@@ -1,0 +1,30 @@
+{
+  "name": "front-trading-platform",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@nuxtjs/i18n": "^9.5.3",
+    "nuxt": "^4.2.1",
+    "swagger-ui-dist": "^5.32.6"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.15.2",
+    "@types/node": "^25.7.0",
+    "@types/swagger-ui-dist": "^3.30.6",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
