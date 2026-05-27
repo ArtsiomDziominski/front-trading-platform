@@ -43,12 +43,7 @@ onMounted(() => {
         </div>
 
         <div class="site-header__actions">
-          <template v-if="auth.loggedIn.value && auth.user.value">
-            <span class="user-name">{{ auth.user.value.name || auth.user.value.email }}</span>
-            <button type="button" class="header-link" @click="auth.logout()">
-              {{ $t('auth.logout') }}
-            </button>
-          </template>
+          <UserMenu v-if="auth.loggedIn.value" />
           <LangSwitcher />
         </div>
       </div>
@@ -129,29 +124,6 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text);
-  white-space: nowrap;
-}
-
-.header-link {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.header-link:hover {
-  color: var(--color-accent);
 }
 
 @media (max-width: 768px) {
