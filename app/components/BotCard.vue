@@ -4,7 +4,7 @@
       <span class="bot-card__symbol">{{ bot.symbol }}</span>
       <span
         class="bot-card__status"
-        :class="`bot-card__status--${bot.lifecycle_status.toLowerCase()}`"
+        :class="statusClass"
       >
         {{ statusLabel }}
       </span>
@@ -12,7 +12,7 @@
     <div class="bot-card__body">
       <div class="bot-card__row">
         <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
-        <span class="bot-card__value">{{ bot.exchange || 'Binance' }}</span>
+        <span class="bot-card__value">{{ bot.exchange || '—' }}</span>
       </div>
       <div class="bot-card__row">
         <span class="bot-card__label">{{ $t('bots.type') }}</span>
@@ -20,51 +20,78 @@
       </div>
       <div class="bot-card__row bot-card__row--pnl">
         <span class="bot-card__label">{{ $t('bots.pnl') }}</span>
-        <span :class="pnlClass">{{ bot.pnl ?? '—' }}</span>
+        <span :class="pnlClass">{{ pnlLabel }}</span>
       </div>
     </div>
   </NeumoCard>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import type { BotListItem } from '#shared/types/bot'
+import { formatSignedPercent } from '~/utils/formatPercent'
 
 const props = defineProps<{
-  bot: {
-    id: number
-    symbol: string
-    bot_type: string
-    lifecycle_status: string
-    engine_state: string
-    exchange?: string
-    pnl?: string
-  }
+  bot: BotListItem
 }>()
 
-const { locale } = useI18n()
+const { t } = useI18n()
+
+function formatPnl(value: number): string {
+  const sign = value >= 0 ? '+' : ''
+  return `${sign}${value.toFixed(2)} USDT`
+}
+
+const pnlLabel = computed(() => {
+  const { unrealized_pnl, pnl_percent } = props.bot
+
+  if (unrealized_pnl == null && pnl_percent == null) {
+    return '—'
+  }
+
+  const parts: string[] = []
+  if (unrealized_pnl != null) {
+    parts.push(formatPnl(unrealized_pnl))
+  }
+  if (pnl_percent != null) {
+    parts.push(`(${formatSignedPercent(pnl_percent)})`)
+  }
+  return parts.join(' ')
+})
+
+const statusClass = computed(() => {
+  if (props.bot.engine_state === 'ERROR') {
+    return 'bot-card__status--error'
+  }
+  return `bot-card__status--${props.bot.lifecycle_status.toLowerCase()}`
+})
 
 const statusLabel = computed(() => {
-  const key = props.bot.lifecycle_status
-  if (key === 'ACTIVE') return 'Активен'
-  if (key === 'STOPPED') return 'Остановлен'
-  if (key === 'CLOSED') return 'Закрыт'
-  if (key === 'ERROR') return 'Ошибка'
-  return key
+  const labels: Record<string, string> = {
+    ACTIVE: t('bots.status_active'),
+    STOPPED: t('bots.status_stopped'),
+    CLOSED: t('bots.status_closed'),
+  }
+  if (props.bot.engine_state === 'ERROR') {
+    return t('bots.status_error')
+  }
+  return labels[props.bot.lifecycle_status] ?? props.bot.lifecycle_status
 })
 
 const typeLabel = computed(() => {
-  const t = props.bot.bot_type
-  if (t === 'GRID_FUTURES') return 'Grid Futures'
-  if (t === 'GRID_SPOT') return 'Grid Spot'
-  if (t === 'DCA_FUTURES') return 'DCA Futures'
-  if (t === 'DCA_SPOT') return 'DCA Spot'
-  return t
+  const labels: Record<string, string> = {
+    GRID_FUTURES: t('bots.type_grid_futures'),
+    GRID_SPOT: t('bots.type_grid_spot'),
+    DCA_FUTURES: t('bots.type_dca_futures'),
+    DCA_SPOT: t('bots.type_dca_spot'),
+    CUSTOM: t('bots.type_custom'),
+  }
+  return labels[props.bot.bot_type] ?? props.bot.bot_type
 })
 
 const pnlClass = computed(() => {
-  const p = props.bot.pnl
-  if (!p) return ''
-  return p.startsWith('-') ? 'bot-card__pnl--down' : 'bot-card__pnl--up'
+  const value = props.bot.unrealized_pnl ?? props.bot.pnl_percent
+  if (value == null || value === 0) return ''
+  return value < 0 ? 'bot-card__pnl--down' : 'bot-card__pnl--up'
 })
 </script>
 
@@ -94,7 +121,8 @@ const pnlClass = computed(() => {
   color: var(--color-accent);
 }
 
-.bot-card__status--stopped {
+.bot-card__status--stopped,
+.bot-card__status--closed {
   color: var(--color-text-muted);
 }
 

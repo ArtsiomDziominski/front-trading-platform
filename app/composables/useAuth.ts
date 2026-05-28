@@ -1,3 +1,4 @@
+import type { FetchError } from 'ofetch'
 import { parseApiError } from '~/utils/parseApiError'
 
 export interface AuthUser {
@@ -61,9 +62,15 @@ export const useAuth = () => {
 
   const loggedIn = computed(() => !!user.value)
 
+  let refreshPromise: Promise<boolean> | null = null
+
   function authHeaders(): Record<string, string> {
     if (!accessToken.value) return {}
     return { Authorization: `Bearer ${accessToken.value}` }
+  }
+
+  function isUnauthorized(error: unknown): boolean {
+    return (error as FetchError)?.response?.status === 401
   }
 
   function authErrorFallback(): string {
@@ -80,51 +87,70 @@ export const useAuth = () => {
   }
 
   async function fetchUser() {
-    if (!accessToken.value) {
+    if (!accessToken.value && !(await refreshSession())) {
       user.value = null
       return null
     }
 
     try {
-      const data = await $fetch<AuthUser>(`${baseUrl}/user/me`, {
-        headers: authHeaders(),
-      })
+      const data = await authFetch<AuthUser>(`${baseUrl}/user/me`)
       user.value = data
       return data
     } catch {
-      const refreshed = await tryRefresh()
-      if (refreshed) {
-        try {
-          const data = await $fetch<AuthUser>(`${baseUrl}/user/me`, {
-            headers: authHeaders(),
-          })
-          user.value = data
-          return data
-        } catch {
-          user.value = null
-          return null
-        }
-      }
       user.value = null
       return null
     }
   }
 
-  async function tryRefresh(): Promise<boolean> {
+  async function refreshSession(): Promise<boolean> {
     if (!refreshToken.value) return false
+    if (refreshPromise) return refreshPromise
+
+    refreshPromise = (async () => {
+      try {
+        const data = await $fetch<TokenResponse>(`${baseUrl}/auth/refresh`, {
+          method: 'POST',
+          body: { refresh_token: refreshToken.value },
+        })
+        setTokens(data)
+        return true
+      } catch {
+        clearTokens()
+        return false
+      } finally {
+        refreshPromise = null
+      }
+    })()
+
+    return refreshPromise
+  }
+
+  async function authFetch<T>(url: string, options?: Parameters<typeof $fetch>[1]): Promise<T> {
+    const request = () => $fetch<T>(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        ...authHeaders(),
+      },
+    })
 
     try {
-      const data = await $fetch<TokenResponse>(`${baseUrl}/auth/refresh`, {
-        method: 'POST',
-        body: { refresh_token: refreshToken.value },
-      })
-      accessToken.value = data.access_token
-      refreshToken.value = data.refresh_token
-      return true
-    } catch {
-      clearTokens()
-      return false
+      return await request() as T
+    } catch (error) {
+      if (!isUnauthorized(error) || !refreshToken.value || url.includes('/auth/refresh')) {
+        throw error
+      }
+
+      const refreshed = await refreshSession()
+      if (!refreshed) throw error
+
+      return await request() as T
     }
+  }
+
+  async function ensureSession(): Promise<boolean> {
+    if (accessToken.value) return true
+    return refreshSession()
   }
 
   function setTokens(data: TokenResponse) {
@@ -271,9 +297,8 @@ export const useAuth = () => {
     error.value = null
 
     try {
-      const data = await $fetch<AuthUser>(`${baseUrl}/user/update`, {
+      const data = await authFetch<AuthUser>(`${baseUrl}/user/update`, {
         method: 'PATCH',
-        headers: authHeaders(),
         body: payload,
       })
       user.value = data
@@ -306,5 +331,8 @@ export const useAuth = () => {
     confirmPasswordReset,
     updateProfile,
     authHeaders,
+    authFetch,
+    refreshSession,
+    ensureSession,
   }
 }

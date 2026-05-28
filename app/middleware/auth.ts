@@ -2,8 +2,15 @@ import type { AuthUser } from '~/composables/useAuth'
 
 export default defineNuxtRouteMiddleware(async () => {
   const accessToken = useCookie<string | null>('access_token')
+  const refreshToken = useCookie<string | null>('refresh_token')
 
-  if (!accessToken.value) {
+  if (!accessToken.value && !refreshToken.value) {
+    return navigateTo('/auth/login')
+  }
+
+  const auth = useAuth()
+
+  if (!(await auth.ensureSession())) {
     return navigateTo('/auth/login')
   }
 
@@ -12,7 +19,6 @@ export default defineNuxtRouteMiddleware(async () => {
     return
   }
 
-  const auth = useAuth()
   const fetched = await auth.fetchUser()
   if (!fetched) {
     return navigateTo('/auth/login')
