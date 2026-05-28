@@ -81,3 +81,21 @@ export interface BotsRemoveAllResponse {
   removed: BotOut[]
   failed: BotBulkActionFailure[]
 }
+
+export type BotCreationOutcome = 'VALIDATION_FAILED' | 'EXCHANGE_ERROR' | 'CREATED_OK'
+
+export interface BotCreationLogOut {
+  id: number
+  user_id: number
+  bot_id: number | null
+  request_payload: Record<string, unknown>
+  outcome: BotCreationOutcome
+  lifecycle_status: BotLifecycleStatus | null
+  engine_state: EngineState | null
+  error_message: string | null
+  symbol: string | null
+  bot_type: BotType | null
+  api_key_id: number | null
+  created_at: string
+  exchange_ok: boolean
+}

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import type { GridDirection, VolumeMode } from '#shared/types/bot'
+import type { BotCreationLogOut, GridDirection, VolumeMode } from '#shared/types/bot'
+import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
   middleware: 'auth',
@@ -8,7 +9,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const router = useRouter()
-const { creating, createError, fetchApiKeys, createBot } = useBots()
+const { creating, createError, fetchApiKeys, fetchCreationHistory, createBot } = useBots()
 
 useSeoMeta({
   title: () => t('bots.create_title'),
@@ -20,6 +21,12 @@ const keysLoading = ref(true)
 const formError = ref('')
 const engineWarning = ref('')
 const createdBotId = ref<number | null>(null)
+const clonedFromId = ref<number | null>(null)
+const formRef = ref<HTMLElement | null>(null)
+
+const creationHistory = ref<BotCreationLogOut[]>([])
+const historyLoading = ref(false)
+const historyError = ref<string | null>(null)
 
 const apiKeyId = ref<number | ''>('')
 const symbol = ref('ETHUSDT')
@@ -40,7 +47,45 @@ function apiKeyLabel(key: ApiKeyOut): string {
   return `${formatExchange(key.exchange)} — ${key.label} (${key.api_key_masked})`
 }
 
-onMounted(async () => {
+function applyPayloadToForm(payload: ReturnType<typeof parseBotCreatePayload>) {
+  if (!payload) return false
+
+  const keyExists = apiKeys.value.some((key) => key.id === payload.api_key_id)
+  apiKeyId.value = keyExists ? payload.api_key_id : ''
+
+  const config = payload.config
+  symbol.value = config.symbol
+  direction.value = config.direction
+  initialAmount.value = String(config.initial_amount)
+  gridOrdersCount.value = config.grid_orders_count
+  gridStepPercent.value = String(config.grid_step_percent)
+  volumeMode.value = config.volume_mode
+  startPrice.value = config.start_price != null ? String(config.start_price) : ''
+  autoRestart.value = Boolean(config.auto_restart)
+
+  formError.value = ''
+  engineWarning.value = ''
+  createdBotId.value = null
+  createError.value = null
+
+  return true
+}
+
+async function loadCreationHistory() {
+  historyLoading.value = true
+  historyError.value = null
+
+  try {
+    creationHistory.value = await fetchCreationHistory(30)
+  } catch {
+    historyError.value = t('bots.creation_history_load_error')
+    creationHistory.value = []
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+async function loadPageData() {
   keysLoading.value = true
   try {
     apiKeys.value = await fetchApiKeys()
@@ -50,12 +95,33 @@ onMounted(async () => {
         apiKeyId.value = onlyKey.id
       }
     }
+    await loadCreationHistory()
   } catch {
     formError.value = t('bots.create_error')
   } finally {
     keysLoading.value = false
   }
+}
+
+onMounted(() => {
+  loadPageData()
 })
+
+function cloneFromHistory(item: BotCreationLogOut) {
+  const payload = parseBotCreatePayload(item.request_payload)
+  if (!payload) {
+    formError.value = t('bots.creation_history_clone_error')
+    return
+  }
+
+  if (!applyPayloadToForm(payload)) {
+    formError.value = t('bots.creation_history_clone_error')
+    return
+  }
+
+  clonedFromId.value = item.id
+  formRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 function validate(): boolean {
   formError.value = ''
@@ -118,6 +184,9 @@ async function handleSubmit() {
       },
     })
 
+    await loadCreationHistory()
+    clonedFromId.value = null
+
     if (bot.engine_state === 'ERROR' && bot.engine_error) {
       createdBotId.value = bot.id
       engineWarning.value = t('bots.create_engine_warning', { error: bot.engine_error })
@@ -155,155 +224,172 @@ async function handleSubmit() {
         </NeumoButton>
       </NeumoCard>
 
-      <NeumoCard v-else variant="raised" class="create-card">
-        <form class="create-form" @submit.prevent="handleSubmit">
-          <div class="field">
-            <label class="field-label" for="bot-api-key">{{ $t('bots.field_api_key') }}</label>
-            <select
-              id="bot-api-key"
-              v-model="apiKeyId"
-              class="field-input neumo-sm-inset"
-              required
-            >
-              <option disabled value="">
-                —
-              </option>
-              <option v-for="key in apiKeys" :key="key.id" :value="key.id">
-                {{ apiKeyLabel(key) }}
-              </option>
-            </select>
-          </div>
+      <div v-else class="create-layout">
+        <NeumoCard variant="raised" class="create-card">
+          <div ref="formRef">
+          <p v-if="clonedFromId" class="clone-notice" role="status">
+            {{ $t('bots.creation_history_cloned') }}
+          </p>
 
-          <div class="field">
-            <label class="field-label" for="bot-symbol">{{ $t('bots.field_symbol') }}</label>
-            <input
-              id="bot-symbol"
-              v-model="symbol"
-              type="text"
-              class="field-input neumo-sm-inset"
-              :placeholder="$t('bots.field_symbol_hint')"
-              autocomplete="off"
-              required
-            />
-            <p class="field-hint">{{ $t('bots.field_symbol_hint') }}</p>
-          </div>
-
-          <div class="field-row">
+          <form class="create-form" @submit.prevent="handleSubmit">
             <div class="field">
-              <label class="field-label" for="bot-direction">{{ $t('bots.field_direction') }}</label>
-              <select id="bot-direction" v-model="direction" class="field-input neumo-sm-inset">
-                <option value="LONG">
-                  {{ $t('bots.direction_long') }}
+              <label class="field-label" for="bot-api-key">{{ $t('bots.field_api_key') }}</label>
+              <select
+                id="bot-api-key"
+                v-model="apiKeyId"
+                class="field-input neumo-sm-inset"
+                required
+              >
+                <option disabled value="">
+                  —
                 </option>
-                <option value="SHORT">
-                  {{ $t('bots.direction_short') }}
+                <option v-for="key in apiKeys" :key="key.id" :value="key.id">
+                  {{ apiKeyLabel(key) }}
                 </option>
               </select>
             </div>
 
             <div class="field">
-              <label class="field-label" for="bot-volume-mode">{{ $t('bots.field_volume_mode') }}</label>
-              <select id="bot-volume-mode" v-model="volumeMode" class="field-input neumo-sm-inset">
-                <option value="linear">
-                  {{ $t('bots.volume_linear') }}
-                </option>
-                <option value="exponential">
-                  {{ $t('bots.volume_exponential') }}
-                </option>
-                <option value="fixed">
-                  {{ $t('bots.volume_fixed') }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label class="field-label" for="bot-initial-amount">{{ $t('bots.field_initial_amount') }}</label>
+              <label class="field-label" for="bot-symbol">{{ $t('bots.field_symbol') }}</label>
               <input
-                id="bot-initial-amount"
-                v-model="initialAmount"
+                id="bot-symbol"
+                v-model="symbol"
                 type="text"
-                inputmode="decimal"
                 class="field-input neumo-sm-inset"
+                :placeholder="$t('bots.field_symbol_hint')"
+                autocomplete="off"
                 required
               />
+              <p class="field-hint">{{ $t('bots.field_symbol_hint') }}</p>
             </div>
 
-            <div class="field">
-              <label class="field-label" for="bot-grid-step">{{ $t('bots.field_grid_step') }}</label>
-              <input
-                id="bot-grid-step"
-                v-model="gridStepPercent"
-                type="text"
-                inputmode="decimal"
-                class="field-input neumo-sm-inset"
-                required
-              />
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="bot-direction">{{ $t('bots.field_direction') }}</label>
+                <select id="bot-direction" v-model="direction" class="field-input neumo-sm-inset">
+                  <option value="LONG">
+                    {{ $t('bots.direction_long') }}
+                  </option>
+                  <option value="SHORT">
+                    {{ $t('bots.direction_short') }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="bot-volume-mode">{{ $t('bots.field_volume_mode') }}</label>
+                <select id="bot-volume-mode" v-model="volumeMode" class="field-input neumo-sm-inset">
+                  <option value="linear">
+                    {{ $t('bots.volume_linear') }}
+                  </option>
+                  <option value="exponential">
+                    {{ $t('bots.volume_exponential') }}
+                  </option>
+                  <option value="fixed">
+                    {{ $t('bots.volume_fixed') }}
+                  </option>
+                </select>
+              </div>
             </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="bot-initial-amount">{{ $t('bots.field_initial_amount') }}</label>
+                <input
+                  id="bot-initial-amount"
+                  v-model="initialAmount"
+                  type="text"
+                  inputmode="decimal"
+                  class="field-input neumo-sm-inset"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="bot-grid-step">{{ $t('bots.field_grid_step') }}</label>
+                <input
+                  id="bot-grid-step"
+                  v-model="gridStepPercent"
+                  type="text"
+                  inputmode="decimal"
+                  class="field-input neumo-sm-inset"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="bot-grid-orders">{{ $t('bots.field_grid_orders') }}</label>
+                <input
+                  id="bot-grid-orders"
+                  v-model.number="gridOrdersCount"
+                  type="number"
+                  min="1"
+                  max="500"
+                  class="field-input neumo-sm-inset"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="bot-start-price">{{ $t('bots.field_start_price') }}</label>
+                <input
+                  id="bot-start-price"
+                  v-model="startPrice"
+                  type="text"
+                  inputmode="decimal"
+                  class="field-input neumo-sm-inset"
+                />
+              </div>
+            </div>
+
+            <label class="field-checkbox">
+              <input v-model="autoRestart" type="checkbox">
+              <span>{{ $t('bots.field_auto_restart') }}</span>
+            </label>
+
+            <p v-if="formError" class="form-message form-message--error" role="alert">
+              {{ formError }}
+            </p>
+            <p v-if="engineWarning" class="form-message form-message--warning" role="status">
+              {{ engineWarning }}
+            </p>
+
+            <div class="form-actions">
+              <NeumoButton variant="primary" size="md" type="submit" :disabled="creating">
+                {{ creating ? $t('common.loading') : $t('bots.create_submit') }}
+              </NeumoButton>
+              <NeumoButton
+                v-if="createdBotId"
+                variant="secondary"
+                size="md"
+                tag="NuxtLink"
+                to="/bots"
+              >
+                {{ $t('bots.back_to_bots') }}
+              </NeumoButton>
+            </div>
+          </form>
           </div>
+        </NeumoCard>
 
-          <div class="field-row">
-            <div class="field">
-              <label class="field-label" for="bot-grid-orders">{{ $t('bots.field_grid_orders') }}</label>
-              <input
-                id="bot-grid-orders"
-                v-model.number="gridOrdersCount"
-                type="number"
-                min="1"
-                max="500"
-                class="field-input neumo-sm-inset"
-                required
-              />
-            </div>
-
-            <div class="field">
-              <label class="field-label" for="bot-start-price">{{ $t('bots.field_start_price') }}</label>
-              <input
-                id="bot-start-price"
-                v-model="startPrice"
-                type="text"
-                inputmode="decimal"
-                class="field-input neumo-sm-inset"
-              />
-            </div>
-          </div>
-
-          <label class="field-checkbox">
-            <input v-model="autoRestart" type="checkbox">
-            <span>{{ $t('bots.field_auto_restart') }}</span>
-          </label>
-
-          <p v-if="formError" class="form-message form-message--error" role="alert">
-            {{ formError }}
-          </p>
-          <p v-if="engineWarning" class="form-message form-message--warning" role="status">
-            {{ engineWarning }}
-          </p>
-
-          <div class="form-actions">
-            <NeumoButton variant="primary" size="md" type="submit" :disabled="creating">
-              {{ creating ? $t('common.loading') : $t('bots.create_submit') }}
-            </NeumoButton>
-            <NeumoButton
-              v-if="createdBotId"
-              variant="secondary"
-              size="md"
-              tag="NuxtLink"
-              to="/bots"
-            >
-              {{ $t('bots.back_to_bots') }}
-            </NeumoButton>
-          </div>
-        </form>
-      </NeumoCard>
+        <BotCreationHistory
+          :items="creationHistory"
+          :loading="historyLoading"
+          :error="historyError"
+          :selected-id="clonedFromId"
+          @select="cloneFromHistory"
+          @retry="loadCreationHistory"
+        />
+      </div>
     </div>
   </main>
 </template>
 
 <style scoped>
 .create-container {
-  max-width: 640px;
+  max-width: 1080px;
 }
 
 .page-header {
@@ -314,6 +400,13 @@ async function handleSubmit() {
   margin-bottom: 36px;
 }
 
+.create-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
 .create-card {
   padding: 32px;
 }
@@ -322,6 +415,16 @@ async function handleSubmit() {
   margin: 0 0 20px;
   color: var(--color-text-muted);
   line-height: 1.5;
+}
+
+.clone-notice {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .create-form {
@@ -406,6 +509,12 @@ async function handleSubmit() {
   padding: 48px 24px;
   text-align: center;
   color: var(--color-text-muted);
+}
+
+@media (max-width: 900px) {
+  .create-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

@@ -2,7 +2,7 @@ import { parseApiError } from '~/utils/parseApiError'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse } from '#shared/types/bot'
+import type { BotCreate, BotCreationLogOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse } from '#shared/types/bot'
 
 function formatExchange(exchange: ApiKeyOut['exchange']): string {
   if (exchange === 'OTHER') return 'Other'
@@ -402,6 +402,12 @@ export const useBots = () => {
     bulkActionFailures.value = null
   }
 
+  async function fetchCreationHistory(limit = 20) {
+    return auth.authFetch<BotCreationLogOut[]>(`${baseUrl}/bots/creation-history`, {
+      query: { limit },
+    })
+  }
+
   async function createBot(payload: BotCreate) {
     creating.value = true
     createError.value = null
@@ -428,6 +434,7 @@ export const useBots = () => {
     wsConnected,
     fetchBots,
     fetchApiKeys,
+    fetchCreationHistory,
     createBot,
     subscribeBotsUpdates,
     stopBot,
