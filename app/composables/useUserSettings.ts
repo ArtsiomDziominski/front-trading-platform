@@ -35,9 +35,7 @@ export const useUserSettings = () => {
     error.value = null
 
     try {
-      const data = await $fetch<UserSettings>(`${baseUrl}/user/settings`, {
-        headers: auth.authHeaders(),
-      })
+      const data = await auth.authFetch<UserSettings>(`${baseUrl}/user/settings`)
       settings.value = data
       return data
     } catch (e) {
@@ -52,9 +50,8 @@ export const useUserSettings = () => {
     error.value = null
 
     try {
-      const data = await $fetch<UserSettings>(`${baseUrl}/user/settings`, {
+      const data = await auth.authFetch<UserSettings>(`${baseUrl}/user/settings`, {
         method: 'PATCH',
-        headers: auth.authHeaders(),
         body: payload,
       })
       settings.value = data
@@ -79,9 +76,8 @@ export const useUserSettings = () => {
     error.value = null
 
     try {
-      return await $fetch<TelegramLinkCode>(`${baseUrl}/user/telegram/link-code`, {
+      return await auth.authFetch<TelegramLinkCode>(`${baseUrl}/user/telegram/link-code`, {
         method: 'POST',
-        headers: auth.authHeaders(),
       })
     } catch (e) {
       handleError(e)
@@ -95,9 +91,8 @@ export const useUserSettings = () => {
     error.value = null
 
     try {
-      await $fetch(`${baseUrl}/user/telegram/send`, {
+      await auth.authFetch(`${baseUrl}/user/telegram/send`, {
         method: 'POST',
-        headers: auth.authHeaders(),
         body: { message },
       })
     } catch (e) {
