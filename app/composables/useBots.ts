@@ -2,7 +2,7 @@ import { parseApiError } from '~/utils/parseApiError'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotLifecycleStatus, BotListItem, BotListOut, BotOut } from '#shared/types/bot'
+import type { BotCreate, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse } from '#shared/types/bot'
 
 function formatExchange(exchange: ApiKeyOut['exchange']): string {
   if (exchange === 'OTHER') return 'Other'
@@ -69,6 +69,118 @@ export const useBots = () => {
   function shouldRemoveBot(message: BotWsMessage): boolean {
     if (message.event === 'bot_removed') return true
     return Boolean(message.bot?.deleted_at)
+  }
+
+  function applyBotFromOut(updated: BotOut) {
+    if (updated.deleted_at) {
+      bots.value = bots.value.filter((b) => b.id !== updated.id)
+      return
+    }
+
+    const existing = bots.value.find((b) => b.id === updated.id)
+    const listOut: BotListOut = {
+      ...(existing ?? {}),
+      ...updated,
+      position_side: existing?.position_side ?? null,
+      position_size: existing?.position_size ?? null,
+      entry_price: existing?.entry_price ?? null,
+      mark_price: existing?.mark_price ?? null,
+      unrealized_pnl: existing?.unrealized_pnl ?? null,
+      pnl_percent: existing?.pnl_percent ?? null,
+    }
+
+    const exchangeByKeyId = new Map(
+      apiKeysCache.value.map((key) => [key.id, formatExchange(key.exchange)]),
+    )
+    const enriched = enrichBot(listOut, exchangeByKeyId)
+    const index = bots.value.findIndex((b) => b.id === enriched.id)
+
+    if (!matchesFilter(listOut)) {
+      if (index >= 0) {
+        bots.value = bots.value.filter((b) => b.id !== enriched.id)
+      }
+      return
+    }
+
+    if (index >= 0) {
+      const next = [...bots.value]
+      next[index] = enriched
+      bots.value = next
+    } else {
+      bots.value = [...bots.value, enriched]
+    }
+  }
+
+  function actionErrorFallback(): string {
+    const i18n = nuxtApp.$i18n
+    if (i18n && typeof i18n.t === 'function') {
+      return i18n.t('bots.action_error')
+    }
+    return 'Action failed'
+  }
+
+  const actionLoading = useState<Record<number, string>>('user_bots_action_loading', () => ({}))
+  const actionErrors = useState<Record<number, string | null>>('user_bots_action_errors', () => ({}))
+
+  async function runBotAction(botId: number, actionKey: string, request: () => Promise<BotOut>) {
+    actionLoading.value = { ...actionLoading.value, [botId]: actionKey }
+    actionErrors.value = { ...actionErrors.value, [botId]: null }
+
+    try {
+      const result = await request()
+      applyBotFromOut(result)
+      return result
+    } catch (e) {
+      actionErrors.value = {
+        ...actionErrors.value,
+        [botId]: parseApiError(e, actionErrorFallback()),
+      }
+      throw e
+    } finally {
+      const nextLoading = { ...actionLoading.value }
+      delete nextLoading[botId]
+      actionLoading.value = nextLoading
+    }
+  }
+
+  function stopBot(botId: number) {
+    return runBotAction(botId, 'stop', () =>
+      auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}/stop`, { method: 'POST' }),
+    )
+  }
+
+  function closeBot(botId: number) {
+    return runBotAction(botId, 'close', () =>
+      auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}/close`, { method: 'POST' }),
+    )
+  }
+
+  function redeployBotGrid(botId: number) {
+    return runBotAction(botId, 'redeploy', () =>
+      auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}/redeploy-grid`, { method: 'POST' }),
+    )
+  }
+
+  function removeBot(botId: number) {
+    return runBotAction(botId, 'remove', () =>
+      auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}`, { method: 'DELETE' }),
+    )
+  }
+
+  function isBotActionLoading(botId: number, actionKey?: string): boolean {
+    const current = actionLoading.value[botId]
+    if (!current) return false
+    return actionKey ? current === actionKey : true
+  }
+
+  function getBotActionError(botId: number): string | null {
+    return actionErrors.value[botId] ?? null
+  }
+
+  function clearBotActionError(botId: number) {
+    if (actionErrors.value[botId]) {
+      actionErrors.value = { ...actionErrors.value, [botId]: null }
+    }
   }
 
   function applyBotMessage(message: BotWsMessage) {
@@ -222,6 +334,74 @@ export const useBots = () => {
     }
   }
 
+  const bulkActionLoading = useState<string | null>('user_bots_bulk_action_loading', () => null)
+  const bulkActionError = useState<string | null>('user_bots_bulk_action_error', () => null)
+  const bulkActionFailures = useState<{ action: string, items: { bot_id: number, detail: string }[] } | null>(
+    'user_bots_bulk_action_failures',
+    () => null,
+  )
+
+  function applyBulkBotsResult(botsUpdated: BotOut[]) {
+    for (const bot of botsUpdated) {
+      applyBotFromOut(bot)
+    }
+  }
+
+  async function runBulkAction<T extends { failed: { bot_id: number, detail: string }[] }>(
+    actionKey: string,
+    request: () => Promise<T>,
+    getUpdated: (response: T) => BotOut[],
+  ) {
+    bulkActionLoading.value = actionKey
+    bulkActionError.value = null
+    bulkActionFailures.value = null
+
+    try {
+      const response = await request()
+      applyBulkBotsResult(getUpdated(response))
+
+      if (response.failed.length > 0) {
+        bulkActionFailures.value = { action: actionKey, items: response.failed }
+      }
+
+      return response
+    } catch (e) {
+      bulkActionError.value = parseApiError(e, actionErrorFallback())
+      throw e
+    } finally {
+      bulkActionLoading.value = null
+    }
+  }
+
+  function stopAllBots() {
+    return runBulkAction(
+      'stop-all',
+      () => auth.authFetch<BotsStopAllResponse>(`${baseUrl}/bots/stop-all`, { method: 'POST' }),
+      (response) => response.stopped,
+    )
+  }
+
+  function closeAllBots() {
+    return runBulkAction(
+      'close-all',
+      () => auth.authFetch<BotsCloseAllResponse>(`${baseUrl}/bots/close-all`, { method: 'POST' }),
+      (response) => response.closed,
+    )
+  }
+
+  function removeAllBots() {
+    return runBulkAction(
+      'remove-all',
+      () => auth.authFetch<BotsRemoveAllResponse>(`${baseUrl}/bots/remove-all`, { method: 'POST' }),
+      (response) => response.removed,
+    )
+  }
+
+  function clearBulkActionFeedback() {
+    bulkActionError.value = null
+    bulkActionFailures.value = null
+  }
+
   async function createBot(payload: BotCreate) {
     creating.value = true
     createError.value = null
@@ -250,5 +430,19 @@ export const useBots = () => {
     fetchApiKeys,
     createBot,
     subscribeBotsUpdates,
+    stopBot,
+    closeBot,
+    redeployBotGrid,
+    removeBot,
+    isBotActionLoading,
+    getBotActionError,
+    clearBotActionError,
+    bulkActionLoading,
+    bulkActionError,
+    bulkActionFailures,
+    stopAllBots,
+    closeAllBots,
+    removeAllBots,
+    clearBulkActionFeedback,
   }
 }

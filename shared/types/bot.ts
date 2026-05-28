@@ -61,3 +61,23 @@ export interface BotListOut extends BotOut {
 export interface BotListItem extends BotListOut {
   exchange?: string
 }
+
+export interface BotBulkActionFailure {
+  bot_id: number
+  detail: string
+}
+
+export interface BotsStopAllResponse {
+  stopped: BotOut[]
+  failed: BotBulkActionFailure[]
+}
+
+export interface BotsCloseAllResponse {
+  closed: BotOut[]
+  failed: BotBulkActionFailure[]
+}
+
+export interface BotsRemoveAllResponse {
+  removed: BotOut[]
+  failed: BotBulkActionFailure[]
+}

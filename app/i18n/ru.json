@@ -79,7 +79,29 @@
     "error_amount_required": "Укажите начальный объём",
     "error_grid_orders": "Количество ордеров должно быть от 1 до 500",
     "error_grid_step": "Укажите шаг сетки в процентах",
-    "back_to_bots": "Назад к ботам"
+    "back_to_bots": "Назад к ботам",
+    "action_stop": "Остановить",
+    "action_close": "Закрыть",
+    "action_redeploy": "Перевыставить сетку",
+    "action_remove": "Убрать",
+    "action_error": "Не удалось выполнить действие",
+    "confirm_close": "Закрыть бота {symbol}? Позиции будут закрыты на бирже.",
+    "confirm_close_title": "Закрыть {symbol}",
+    "confirm_redeploy": "Перевыставить сетку для {symbol}? Ордера будут сняты и сетка выставлена заново.",
+    "confirm_redeploy_title": "Перевыставить {symbol}",
+    "confirm_remove": "Убрать бота {symbol} из списка?",
+    "confirm_remove_title": "Убрать {symbol}",
+    "bulk_actions_label": "Действия для всех ботов",
+    "bulk_stop_all": "Остановить всех",
+    "bulk_close_all": "Закрыть всех",
+    "bulk_remove_all": "Убрать всех",
+    "bulk_confirm_stop_all_title": "Остановить всех активных ботов?",
+    "bulk_confirm_stop_all_message": "Для каждого активного бота ордера будут сняты на бирже, статус сменится на «остановлен».",
+    "bulk_confirm_close_all_title": "Закрыть всех ботов?",
+    "bulk_confirm_close_all_message": "У каждого бота, который ещё не закрыт, будут сняты ордера и закрыты позиции на бирже.",
+    "bulk_confirm_remove_all_title": "Убрать всех ботов?",
+    "bulk_confirm_remove_all_message": "Все боты будут скрыты из списка. Для активных ботов сначала попытаются снять ордера.",
+    "bulk_partial_fail": "Не удалось обработать ботов: {count}"
   },
   "exchanges": {
     "title": "Биржи",
@@ -175,6 +197,8 @@
     "loading": "Загрузка...",
     "error": "Ошибка",
     "retry": "Повторить",
-    "language": "Язык"
+    "language": "Язык",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить"
   }
 }

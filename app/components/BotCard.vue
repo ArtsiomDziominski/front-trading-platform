@@ -23,6 +23,61 @@
         <span :class="pnlClass">{{ pnlLabel }}</span>
       </div>
     </div>
+
+    <div v-if="hasActions" class="bot-card__actions">
+      <NeumoButton
+        v-if="canStop"
+        variant="secondary"
+        size="sm"
+        :disabled="isBusy"
+        @click="handleStop"
+      >
+        {{ isBotActionLoading(bot.id, 'stop') ? $t('common.loading') : $t('bots.action_stop') }}
+      </NeumoButton>
+      <NeumoButton
+        v-if="canRedeploy"
+        variant="secondary"
+        size="sm"
+        :disabled="isBusy"
+        @click="openConfirm('redeploy')"
+      >
+        {{ isBotActionLoading(bot.id, 'redeploy') ? $t('common.loading') : $t('bots.action_redeploy') }}
+      </NeumoButton>
+      <NeumoButton
+        v-if="canClose"
+        variant="secondary"
+        size="sm"
+        :disabled="isBusy"
+        @click="openConfirm('close')"
+      >
+        {{ isBotActionLoading(bot.id, 'close') ? $t('common.loading') : $t('bots.action_close') }}
+      </NeumoButton>
+      <NeumoButton
+        v-if="canRemove"
+        variant="danger"
+        size="sm"
+        :disabled="isBusy"
+        @click="openConfirm('remove')"
+      >
+        {{ isBotActionLoading(bot.id, 'remove') ? $t('common.loading') : $t('bots.action_remove') }}
+      </NeumoButton>
+    </div>
+
+    <p v-if="actionError" class="bot-card__action-error" role="alert">
+      {{ actionError }}
+    </p>
+
+    <ConfirmModal
+      v-model="confirmOpen"
+      :title="confirmCopy.title"
+      :message="confirmCopy.message"
+      :confirm-label="confirmCopy.confirmLabel"
+      :cancel-label="$t('common.cancel')"
+      :loading-label="$t('common.loading')"
+      :loading="confirmLoading"
+      :confirm-variant="confirmCopy.variant"
+      @confirm="confirmAction"
+    />
   </NeumoCard>
 </template>
 
@@ -35,6 +90,15 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const {
+  stopBot,
+  closeBot,
+  redeployBotGrid,
+  removeBot,
+  isBotActionLoading,
+  getBotActionError,
+  clearBotActionError,
+} = useBots()
 
 function formatPnl(value: number): string {
   const sign = value >= 0 ? '+' : ''
@@ -93,6 +157,93 @@ const pnlClass = computed(() => {
   if (value == null || value === 0) return ''
   return value < 0 ? 'bot-card__pnl--down' : 'bot-card__pnl--up'
 })
+
+const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
+const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
+const canRedeploy = computed(() =>
+  props.bot.lifecycle_status === 'ACTIVE' && props.bot.bot_type === 'GRID_FUTURES',
+)
+const canRemove = computed(() => !props.bot.deleted_at)
+const hasActions = computed(() => canStop.value || canClose.value || canRedeploy.value || canRemove.value)
+const isBusy = computed(() => isBotActionLoading(props.bot.id))
+const actionError = computed(() => getBotActionError(props.bot.id))
+
+type CardAction = 'close' | 'redeploy' | 'remove'
+const confirmOpen = ref(false)
+const confirmLoading = ref(false)
+const pendingAction = ref<CardAction | null>(null)
+
+const confirmCopy = computed(() => {
+  const symbol = props.bot.symbol
+  switch (pendingAction.value) {
+    case 'close':
+      return {
+        title: t('bots.confirm_close_title', { symbol }),
+        message: t('bots.confirm_close', { symbol }),
+        confirmLabel: t('bots.action_close'),
+        variant: 'primary' as const,
+      }
+    case 'redeploy':
+      return {
+        title: t('bots.confirm_redeploy_title', { symbol }),
+        message: t('bots.confirm_redeploy', { symbol }),
+        confirmLabel: t('bots.action_redeploy'),
+        variant: 'primary' as const,
+      }
+    case 'remove':
+      return {
+        title: t('bots.confirm_remove_title', { symbol }),
+        message: t('bots.confirm_remove', { symbol }),
+        confirmLabel: t('bots.action_remove'),
+        variant: 'danger' as const,
+      }
+    default:
+      return {
+        title: '',
+        message: '',
+        confirmLabel: t('common.confirm'),
+        variant: 'primary' as const,
+      }
+  }
+})
+
+watch(() => props.bot.id, () => {
+  clearBotActionError(props.bot.id)
+})
+
+function openConfirm(action: CardAction) {
+  if (isBusy.value) return
+  pendingAction.value = action
+  confirmOpen.value = true
+}
+
+async function confirmAction() {
+  if (!pendingAction.value) return
+
+  confirmLoading.value = true
+  clearBotActionError(props.bot.id)
+
+  try {
+    if (pendingAction.value === 'close') {
+      await closeBot(props.bot.id)
+    } else if (pendingAction.value === 'redeploy') {
+      await redeployBotGrid(props.bot.id)
+    } else if (pendingAction.value === 'remove') {
+      await removeBot(props.bot.id)
+    }
+    confirmOpen.value = false
+    pendingAction.value = null
+  } catch {
+    // error shown under card
+  } finally {
+    confirmLoading.value = false
+  }
+}
+
+async function handleStop() {
+  clearBotActionError(props.bot.id)
+  await stopBot(props.bot.id)
+}
 </script>
 
 <style scoped>
@@ -165,5 +316,20 @@ const pnlClass = computed(() => {
 .bot-card__pnl--down {
   color: var(--color-danger);
   font-weight: 700;
+}
+
+.bot-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.bot-card__action-error {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-danger);
 }
 </style>

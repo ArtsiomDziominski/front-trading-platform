@@ -79,7 +79,29 @@
     "error_amount_required": "Enter initial amount",
     "error_grid_orders": "Grid orders count must be between 1 and 500",
     "error_grid_step": "Enter grid step percent",
-    "back_to_bots": "Back to bots"
+    "back_to_bots": "Back to bots",
+    "action_stop": "Stop",
+    "action_close": "Close",
+    "action_redeploy": "Redeploy grid",
+    "action_remove": "Remove",
+    "action_error": "Action failed",
+    "confirm_close": "Close bot {symbol}? Positions will be closed on the exchange.",
+    "confirm_close_title": "Close {symbol}",
+    "confirm_redeploy": "Redeploy grid for {symbol}? Orders will be cancelled and the grid will be placed again.",
+    "confirm_redeploy_title": "Redeploy {symbol}",
+    "confirm_remove": "Remove bot {symbol} from the list?",
+    "confirm_remove_title": "Remove {symbol}",
+    "bulk_actions_label": "Actions for all bots",
+    "bulk_stop_all": "Stop all",
+    "bulk_close_all": "Close all",
+    "bulk_remove_all": "Remove all",
+    "bulk_confirm_stop_all_title": "Stop all active bots?",
+    "bulk_confirm_stop_all_message": "Orders will be cancelled on the exchange for every active bot. Bots will move to stopped status.",
+    "bulk_confirm_close_all_title": "Close all bots?",
+    "bulk_confirm_close_all_message": "Every bot that is not closed will have orders cancelled and positions closed on the exchange.",
+    "bulk_confirm_remove_all_title": "Remove all bots?",
+    "bulk_confirm_remove_all_message": "All bots will be hidden from the list. Active bots will attempt to cancel orders first.",
+    "bulk_partial_fail": "{count} bots could not be processed"
   },
   "exchanges": {
     "title": "Exchanges",
@@ -175,6 +197,8 @@
     "loading": "Loading...",
     "error": "Error",
     "retry": "Retry",
-    "language": "Language"
+    "language": "Language",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
   }
 }
