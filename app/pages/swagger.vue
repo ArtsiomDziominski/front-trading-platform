@@ -26,7 +26,7 @@ onMounted(async () => {
     defaultModelExpandDepth: 1,
     tryItOutEnabled: true,
     syntaxHighlight: {
-      theme: 'monokai',
+      theme: 'agate',
     },
   })
 })
@@ -40,9 +40,9 @@ onMounted(async () => {
         <h1 class="section-title">{{ $t('api.title') }}</h1>
         <p class="section-subtitle">{{ $t('api.subtitle') }}</p>
       </div>
-      <NeumoCard variant="raised" class="swagger-wrapper">
+      <UCard class="swagger-wrapper">
         <div id="swagger-ui" />
-      </NeumoCard>
+      </UCard>
     </div>
   </main>
 </template>
@@ -59,7 +59,7 @@ onMounted(async () => {
 }
 
 :deep(.swagger-ui) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .info) {
@@ -67,219 +67,219 @@ onMounted(async () => {
 }
 
 :deep(.swagger-ui .info .title) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .info .description p) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .opblock-tag) {
-  color: #e8ecf1;
-  border-bottom-color: #2d323a;
+  color: var(--color-text);
+  border-bottom-color: var(--color-border);
 }
 
 :deep(.swagger-ui .opblock-tag:hover) {
-  background: #23272e;
+  background: var(--color-surface-alt);
 }
 
 :deep(.swagger-ui .opblock) {
   border: none;
   border-radius: 14px;
-  background: #23272e;
-  box-shadow: 4px 4px 8px #0c0e11, -4px -4px 8px #343941;
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-sm);
   margin: 0 0 12px;
 }
 
 :deep(.swagger-ui .opblock .opblock-summary) {
-  border-bottom: 1px solid #2d323a;
+  border-bottom: 1px solid var(--color-border);
 }
 
 :deep(.swagger-ui .opblock .opblock-summary-description) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .opblock-body) {
-  background: #23272e;
+  background: var(--color-surface-alt);
 }
 
 :deep(.swagger-ui .opblock-body pre) {
-  background: #1a1d23;
+  background: var(--color-surface-muted);
   border-radius: 8px;
 }
 
 :deep(.swagger-ui .opblock-body .opblock-section-header) {
-  background: #2b3038;
+  background: var(--color-surface);
   border: none;
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  box-shadow: var(--shadow-inset-sm);
   border-radius: 8px;
 }
 
 :deep(.swagger-ui .opblock-body .opblock-section-header h4) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .opblock-body .opblock-section-header label) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui table thead tr td, .swagger-ui table thead tr th) {
-  border-bottom-color: #2d323a;
-  color: #8a94a6;
+  border-bottom-color: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui table tbody tr td) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .response-col_status) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .response-col_description) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .btn) {
   border: none;
   border-radius: 14px;
-  background: #23272e;
-  color: #e8ecf1;
-  box-shadow: 4px 4px 8px #0c0e11, -4px -4px 8px #343941;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s;
 }
 
 :deep(.swagger-ui .btn:hover) {
-  box-shadow: 6px 6px 12px #0c0e11, -6px -6px 12px #343941;
+  box-shadow: var(--shadow-md);
 }
 
 :deep(.swagger-ui .btn:active) {
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  box-shadow: var(--shadow-inset-sm);
 }
 
 :deep(.swagger-ui .btn.execute) {
-  background: #20c997;
-  color: #04100c;
+  background: var(--color-accent);
+  color: #fff;
 }
 
 :deep(.swagger-ui .opblock-control-arrow) {
-  fill: #e8ecf1;
+  fill: var(--color-text);
 }
 
 :deep(.swagger-ui .model-box) {
-  color: #e8ecf1;
-  background: #2b3038;
+  color: var(--color-text);
+  background: var(--color-surface);
   border-radius: 8px;
   padding: 8px;
 }
 
 :deep(.swagger-ui .model) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .model-title) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .prop-type) {
-  color: #20c997;
+  color: var(--color-accent);
 }
 
 :deep(.swagger-ui .model-toggle) {
-  fill: #e8ecf1;
+  fill: var(--color-text);
 }
 
 :deep(.swagger-ui select) {
   border: none;
   border-radius: 8px;
-  background: #2b3038;
-  color: #e8ecf1;
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  box-shadow: var(--shadow-inset-sm);
 }
 
 :deep(.swagger-ui input[type=text]) {
   border: none;
   border-radius: 8px;
-  background: #2b3038;
-  color: #e8ecf1;
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  box-shadow: var(--shadow-inset-sm);
 }
 
 :deep(.swagger-ui textarea) {
   border: none;
   border-radius: 8px;
-  background: #1a1d23;
-  color: #e8ecf1;
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  box-shadow: var(--shadow-inset-sm);
 }
 
 :deep(.swagger-ui .parameter__name) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .parameter__type) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .info .title small) {
-  background: #2b3038;
+  background: var(--color-surface);
   border-radius: 8px;
 }
 
 :deep(.swagger-ui .scheme-container) {
-  background: #23272e;
-  box-shadow: inset 3px 3px 6px #0c0e11, inset -3px -3px 6px #343941;
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-inset-sm);
   border-radius: 14px;
   padding: 16px;
   margin: 12px 0;
 }
 
 :deep(.swagger-ui .scheme-container .schemes-title) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .auth-wrapper .authorize) {
-  border-color: #20c997;
-  color: #20c997;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 :deep(.swagger-ui .auth-container) {
-  border-bottom-color: #2d323a;
+  border-bottom-color: var(--color-border);
 }
 
 :deep(.swagger-ui .auth-container h4, .swagger-ui .auth-container h5) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .dialog-ux .backdrop-ux) {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(15 23 42 / 40%);
 }
 
 :deep(.swagger-ui .dialog-ux .modal-ux) {
-  background: #23272e;
+  background: var(--color-surface-alt);
   border-radius: 18px;
-  box-shadow: 12px 12px 24px #0c0e11, -12px -12px 24px #343941;
+  box-shadow: var(--shadow-lg);
 }
 
 :deep(.swagger-ui .dialog-ux .modal-ux-header) {
-  border-bottom-color: #2d323a;
+  border-bottom-color: var(--color-border);
 }
 
 :deep(.swagger-ui .dialog-ux .modal-ux-header h3) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .dialog-ux .modal-ux-content h4) {
-  color: #e8ecf1;
+  color: var(--color-text);
 }
 
 :deep(.swagger-ui .dialog-ux .modal-ux-content p) {
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 
 :deep(.swagger-ui .auth-btn-wrapper .btn-done) {
-  background: #20c997;
-  color: #04100c;
+  background: var(--color-accent);
+  color: #fff;
 }
 
 :deep(.swagger-ui .topbar) {
@@ -287,12 +287,12 @@ onMounted(async () => {
 }
 
 :deep(.swagger-ui .response-control-media-type__accept-message) {
-  color: #20c997;
+  color: var(--color-accent);
 }
 
 :deep(.swagger-ui .loading-container) {
   padding: 40px;
   text-align: center;
-  color: #8a94a6;
+  color: var(--color-text-muted);
 }
 </style>

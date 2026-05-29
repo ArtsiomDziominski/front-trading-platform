@@ -1,5 +1,5 @@
 <template>
-  <NeumoCard variant="raised" class="creation-history">
+  <UCard class="creation-history">
     <h2 class="creation-history__title">
       {{ $t('bots.creation_history_title') }}
     </h2>
@@ -13,9 +13,9 @@
 
     <div v-else-if="error" class="creation-history__state creation-history__state--error" role="alert">
       <p>{{ error }}</p>
-      <NeumoButton variant="secondary" size="sm" @click="$emit('retry')">
+      <UButton color="neutral" variant="outline" size="sm" @click="$emit('retry')">
         {{ $t('common.retry') }}
-      </NeumoButton>
+      </UButton>
     </div>
 
     <ul v-else-if="items.length" class="creation-history__list">
@@ -40,21 +40,22 @@
             {{ item.error_message }}
           </p>
         </div>
-        <NeumoButton
-          variant="secondary"
+        <UButton
+          color="neutral"
+          variant="outline"
           size="sm"
           class="creation-history__copy-btn"
           @click="$emit('select', item)"
         >
           {{ $t('bots.copy_settings') }}
-        </NeumoButton>
+        </UButton>
       </li>
     </ul>
 
     <p v-else class="creation-history__state">
       {{ $t('bots.creation_history_empty') }}
     </p>
-  </NeumoCard>
+  </UCard>
 </template>
 
 <script setup lang="ts">

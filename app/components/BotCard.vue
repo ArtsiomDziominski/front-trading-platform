@@ -1,5 +1,5 @@
 <template>
-  <NeumoCard variant="raised" class="bot-card">
+  <UCard class="bot-card">
     <div class="bot-card__header">
       <span class="bot-card__symbol">{{ bot.symbol }}</span>
       <span
@@ -25,42 +25,49 @@
     </div>
 
     <div v-if="hasActions" class="bot-card__actions">
-      <NeumoButton
+      <UButton
         v-if="canStop"
-        variant="secondary"
+        color="neutral"
+        variant="outline"
         size="sm"
         :disabled="isBusy"
+        :loading="isBotActionLoading(bot.id, 'stop')"
         @click="handleStop"
       >
-        {{ isBotActionLoading(bot.id, 'stop') ? $t('common.loading') : $t('bots.action_stop') }}
-      </NeumoButton>
-      <NeumoButton
+        {{ $t('bots.action_stop') }}
+      </UButton>
+      <UButton
         v-if="canRedeploy"
-        variant="secondary"
+        color="neutral"
+        variant="outline"
         size="sm"
         :disabled="isBusy"
+        :loading="isBotActionLoading(bot.id, 'redeploy')"
         @click="openConfirm('redeploy')"
       >
-        {{ isBotActionLoading(bot.id, 'redeploy') ? $t('common.loading') : $t('bots.action_redeploy') }}
-      </NeumoButton>
-      <NeumoButton
+        {{ $t('bots.action_redeploy') }}
+      </UButton>
+      <UButton
         v-if="canClose"
-        variant="secondary"
+        color="neutral"
+        variant="outline"
         size="sm"
         :disabled="isBusy"
+        :loading="isBotActionLoading(bot.id, 'close')"
         @click="openConfirm('close')"
       >
-        {{ isBotActionLoading(bot.id, 'close') ? $t('common.loading') : $t('bots.action_close') }}
-      </NeumoButton>
-      <NeumoButton
+        {{ $t('bots.action_close') }}
+      </UButton>
+      <UButton
         v-if="canRemove"
-        variant="danger"
+        color="error"
         size="sm"
         :disabled="isBusy"
+        :loading="isBotActionLoading(bot.id, 'remove')"
         @click="openConfirm('remove')"
       >
-        {{ isBotActionLoading(bot.id, 'remove') ? $t('common.loading') : $t('bots.action_remove') }}
-      </NeumoButton>
+        {{ $t('bots.action_remove') }}
+      </UButton>
     </div>
 
     <p v-if="actionError" class="bot-card__action-error" role="alert">
@@ -78,7 +85,7 @@
       :confirm-variant="confirmCopy.variant"
       @confirm="confirmAction"
     />
-  </NeumoCard>
+  </UCard>
 </template>
 
 <script setup lang="ts">

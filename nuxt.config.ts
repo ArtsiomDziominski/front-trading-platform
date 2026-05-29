@@ -1,7 +1,12 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-05-12',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', '@nuxtjs/i18n'],
+  modules: ['@nuxt/eslint', '@nuxtjs/i18n', '@nuxt/ui'],
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    storageKey: 'trading-platform-color-mode',
+  },
   css: ['~/assets/css/main.css'],
   future: {
     compatibilityVersion: 4,

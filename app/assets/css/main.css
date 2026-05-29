@@ -1,18 +1,21 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
 :root {
-  color-scheme: dark;
-  --color-bg: #1a1d23;
-  --color-surface: #23272e;
-  --color-surface-alt: #2b3038;
-  --color-surface-muted: #1e2128;
-  --color-border: #2d323a;
-  --color-text: #e8ecf1;
-  --color-text-muted: #8a94a6;
-  --color-accent: #20c997;
-  --color-accent-dim: rgb(32 201 151 / 15%);
-  --color-danger: #ff5c7a;
-  --color-warning: #f0b429;
-  --shadow-dark: #0c0e11;
-  --shadow-light: #343941;
+  color-scheme: light;
+  --color-bg: #eef1f6;
+  --color-surface: #f7f8fb;
+  --color-surface-alt: #ffffff;
+  --color-surface-muted: #e8ecf2;
+  --color-border: #d5dbe5;
+  --color-text: #1a1f2b;
+  --color-text-muted: #5f6b7c;
+  --color-accent: #12a87a;
+  --color-accent-dim: rgb(18 168 122 / 12%);
+  --color-danger: #e11d48;
+  --color-warning: #d97706;
+  --shadow-dark: #c5ccd8;
+  --shadow-light: #ffffff;
   --shadow-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
   --shadow-md: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
   --shadow-lg: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);

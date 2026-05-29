@@ -15,12 +15,12 @@ useSeoMeta({
         <h1 class="hero__title">{{ $t('home.hero_title') }}</h1>
         <p class="hero__copy">{{ $t('home.hero_subtitle') }}</p>
         <div class="hero__actions">
-          <NeumoButton variant="primary" size="lg" tag="NuxtLink" to="/bots">
+          <UButton size="lg" to="/bots">
             {{ $t('home.hero_cta') }}
-          </NeumoButton>
-          <NeumoButton variant="secondary" size="lg" tag="NuxtLink" to="/swagger">
+          </UButton>
+          <UButton size="lg" color="neutral" variant="outline" to="/swagger">
             {{ $t('home.hero_secondary') }}
-          </NeumoButton>
+          </UButton>
         </div>
       </div>
     </section>
@@ -87,13 +87,13 @@ useSeoMeta({
 
     <section class="page-section cta-section">
       <div class="container">
-        <NeumoCard variant="raised" class="cta-card">
+        <UCard class="cta-card text-center">
           <h2 class="cta-title">{{ $t('home.cta_title') }}</h2>
           <p class="cta-subtitle">{{ $t('home.cta_subtitle') }}</p>
-          <NeumoButton variant="primary" size="lg" tag="NuxtLink" to="/bots">
+          <UButton size="lg" to="/bots">
             {{ $t('home.cta_button') }}
-          </NeumoButton>
-        </NeumoCard>
+          </UButton>
+        </UCard>
       </div>
     </section>
   </main>

@@ -36,7 +36,7 @@ async function handleSubmit() {
 <template>
   <main class="page-section auth-page">
     <div class="container auth-container">
-      <NeumoCard variant="raised" class="auth-card">
+      <UCard class="auth-card">
         <h1 class="auth-title">{{ $t('auth.register_title') }}</h1>
 
         <form
@@ -47,22 +47,20 @@ async function handleSubmit() {
           autocomplete="on"
           @submit.prevent="handleSubmit"
         >
-          <div class="field">
-            <label class="field-label" for="register-name">{{ $t('auth.name') }}</label>
-            <input
+          <UFormField :label="$t('auth.name')">
+            <UInput
               id="register-name"
               v-model="name"
               name="name"
               type="text"
-              class="field-input neumo-sm-inset"
               :placeholder="$t('auth.name')"
               autocomplete="name"
+              class="w-full"
             />
-          </div>
+          </UFormField>
 
-          <div class="field">
-            <label class="field-label" for="register-email">{{ $t('auth.email') }}</label>
-            <input
+          <UFormField :label="$t('auth.email')">
+            <UInput
               id="register-email"
               v-model="email"
               name="email"
@@ -70,39 +68,38 @@ async function handleSubmit() {
               inputmode="email"
               autocapitalize="none"
               spellcheck="false"
-              class="field-input neumo-sm-inset"
               :placeholder="$t('auth.email')"
               autocomplete="email"
               required
+              class="w-full"
             />
-          </div>
+          </UFormField>
 
-          <div class="field">
-            <label class="field-label" for="register-password">{{ $t('auth.password') }}</label>
-            <input
+          <UFormField :label="$t('auth.password')">
+            <UInput
               id="register-password"
               v-model="password"
               name="new-password"
               type="password"
-              class="field-input neumo-sm-inset"
               :placeholder="$t('auth.password')"
               autocomplete="new-password"
               required
+              class="w-full"
             />
-          </div>
+          </UFormField>
 
-          <p v-if="formError" class="auth-error">{{ formError }}</p>
+          <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />
 
-          <NeumoButton
-            variant="primary"
+          <UButton
+            class="w-full justify-center"
             size="lg"
-            class="auth-submit"
             type="submit"
             name="submit"
-            :disabled="auth.loading.value"
+            :loading="auth.loading.value"
+            block
           >
             {{ auth.loading.value ? $t('common.loading') : $t('auth.register_submit') }}
-          </NeumoButton>
+          </UButton>
         </form>
 
         <div class="auth-links">
@@ -113,7 +110,7 @@ async function handleSubmit() {
             </NuxtLink>
           </span>
         </div>
-      </NeumoCard>
+      </UCard>
     </div>
   </main>
 </template>
@@ -143,48 +140,6 @@ async function handleSubmit() {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.field-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  outline: none;
-  transition: box-shadow 0.2s;
-}
-
-.field-input:focus {
-  box-shadow: var(--shadow-sm);
-}
-
-.auth-submit {
-  width: 100%;
-  margin-top: 8px;
-}
-
-.auth-error {
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: rgb(255 92 122 / 12%);
-  color: var(--color-danger);
-  font-size: 0.88rem;
-  text-align: center;
 }
 
 .auth-links {

@@ -81,7 +81,7 @@ function handleTelegramError(message: string) {
 <template>
   <main class="page-section auth-page">
     <div class="container auth-container">
-      <NeumoCard variant="raised" class="auth-card">
+      <UCard class="auth-card">
         <h1 class="auth-title">{{ $t('auth.login_title') }}</h1>
 
         <form
@@ -92,9 +92,8 @@ function handleTelegramError(message: string) {
           autocomplete="on"
           @submit.prevent="handleSubmit"
         >
-          <div class="field">
-            <label class="field-label" for="login-email">{{ $t('auth.email') }}</label>
-            <input
+          <UFormField :label="$t('auth.email')">
+            <UInput
               id="login-email"
               v-model="email"
               name="username"
@@ -102,56 +101,58 @@ function handleTelegramError(message: string) {
               inputmode="email"
               autocapitalize="none"
               spellcheck="false"
-              class="field-input neumo-sm-inset"
               :placeholder="$t('auth.email')"
               autocomplete="username"
               required
+              class="w-full"
             />
-          </div>
+          </UFormField>
 
-          <div class="field">
-            <label class="field-label" for="login-password">{{ $t('auth.password') }}</label>
-            <input
+          <UFormField :label="$t('auth.password')">
+            <UInput
               id="login-password"
               v-model="password"
               name="password"
               type="password"
-              class="field-input neumo-sm-inset"
               :placeholder="$t('auth.password')"
               autocomplete="current-password"
               required
+              class="w-full"
             />
-          </div>
+          </UFormField>
 
-          <p v-if="formError" class="auth-error" role="alert">{{ formError }}</p>
+          <UAlert
+            v-if="formError"
+            color="error"
+            variant="subtle"
+            :title="formError"
+          />
 
-          <NeumoButton
-            variant="primary"
+          <UButton
+            class="w-full justify-center"
             size="lg"
-            class="auth-submit"
             type="submit"
             name="submit"
-            :disabled="auth.loading.value"
+            :loading="auth.loading.value"
+            block
           >
             {{ auth.loading.value ? $t('common.loading') : $t('auth.login_submit') }}
-          </NeumoButton>
+          </UButton>
         </form>
 
-        <div class="auth-divider">
-          <span>{{ $t('auth.login_or') }}</span>
-        </div>
+        <USeparator :label="$t('auth.login_or')" class="my-6" />
 
         <div class="auth-oauth">
-          <NeumoButton
-            variant="secondary"
-            size="md"
-            class="auth-oauth-btn"
+          <UButton
+            color="neutral"
+            variant="outline"
+            class="w-full justify-center"
             type="button"
             :disabled="auth.loading.value"
             @click="handleGoogleLogin"
           >
             {{ $t('auth.login_google') }}
-          </NeumoButton>
+          </UButton>
 
           <TelegramLogin
             v-if="showTelegram"
@@ -171,7 +172,7 @@ function handleTelegramError(message: string) {
             </NuxtLink>
           </span>
         </div>
-      </NeumoCard>
+      </UCard>
     </div>
   </main>
 </template>
@@ -203,73 +204,10 @@ function handleTelegramError(message: string) {
   gap: 18px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.field-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  outline: none;
-  transition: box-shadow 0.2s;
-}
-
-.field-input:focus {
-  box-shadow: var(--shadow-sm);
-}
-
-.auth-submit {
-  width: 100%;
-  margin-top: 8px;
-}
-
-.auth-error {
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: rgb(255 92 122 / 12%);
-  color: var(--color-danger);
-  font-size: 0.88rem;
-  text-align: center;
-}
-
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 24px 0 20px;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  flex: 1;
-  height: 1px;
-  background: var(--color-border);
-  content: '';
-}
-
 .auth-oauth {
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.auth-oauth-btn {
-  width: 100%;
 }
 
 .auth-links {

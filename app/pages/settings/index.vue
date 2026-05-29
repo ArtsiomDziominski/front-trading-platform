@@ -86,87 +86,87 @@ async function handlePasswordReset() {
       </div>
 
       <div class="settings-grid">
-        <NeumoCard variant="raised" class="settings-card">
+        <UCard class="settings-card">
           <h2 class="settings-card__title">{{ $t('settings.profile_section') }}</h2>
 
           <form class="settings-form" @submit.prevent="handleProfileSubmit">
-            <div class="field">
-              <label class="field-label" for="settings-name">{{ $t('auth.name') }}</label>
-              <input
+            <UFormField :label="$t('auth.name')">
+              <UInput
                 id="settings-name"
                 v-model="name"
                 type="text"
-                class="field-input neumo-sm-inset"
                 :placeholder="$t('auth.name')"
                 autocomplete="name"
+                class="w-full"
               />
-            </div>
+            </UFormField>
 
-            <div class="field">
-              <label class="field-label" for="settings-email">{{ $t('auth.email') }}</label>
-              <input
+            <UFormField :label="$t('auth.email')">
+              <UInput
                 id="settings-email"
-                :value="auth.user.value?.email ?? ''"
+                :model-value="auth.user.value?.email ?? ''"
                 type="email"
-                class="field-input neumo-sm-inset field-input--readonly"
                 disabled
-                readonly
+                class="w-full"
               />
-              <p class="field-hint">{{ $t('settings.email_readonly_hint') }}</p>
-            </div>
+              <template #hint>
+                {{ $t('settings.email_readonly_hint') }}
+              </template>
+            </UFormField>
 
-            <div v-if="auth.user.value" class="field field--inline">
-              <label class="field-label" for="settings-role">{{ $t('settings.role') }}</label>
-              <span id="settings-role" class="role-badge">
-                {{ $t(roleLabels[auth.user.value.role] ?? 'settings.role_user') }}
-              </span>
-            </div>
+            <UFormField v-if="auth.user.value" :label="$t('settings.role')">
+              <UBadge
+                color="primary"
+                variant="subtle"
+                :label="$t(roleLabels[auth.user.value.role] ?? 'settings.role_user')"
+              />
+            </UFormField>
 
-            <p v-if="profileError" class="form-message form-message--error" role="alert">
-              {{ profileError }}
-            </p>
-            <p v-if="profileSuccess" class="form-message form-message--success" role="status">
-              {{ $t('settings.profile_saved') }}
-            </p>
+            <UAlert v-if="profileError" color="error" variant="subtle" :title="profileError" />
+            <UAlert
+              v-if="profileSuccess"
+              color="success"
+              variant="subtle"
+              :title="$t('settings.profile_saved')"
+            />
 
-            <NeumoButton
-              variant="primary"
-              size="md"
-              type="submit"
-              :disabled="auth.loading.value"
-            >
-              {{ auth.loading.value ? $t('common.loading') : $t('settings.save_profile') }}
-            </NeumoButton>
+            <UButton type="submit" :loading="auth.loading.value">
+              {{ $t('settings.save_profile') }}
+            </UButton>
           </form>
-        </NeumoCard>
+        </UCard>
+
+        <SettingsApiKeysCard />
 
         <SettingsTelegramCard />
 
-        <NeumoCard variant="raised" class="settings-card">
+        <UCard class="settings-card">
           <h2 class="settings-card__title">{{ $t('settings.security_section') }}</h2>
           <p class="settings-card__desc">{{ $t('settings.password_hint') }}</p>
 
-          <p v-if="passwordError" class="form-message form-message--error" role="alert">
-            {{ passwordError }}
-          </p>
-          <p v-if="passwordSent" class="form-message form-message--success" role="status">
-            {{ $t('auth.reset_password_sent') }}
-          </p>
+          <UAlert v-if="passwordError" color="error" variant="subtle" :title="passwordError" />
+          <UAlert
+            v-if="passwordSent"
+            color="success"
+            variant="subtle"
+            :title="$t('auth.reset_password_sent')"
+          />
 
-          <NeumoButton
-            variant="secondary"
-            size="md"
+          <UButton
+            color="neutral"
+            variant="outline"
             type="button"
             :disabled="auth.loading.value || passwordSent"
+            :loading="auth.loading.value"
             @click="handlePasswordReset"
           >
-            {{ auth.loading.value ? $t('common.loading') : $t('settings.send_password_reset') }}
-          </NeumoButton>
+            {{ $t('settings.send_password_reset') }}
+          </UButton>
 
           <NuxtLink to="/auth/reset-password" class="settings-link">
             {{ $t('settings.reset_password_other_email') }}
           </NuxtLink>
-        </NeumoCard>
+        </UCard>
       </div>
     </div>
   </main>
@@ -207,138 +207,6 @@ async function handlePasswordReset() {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field--inline {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
-
-.field-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.field-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  outline: none;
-  transition: box-shadow 0.2s;
-}
-
-.field-input:focus {
-  box-shadow: var(--shadow-sm);
-}
-
-.field-input--readonly {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.field-hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.78rem;
-}
-
-.role-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--color-accent-dim);
-  color: var(--color-accent);
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.toggle__input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.toggle__track {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--color-surface-alt);
-  box-shadow: var(--shadow-inset-sm);
-  transition: background 0.2s;
-}
-
-.toggle__track::after {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--color-text-muted);
-  content: '';
-  transition: transform 0.2s, background 0.2s;
-}
-
-.toggle__input:checked + .toggle__track {
-  background: var(--color-accent-dim);
-}
-
-.toggle__input:checked + .toggle__track::after {
-  transform: translateX(20px);
-  background: var(--color-accent);
-}
-
-.toggle__input:focus-visible + .toggle__track {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.toggle__label {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.form-message {
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 0.88rem;
-}
-
-.form-message--error {
-  background: rgb(255 92 122 / 12%);
-  color: var(--color-danger);
-}
-
-.form-message--success {
-  background: rgb(32 201 151 / 12%);
-  color: var(--color-accent);
 }
 
 .settings-link {

@@ -8,3 +8,10 @@ export interface ApiKeyOut {
   has_passphrase?: boolean
   created_at: string
 }
+
+export interface ApiKeyCreate {
+  exchange?: ExchangeType
+  api_key: string
+  api_secret: string
+  label?: string
+}

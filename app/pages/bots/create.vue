@@ -29,6 +29,12 @@ const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 
 const apiKeyId = ref<number | ''>('')
+const apiKeyIdModel = computed({
+  get: (): number | undefined => (apiKeyId.value === '' ? undefined : apiKeyId.value),
+  set: (value: number | undefined) => {
+    apiKeyId.value = value ?? ''
+  },
+})
 const symbol = ref('ETHUSDT')
 const direction = ref<GridDirection>('LONG')
 const initialAmount = ref('0.01')
@@ -208,171 +214,147 @@ async function handleSubmit() {
           <span class="section-label">{{ $t('bots.create_title') }}</span>
           <h1 class="section-title">{{ $t('bots.create_subtitle') }}</h1>
         </div>
-        <NeumoButton variant="secondary" tag="NuxtLink" to="/bots">
+        <UButton color="neutral" variant="outline" to="/bots">
           {{ $t('bots.back_to_bots') }}
-        </NeumoButton>
+        </UButton>
       </div>
 
       <p v-if="keysLoading" class="state-message" role="status">
         {{ $t('common.loading') }}
       </p>
 
-      <NeumoCard v-else-if="!apiKeys.length" variant="raised" class="create-card">
-        <p class="create-card__desc">{{ $t('bots.no_api_keys') }}</p>
-        <NeumoButton variant="primary" tag="NuxtLink" to="/exchanges">
-          {{ $t('bots.go_to_exchanges') }}
-        </NeumoButton>
-      </NeumoCard>
+      <UCard v-else-if="!apiKeys.length" class="create-card text-center">
+        <p class="create-card__desc mb-4">{{ $t('bots.no_api_keys') }}</p>
+        <UButton to="/settings#api-keys">
+          {{ $t('bots.manage_api_keys') }}
+        </UButton>
+      </UCard>
 
       <div v-else class="create-layout">
-        <NeumoCard variant="raised" class="create-card">
+        <UCard class="create-card">
           <div ref="formRef">
           <p v-if="clonedFromId" class="clone-notice" role="status">
             {{ $t('bots.creation_history_cloned') }}
           </p>
 
-          <form class="create-form" @submit.prevent="handleSubmit">
-            <div class="field">
-              <label class="field-label" for="bot-api-key">{{ $t('bots.field_api_key') }}</label>
-              <select
+          <form class="create-form flex flex-col gap-4" @submit.prevent="handleSubmit">
+            <UFormField :label="$t('bots.field_api_key')">
+              <USelect
                 id="bot-api-key"
-                v-model="apiKeyId"
-                class="field-input neumo-sm-inset"
-                required
-              >
-                <option disabled value="">
-                  —
-                </option>
-                <option v-for="key in apiKeys" :key="key.id" :value="key.id">
-                  {{ apiKeyLabel(key) }}
-                </option>
-              </select>
-            </div>
+                v-model="apiKeyIdModel"
+                :items="apiKeys.map((key) => ({ label: apiKeyLabel(key), value: key.id }))"
+                placeholder="—"
+                class="w-full"
+              />
+            </UFormField>
 
-            <div class="field">
-              <label class="field-label" for="bot-symbol">{{ $t('bots.field_symbol') }}</label>
-              <input
+            <UFormField :label="$t('bots.field_symbol')">
+              <UInput
                 id="bot-symbol"
                 v-model="symbol"
-                type="text"
-                class="field-input neumo-sm-inset"
                 :placeholder="$t('bots.field_symbol_hint')"
                 autocomplete="off"
                 required
+                class="w-full"
               />
-              <p class="field-hint">{{ $t('bots.field_symbol_hint') }}</p>
+              <template #hint>
+                {{ $t('bots.field_symbol_hint') }}
+              </template>
+            </UFormField>
+
+            <div class="field-row">
+              <UFormField :label="$t('bots.field_direction')" class="flex-1">
+                <USelect
+                  id="bot-direction"
+                  v-model="direction"
+                  :items="[
+                    { label: $t('bots.direction_long'), value: 'LONG' },
+                    { label: $t('bots.direction_short'), value: 'SHORT' },
+                  ]"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField :label="$t('bots.field_volume_mode')" class="flex-1">
+                <USelect
+                  id="bot-volume-mode"
+                  v-model="volumeMode"
+                  :items="[
+                    { label: $t('bots.volume_linear'), value: 'linear' },
+                    { label: $t('bots.volume_exponential'), value: 'exponential' },
+                    { label: $t('bots.volume_fixed'), value: 'fixed' },
+                  ]"
+                  class="w-full"
+                />
+              </UFormField>
             </div>
 
             <div class="field-row">
-              <div class="field">
-                <label class="field-label" for="bot-direction">{{ $t('bots.field_direction') }}</label>
-                <select id="bot-direction" v-model="direction" class="field-input neumo-sm-inset">
-                  <option value="LONG">
-                    {{ $t('bots.direction_long') }}
-                  </option>
-                  <option value="SHORT">
-                    {{ $t('bots.direction_short') }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label class="field-label" for="bot-volume-mode">{{ $t('bots.field_volume_mode') }}</label>
-                <select id="bot-volume-mode" v-model="volumeMode" class="field-input neumo-sm-inset">
-                  <option value="linear">
-                    {{ $t('bots.volume_linear') }}
-                  </option>
-                  <option value="exponential">
-                    {{ $t('bots.volume_exponential') }}
-                  </option>
-                  <option value="fixed">
-                    {{ $t('bots.volume_fixed') }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            <div class="field-row">
-              <div class="field">
-                <label class="field-label" for="bot-initial-amount">{{ $t('bots.field_initial_amount') }}</label>
-                <input
+              <UFormField :label="$t('bots.field_initial_amount')" class="flex-1">
+                <UInput
                   id="bot-initial-amount"
                   v-model="initialAmount"
-                  type="text"
                   inputmode="decimal"
-                  class="field-input neumo-sm-inset"
                   required
+                  class="w-full"
                 />
-              </div>
+              </UFormField>
 
-              <div class="field">
-                <label class="field-label" for="bot-grid-step">{{ $t('bots.field_grid_step') }}</label>
-                <input
+              <UFormField :label="$t('bots.field_grid_step')" class="flex-1">
+                <UInput
                   id="bot-grid-step"
                   v-model="gridStepPercent"
-                  type="text"
                   inputmode="decimal"
-                  class="field-input neumo-sm-inset"
                   required
+                  class="w-full"
                 />
-              </div>
+              </UFormField>
             </div>
 
             <div class="field-row">
-              <div class="field">
-                <label class="field-label" for="bot-grid-orders">{{ $t('bots.field_grid_orders') }}</label>
-                <input
+              <UFormField :label="$t('bots.field_grid_orders')" class="flex-1">
+                <UInput
                   id="bot-grid-orders"
                   v-model.number="gridOrdersCount"
                   type="number"
                   min="1"
                   max="500"
-                  class="field-input neumo-sm-inset"
                   required
+                  class="w-full"
                 />
-              </div>
+              </UFormField>
 
-              <div class="field">
-                <label class="field-label" for="bot-start-price">{{ $t('bots.field_start_price') }}</label>
-                <input
+              <UFormField :label="$t('bots.field_start_price')" class="flex-1">
+                <UInput
                   id="bot-start-price"
                   v-model="startPrice"
-                  type="text"
                   inputmode="decimal"
-                  class="field-input neumo-sm-inset"
+                  class="w-full"
                 />
-              </div>
+              </UFormField>
             </div>
 
-            <label class="field-checkbox">
-              <input v-model="autoRestart" type="checkbox">
-              <span>{{ $t('bots.field_auto_restart') }}</span>
-            </label>
+            <UCheckbox v-model="autoRestart" :label="$t('bots.field_auto_restart')" />
 
-            <p v-if="formError" class="form-message form-message--error" role="alert">
-              {{ formError }}
-            </p>
-            <p v-if="engineWarning" class="form-message form-message--warning" role="status">
-              {{ engineWarning }}
-            </p>
+            <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />
+            <UAlert v-if="engineWarning" color="warning" variant="subtle" :title="engineWarning" />
 
-            <div class="form-actions">
-              <NeumoButton variant="primary" size="md" type="submit" :disabled="creating">
-                {{ creating ? $t('common.loading') : $t('bots.create_submit') }}
-              </NeumoButton>
-              <NeumoButton
+            <div class="form-actions flex flex-wrap gap-2">
+              <UButton type="submit" :loading="creating">
+                {{ $t('bots.create_submit') }}
+              </UButton>
+              <UButton
                 v-if="createdBotId"
-                variant="secondary"
-                size="md"
-                tag="NuxtLink"
+                color="neutral"
+                variant="outline"
                 to="/bots"
               >
                 {{ $t('bots.back_to_bots') }}
-              </NeumoButton>
+              </UButton>
             </div>
           </form>
           </div>
-        </NeumoCard>
+        </UCard>
 
         <BotCreationHistory
           :items="creationHistory"
@@ -427,82 +409,10 @@ async function handleSubmit() {
   font-weight: 600;
 }
 
-.create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.field-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  outline: none;
-  transition: box-shadow 0.2s;
-}
-
-.field-input:focus {
-  box-shadow: var(--shadow-sm);
-}
-
-.field-hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.78rem;
-}
-
-.field-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.field-checkbox input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-accent);
-}
-
-.form-message {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.form-message--error {
-  color: var(--color-danger);
-}
-
-.form-message--warning {
-  color: var(--color-text-muted);
-}
-
-.form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
 }
 
 .state-message {

@@ -12,9 +12,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@nuxt/ui": "^4.8.1",
     "@nuxtjs/i18n": "^9.5.3",
     "nuxt": "^4.2.1",
-    "swagger-ui-dist": "^5.32.6"
+    "swagger-ui-dist": "^5.32.6",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",

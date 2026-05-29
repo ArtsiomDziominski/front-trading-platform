@@ -1,9 +1,9 @@
 <template>
-  <NeumoCard variant="raised" class="feature-card">
+  <UCard class="feature-card text-center">
     <div class="feature-icon" v-html="icon" />
     <h3 class="feature-title">{{ title }}</h3>
     <p class="feature-desc">{{ description }}</p>
-  </NeumoCard>
+  </UCard>
 </template>
 
 <script setup lang="ts">
@@ -16,7 +16,6 @@ defineProps<{
 
 <style scoped>
 .feature-card {
-  text-align: center;
   padding: 32px 24px;
 }
 
@@ -31,7 +30,6 @@ defineProps<{
   background: var(--color-accent-dim);
   color: var(--color-accent);
   font-size: 1.6rem;
-  box-shadow: var(--shadow-inset-sm);
 }
 
 .feature-title {

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const auth = useAuth()
-const { t } = useI18n()
 
 onMounted(() => {
   if (auth.user.value === null) {
@@ -33,12 +32,17 @@ onMounted(() => {
           </nav>
 
           <div v-if="!auth.loggedIn.value" class="site-header__auth">
-            <NeumoButton variant="secondary" size="sm" tag="NuxtLink" to="/auth/login">
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              to="/auth/login"
+            >
               {{ $t('auth.login') }}
-            </NeumoButton>
-            <NeumoButton variant="primary" size="sm" tag="NuxtLink" to="/auth/register">
+            </UButton>
+            <UButton size="sm" to="/auth/register">
               {{ $t('auth.register') }}
-            </NeumoButton>
+            </UButton>
           </div>
         </div>
 
@@ -150,11 +154,6 @@ onMounted(() => {
   .site-header__auth {
     justify-content: center;
     width: 100%;
-  }
-
-  .site-header__auth :deep(.neumo-btn) {
-    flex: 1;
-    max-width: 160px;
   }
 
   .brand {

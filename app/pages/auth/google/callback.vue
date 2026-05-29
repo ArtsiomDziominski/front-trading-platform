@@ -42,17 +42,22 @@ onMounted(async () => {
 <template>
   <main class="page-section auth-page">
     <div class="container auth-container">
-      <NeumoCard variant="raised" class="auth-card auth-card--compact">
-        <p v-if="status === 'loading'" class="auth-status">
+      <UCard class="auth-card text-center">
+        <p v-if="status === 'loading'" class="text-muted">
           {{ $t('common.loading') }}
         </p>
         <template v-else>
-          <p class="auth-error">{{ message }}</p>
-          <NeumoButton variant="secondary" size="md" tag="NuxtLink" to="/auth/login" class="auth-back">
+          <UAlert color="error" variant="subtle" :title="message" class="mb-5" />
+          <UButton
+            color="neutral"
+            variant="outline"
+            class="w-full justify-center"
+            to="/auth/login"
+          >
             {{ $t('auth.login_submit') }}
-          </NeumoButton>
+          </UButton>
         </template>
-      </NeumoCard>
+      </UCard>
     </div>
   </main>
 </template>
@@ -70,27 +75,5 @@ onMounted(async () => {
 
 .auth-card {
   padding: 40px 32px;
-}
-
-.auth-card--compact {
-  text-align: center;
-}
-
-.auth-status {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-.auth-error {
-  margin: 0 0 20px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  background: rgb(255 92 122 / 12%);
-  color: var(--color-danger);
-  font-size: 0.88rem;
-}
-
-.auth-back {
-  width: 100%;
 }
 </style>
