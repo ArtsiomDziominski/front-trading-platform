@@ -2,7 +2,7 @@ import { parseApiError } from '~/utils/parseApiError'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotCreationLogOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse } from '#shared/types/bot'
+import type { BotCreate, BotCreationLogOut, BotEventOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
 
 function formatExchange(exchange: ApiKeyOut['exchange']): string {
   if (exchange === 'OTHER') return 'Other'
@@ -408,6 +408,12 @@ export const useBots = () => {
     })
   }
 
+  async function fetchBotHistory(botId?: number) {
+    return auth.authFetch<BotEventOut[]>(`${baseUrl}/bots/history`, {
+      query: botId != null ? { bot_id: botId } : undefined,
+    })
+  }
+
   async function createBot(payload: BotCreate) {
     creating.value = true
     createError.value = null
@@ -425,6 +431,34 @@ export const useBots = () => {
     }
   }
 
+  const liquidationChecking = useState<boolean>('user_bots_liquidation_checking', () => false)
+  const liquidationError = useState<string | null>('user_bots_liquidation_error', () => null)
+
+  function liquidationErrorFallback(): string {
+    const i18n = nuxtApp.$i18n
+    if (i18n && typeof i18n.t === 'function') {
+      return i18n.t('bots.liquidation_check_error')
+    }
+    return 'Failed to check liquidation'
+  }
+
+  async function checkLiquidation(payload: LiquidationCheckRequest) {
+    liquidationChecking.value = true
+    liquidationError.value = null
+
+    try {
+      return await auth.authFetch<LiquidationCheckOut>(`${baseUrl}/bots/check-liquidation`, {
+        method: 'POST',
+        body: payload,
+      })
+    } catch (e) {
+      liquidationError.value = parseApiError(e, liquidationErrorFallback())
+      throw e
+    } finally {
+      liquidationChecking.value = false
+    }
+  }
+
   return {
     bots,
     loading,
@@ -435,7 +469,11 @@ export const useBots = () => {
     fetchBots,
     fetchApiKeys,
     fetchCreationHistory,
+    fetchBotHistory,
     createBot,
+    liquidationChecking,
+    liquidationError,
+    checkLiquidation,
     subscribeBotsUpdates,
     stopBot,
     closeBot,

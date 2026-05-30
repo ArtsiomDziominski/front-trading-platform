@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import type { BotCreationLogOut, GridDirection, VolumeMode } from '#shared/types/bot'
+import type { BotCreationLogOut, GridDirection, GridFuturesConfig, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -9,7 +9,16 @@ definePageMeta({
 
 const { t } = useI18n()
 const router = useRouter()
-const { creating, createError, fetchApiKeys, fetchCreationHistory, createBot } = useBots()
+const {
+  creating,
+  createError,
+  fetchApiKeys,
+  fetchCreationHistory,
+  createBot,
+  liquidationChecking,
+  liquidationError,
+  checkLiquidation,
+} = useBots()
 
 useSeoMeta({
   title: () => t('bots.create_title'),
@@ -43,6 +52,49 @@ const gridStepPercent = ref('5')
 const volumeMode = ref<VolumeMode>('linear')
 const startPrice = ref('')
 const autoRestart = ref(false)
+const leverage = ref(10)
+const currentPrice = ref('')
+const totalBalance = ref('')
+const liquidationResult = ref<LiquidationCheckOut | null>(null)
+const liquidationCheckError = ref('')
+
+const priceFormatter = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 8,
+})
+
+function formatPrice(value: number): string {
+  return priceFormatter.format(value)
+}
+
+function buildGridConfig(): GridFuturesConfig {
+  const startPriceValue = startPrice.value.trim()
+
+  return {
+    symbol: symbol.value.trim().toUpperCase(),
+    direction: direction.value,
+    initial_amount: initialAmount.value.trim(),
+    grid_orders_count: gridOrdersCount.value,
+    grid_step_percent: gridStepPercent.value.trim(),
+    volume_mode: volumeMode.value,
+    auto_restart: autoRestart.value,
+    ...(startPriceValue ? { start_price: startPriceValue } : {}),
+  }
+}
+
+function parseOptionalNumber(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function clearLiquidationResult() {
+  liquidationResult.value = null
+  liquidationError.value = null
+  liquidationCheckError.value = ''
+}
 
 function formatExchange(exchange: ApiKeyOut['exchange']): string {
   if (exchange === 'OTHER') return 'Other'
@@ -73,6 +125,7 @@ function applyPayloadToForm(payload: ReturnType<typeof parseBotCreatePayload>) {
   engineWarning.value = ''
   createdBotId.value = null
   createError.value = null
+  clearLiquidationResult()
 
   return true
 }
@@ -112,6 +165,11 @@ async function loadPageData() {
 onMounted(() => {
   loadPageData()
 })
+
+watch(
+  [symbol, direction, initialAmount, gridOrdersCount, gridStepPercent, volumeMode, startPrice, leverage, currentPrice, totalBalance],
+  clearLiquidationResult,
+)
 
 function cloneFromHistory(item: BotCreationLogOut) {
   const payload = parseBotCreatePayload(item.request_payload)
@@ -162,6 +220,41 @@ function validate(): boolean {
   return true
 }
 
+async function handleCheckLiquidation() {
+  clearLiquidationResult()
+
+  if (!validate()) {
+    liquidationCheckError.value = formError.value
+    formError.value = ''
+    return
+  }
+
+  const currentPriceValue = parseOptionalNumber(currentPrice.value)
+  const totalBalanceValue = parseOptionalNumber(totalBalance.value)
+
+  if (leverage.value < 1 || leverage.value > 125) {
+    liquidationCheckError.value = t('bots.error_leverage')
+    return
+  }
+
+  if (!startPrice.value.trim() && currentPriceValue == null) {
+    liquidationCheckError.value = t('bots.error_liquidation_price_required')
+    return
+  }
+
+  try {
+    liquidationResult.value = await checkLiquidation({
+      bot_type: 'GRID_FUTURES',
+      config: buildGridConfig(),
+      leverage: leverage.value,
+      ...(currentPriceValue != null ? { current_price: currentPriceValue } : {}),
+      ...(totalBalanceValue != null ? { total_balance: totalBalanceValue } : {}),
+    })
+  } catch {
+    liquidationCheckError.value = liquidationError.value || t('bots.liquidation_check_error')
+  }
+}
+
 async function handleSubmit() {
   formError.value = ''
   engineWarning.value = ''
@@ -172,22 +265,11 @@ async function handleSubmit() {
     return
   }
 
-  const startPriceValue = startPrice.value.trim()
-
   try {
     const bot = await createBot({
       api_key_id: Number(apiKeyId.value),
       bot_type: 'GRID_FUTURES',
-      config: {
-        symbol: symbol.value.trim().toUpperCase(),
-        direction: direction.value,
-        initial_amount: initialAmount.value.trim(),
-        grid_orders_count: gridOrdersCount.value,
-        grid_step_percent: gridStepPercent.value.trim(),
-        volume_mode: volumeMode.value,
-        auto_restart: autoRestart.value,
-        ...(startPriceValue ? { start_price: startPriceValue } : {}),
-      },
+      config: buildGridConfig(),
     })
 
     await loadCreationHistory()
@@ -356,14 +438,89 @@ async function handleSubmit() {
           </div>
         </UCard>
 
-        <BotCreationHistory
-          :items="creationHistory"
-          :loading="historyLoading"
-          :error="historyError"
-          :selected-id="clonedFromId"
-          @select="cloneFromHistory"
-          @retry="loadCreationHistory"
-        />
+        <div class="create-sidebar">
+          <BotCreationHistory
+            :items="creationHistory"
+            :loading="historyLoading"
+            :error="historyError"
+            :selected-id="clonedFromId"
+            @select="cloneFromHistory"
+            @retry="loadCreationHistory"
+          />
+
+          <UCard class="liquidation-card">
+            <h2 class="liquidation-section__title">{{ $t('bots.liquidation_section_title') }}</h2>
+            <p class="liquidation-section__desc">{{ $t('bots.liquidation_section_desc') }}</p>
+
+            <div class="liquidation-section">
+              <UFormField :label="$t('bots.field_leverage')">
+                <UInput
+                  id="bot-leverage"
+                  v-model.number="leverage"
+                  type="number"
+                  min="1"
+                  max="125"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField :label="$t('bots.field_current_price')">
+                <UInput
+                  id="bot-current-price"
+                  v-model="currentPrice"
+                  inputmode="decimal"
+                  class="w-full"
+                />
+                <template #hint>
+                  {{ $t('bots.field_current_price_hint') }}
+                </template>
+              </UFormField>
+
+              <UFormField :label="$t('bots.field_total_balance')">
+                <UInput
+                  id="bot-total-balance"
+                  v-model="totalBalance"
+                  inputmode="decimal"
+                  class="w-full"
+                />
+                <template #hint>
+                  {{ $t('bots.field_total_balance_hint') }}
+                </template>
+              </UFormField>
+
+              <UAlert v-if="liquidationCheckError" color="error" variant="subtle" :title="liquidationCheckError" />
+
+              <UButton
+                type="button"
+                color="neutral"
+                variant="outline"
+                class="w-full"
+                :loading="liquidationChecking"
+                :disabled="creating"
+                @click="handleCheckLiquidation"
+              >
+                {{ $t('bots.liquidation_check_submit') }}
+              </UButton>
+
+              <div v-if="liquidationResult" class="liquidation-result" role="status">
+                <div class="liquidation-result__row">
+                  <span class="liquidation-result__label">{{ $t('bots.liquidation_avg_entry') }}</span>
+                  <span class="liquidation-result__value">{{ formatPrice(liquidationResult.avg_entry_price) }}</span>
+                </div>
+                <div class="liquidation-result__row">
+                  <span class="liquidation-result__label">{{ $t('bots.liquidation_price') }}</span>
+                  <span class="liquidation-result__value liquidation-result__value--accent">
+                    {{ formatPrice(liquidationResult.liquidation_price) }}
+                  </span>
+                </div>
+                <div class="liquidation-result__row">
+                  <span class="liquidation-result__label">{{ $t('bots.liquidation_total_quantity') }}</span>
+                  <span class="liquidation-result__value">{{ formatPrice(liquidationResult.total_base_quantity) }}</span>
+                </div>
+              </div>
+            </div>
+          </UCard>
+        </div>
       </div>
     </div>
   </main>
@@ -387,6 +544,23 @@ async function handleSubmit() {
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   gap: 24px;
   align-items: start;
+}
+
+.create-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.liquidation-card {
+  padding: 24px;
+}
+
+.liquidation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .create-card {
@@ -413,6 +587,48 @@ async function handleSubmit() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.liquidation-section__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.liquidation-section__desc {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.liquidation-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-alt);
+}
+
+.liquidation-result__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.liquidation-result__label {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.liquidation-result__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.liquidation-result__value--accent {
+  color: var(--color-accent);
 }
 
 .state-message {

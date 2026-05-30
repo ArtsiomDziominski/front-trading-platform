@@ -152,6 +152,9 @@ onUnmounted(() => {
           <h1 class="section-title">{{ $t('bots.subtitle') }}</h1>
         </div>
         <div class="page-header__actions">
+          <UButton color="neutral" variant="outline" to="/bots/history">
+            {{ $t('bots.event_history_open') }}
+          </UButton>
           <UButton color="neutral" variant="outline" to="/settings#api-keys">
             {{ $t('bots.manage_api_keys') }}
           </UButton>

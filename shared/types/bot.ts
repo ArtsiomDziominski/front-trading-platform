@@ -32,6 +32,20 @@ export interface BotCreate {
   config: GridFuturesConfig
 }
 
+export interface LiquidationCheckRequest {
+  bot_type?: BotType
+  config: GridFuturesConfig
+  current_price?: number
+  total_balance?: number
+  leverage: number
+}
+
+export interface LiquidationCheckOut {
+  liquidation_price: number
+  avg_entry_price: number
+  total_base_quantity: number
+}
+
 export interface BotOut {
   id: number
   user_id: number
@@ -98,4 +112,12 @@ export interface BotCreationLogOut {
   api_key_id: number | null
   created_at: string
   exchange_ok: boolean
+}
+
+export interface BotEventOut {
+  id: number
+  bot_id: number
+  event_type: string
+  payload: Record<string, unknown> | null
+  created_at: string
 }
