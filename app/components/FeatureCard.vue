@@ -1,6 +1,9 @@
 <template>
   <UCard class="feature-card text-center">
-    <div class="feature-icon" v-html="icon" />
+    <div class="feature-icon">
+      <UIcon v-if="iconName" :name="iconName" class="feature-icon__svg" />
+      <span v-else v-html="icon" />
+    </div>
     <h3 class="feature-title">{{ title }}</h3>
     <p class="feature-desc">{{ description }}</p>
   </UCard>
@@ -8,7 +11,8 @@
 
 <script setup lang="ts">
 defineProps<{
-  icon: string
+  icon?: string
+  iconName?: string
   title: string
   description: string
 }>()
@@ -17,6 +21,7 @@ defineProps<{
 <style scoped>
 .feature-card {
   padding: 32px 24px;
+  height: 100%;
 }
 
 .feature-icon {
@@ -30,6 +35,11 @@ defineProps<{
   background: var(--color-accent-dim);
   color: var(--color-accent);
   font-size: 1.6rem;
+}
+
+.feature-icon__svg {
+  width: 26px;
+  height: 26px;
 }
 
 .feature-title {
