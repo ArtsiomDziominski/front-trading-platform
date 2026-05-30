@@ -1,25 +1,20 @@
-import type { MarketSummaryItem } from '~~/shared/types/market'
+import { fetchBinanceMarketSummary } from '~~/server/utils/binanceMarket'
 
-const summary: MarketSummaryItem[] = [
-  {
-    symbol: 'BTCUSDT',
-    name: 'Bitcoin / Tether',
-    price: '104,820.00',
-    change: '+1.42%',
+export default defineCachedEventHandler(
+  async () => {
+    try {
+      return await fetchBinanceMarketSummary()
+    } catch (error) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: 'Failed to fetch market data from Binance',
+        cause: error,
+      })
+    }
   },
   {
-    symbol: 'ETHUSDT',
-    name: 'Ethereum / Tether',
-    price: '5,730.50',
-    change: '+0.86%',
+    maxAge: 30,
+    swr: true,
+    name: 'market-summary',
   },
-  {
-    symbol: 'SOLUSDT',
-    name: 'Solana / Tether',
-    price: '212.18',
-    change: '-0.34%',
-  },
-]
-
-export default defineEventHandler(() => summary)
-
+)

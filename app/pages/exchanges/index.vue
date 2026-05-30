@@ -1,5 +1,10 @@
 <script setup lang="ts">
 const { t } = useI18n()
+const auth = useAuth()
+
+const settingsLink = computed(() =>
+  auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+)
 
 useSeoMeta({
   title: () => t('exchanges.title'),
@@ -21,6 +26,7 @@ useSeoMeta({
           :description="$t('exchanges.binance_desc')"
           icon="&#11088;"
           :active="true"
+          :to="settingsLink"
         />
         <ExchangeCard
           name="Bybit"
@@ -32,7 +38,8 @@ useSeoMeta({
           name="OKX"
           :description="$t('exchanges.okx_desc')"
           icon="&#9670;"
-          :active="false"
+          :active="true"
+          :to="settingsLink"
         />
       </div>
     </div>

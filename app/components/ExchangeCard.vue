@@ -16,6 +16,16 @@
         variant="subtle"
         :label="$t('exchanges.status_soon')"
       />
+      <UButton
+        v-if="active && to"
+        size="sm"
+        color="primary"
+        variant="soft"
+        class="exchange-card__cta"
+        :to="to"
+      >
+        {{ $t('exchanges.connect') }}
+      </UButton>
     </div>
   </UCard>
 </template>
@@ -26,12 +36,14 @@ defineProps<{
   description: string
   icon: string
   active: boolean
+  to?: string
 }>()
 </script>
 
 <style scoped>
 .exchange-card {
   padding: 32px 24px;
+  height: 100%;
 }
 
 .exchange-card__icon {
@@ -61,6 +73,13 @@ defineProps<{
 
 .exchange-card__footer {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.exchange-card__cta {
+  width: 100%;
   justify-content: center;
 }
 </style>
