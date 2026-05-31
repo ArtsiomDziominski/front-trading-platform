@@ -36,6 +36,18 @@
             {{ formatDate(item.created_at) }}
             <span v-if="item.bot_id"> · #{{ item.bot_id }}</span>
           </p>
+
+          <dl v-if="settingsFor(item).length" class="creation-history__settings">
+            <div
+              v-for="setting in settingsFor(item)"
+              :key="`${item.id}-${setting.key}`"
+              class="creation-history__setting"
+            >
+              <dt class="creation-history__setting-label">{{ settingLabel(setting.key) }}</dt>
+              <dd class="creation-history__setting-value">{{ settingValue(setting) }}</dd>
+            </div>
+          </dl>
+
           <p v-if="item.error_message" class="creation-history__error">
             {{ item.error_message }}
           </p>
@@ -59,7 +71,9 @@
 </template>
 
 <script setup lang="ts">
-import type { BotCreationLogOut, BotCreationOutcome } from '#shared/types/bot'
+import type { BotCreationLogOut, BotCreationOutcome, BotType } from '#shared/types/bot'
+import type { CreationHistorySetting, CreationSettingKey } from '~/utils/formatBotCreationSettings'
+import { extractCreationHistorySettings } from '~/utils/formatBotCreationSettings'
 
 defineProps<{
   items: BotCreationLogOut[]
@@ -74,6 +88,27 @@ defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+
+const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
+  bot_type: 'bots.field_bot_type',
+  api_key_id: 'bots.field_api_key',
+  symbol: 'bots.field_symbol',
+  direction: 'bots.field_direction',
+  initial_amount: 'bots.field_initial_amount',
+  grid_orders_count: 'bots.field_grid_orders',
+  grid_step_percent: 'bots.field_grid_step',
+  volume_mode: 'bots.field_volume_mode',
+  start_price: 'bots.field_start_price',
+  auto_restart: 'bots.field_auto_restart',
+}
+
+const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
+  GRID_FUTURES: 'bots.type_grid_futures',
+  GRID_SPOT: 'bots.type_grid_spot',
+  DCA_FUTURES: 'bots.type_dca_futures',
+  DCA_SPOT: 'bots.type_dca_spot',
+  CUSTOM: 'bots.type_custom',
+}
 
 function outcomeLabel(outcome: BotCreationOutcome): string {
   const keys: Record<BotCreationOutcome, string> = {
@@ -91,6 +126,37 @@ function formatDate(value: string): string {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date)
+}
+
+function settingsFor(item: BotCreationLogOut): CreationHistorySetting[] {
+  return extractCreationHistorySettings(item.request_payload, item.symbol)
+}
+
+function settingLabel(key: CreationSettingKey): string {
+  return t(SETTING_LABEL_KEYS[key])
+}
+
+function settingValue(setting: CreationHistorySetting): string {
+  switch (setting.key) {
+    case 'bot_type': {
+      const key = BOT_TYPE_LABEL_KEYS[setting.value as BotType]
+      return key ? t(key) : String(setting.value)
+    }
+    case 'api_key_id':
+      return `#${setting.value}`
+    case 'direction':
+      return setting.value === 'SHORT' ? t('bots.direction_short') : t('bots.direction_long')
+    case 'volume_mode':
+      if (setting.value === 'exponential') return t('bots.volume_exponential')
+      if (setting.value === 'fixed') return t('bots.volume_fixed')
+      return t('bots.volume_linear')
+    case 'auto_restart':
+      return setting.value ? t('common.yes') : t('common.no')
+    case 'grid_step_percent':
+      return `${setting.value}%`
+    default:
+      return String(setting.value)
+  }
 }
 </script>
 
@@ -135,7 +201,7 @@ function formatDate(value: string): string {
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: 520px;
+  max-height: 640px;
   overflow-y: auto;
 }
 
@@ -204,10 +270,46 @@ function formatDate(value: string): string {
   font-size: 0.78rem;
 }
 
+.creation-history__settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.creation-history__setting {
+  min-width: 0;
+}
+
+.creation-history__setting-label {
+  margin: 0 0 2px;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.creation-history__setting-value {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
 .creation-history__error {
   margin: 8px 0 0;
   color: var(--color-danger);
   font-size: 0.78rem;
   line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .creation-history__settings {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -141,14 +141,20 @@
     "error_grid_orders": "Количество ордеров должно быть от 1 до 500",
     "error_grid_step": "Укажите шаг сетки в процентах",
     "error_leverage": "Плечо должно быть от 1 до 125",
-    "error_liquidation_price_required": "Укажите стартовую или текущую цену для проверки ликвидации",
+    "error_current_price": "Текущая цена должна быть больше 0",
+    "error_total_balance": "Общий баланс должен быть больше 0",
+    "error_total_balance_required": "Укажите общий баланс в USDT",
+    "field_bot_type": "Тип бота",
+    "liquidation_config_group": "Параметры сетки",
+    "liquidation_market_group": "Рынок и маржа",
+    "liquidation_start_price_hint": "Необязательная якорная цена; иначе используется текущая цена или тикер Binance",
     "liquidation_section_title": "Проверка ликвидации",
     "liquidation_section_desc": "Оценка средней цены входа, цены ликвидации и объёма при полном наборе сетки. Бот не создаётся.",
     "field_leverage": "Плечо",
     "field_current_price": "Текущая цена (необяз.)",
     "field_current_price_hint": "Если стартовая цена пуста — используется это значение или тикер Binance",
-    "field_total_balance": "Общий баланс (необяз.)",
-    "field_total_balance_hint": "Маржа в USDT для грубой проверки полной сетки",
+    "field_total_balance": "Общий баланс (USDT)",
+    "field_total_balance_hint": "Доступная маржа в USDT для проверки полной сетки",
     "liquidation_check_submit": "Проверить ликвидацию",
     "liquidation_check_error": "Не удалось проверить ликвидацию",
     "liquidation_avg_entry": "Средняя цена входа",
@@ -320,6 +326,8 @@
     "retry": "Повторить",
     "language": "Язык",
     "cancel": "Отмена",
-    "confirm": "Подтвердить"
+    "confirm": "Подтвердить",
+    "yes": "Да",
+    "no": "Нет"
   }
 }

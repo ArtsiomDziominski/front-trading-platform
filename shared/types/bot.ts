@@ -36,7 +36,7 @@ export interface LiquidationCheckRequest {
   bot_type?: BotType
   config: GridFuturesConfig
   current_price?: number
-  total_balance?: number
+  total_balance: number
   leverage: number
 }
 

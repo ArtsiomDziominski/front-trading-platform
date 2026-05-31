@@ -141,14 +141,20 @@
     "error_grid_orders": "Grid orders count must be between 1 and 500",
     "error_grid_step": "Enter grid step percent",
     "error_leverage": "Leverage must be between 1 and 125",
-    "error_liquidation_price_required": "Enter start price or current price for liquidation check",
+    "error_current_price": "Current price must be greater than 0",
+    "error_total_balance": "Total balance must be greater than 0",
+    "error_total_balance_required": "Enter total balance in USDT",
+    "field_bot_type": "Bot type",
+    "liquidation_config_group": "Grid config",
+    "liquidation_market_group": "Market & margin",
+    "liquidation_start_price_hint": "Optional anchor price; otherwise current price or Binance ticker is used",
     "liquidation_section_title": "Liquidation check",
     "liquidation_section_desc": "Estimate average entry, liquidation price, and total size if the full grid is filled. Does not create a bot.",
     "field_leverage": "Leverage",
     "field_current_price": "Current price (optional)",
     "field_current_price_hint": "Used when start price is empty; otherwise the backend uses Binance ticker",
-    "field_total_balance": "Total balance (optional)",
-    "field_total_balance_hint": "USDT margin for a rough full-grid margin check",
+    "field_total_balance": "Total balance (USDT)",
+    "field_total_balance_hint": "Available USDT margin for the full grid check",
     "liquidation_check_submit": "Check liquidation",
     "liquidation_check_error": "Failed to check liquidation",
     "liquidation_avg_entry": "Avg entry price",
@@ -320,6 +326,8 @@
     "retry": "Retry",
     "language": "Language",
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
   }
 }
