@@ -6,7 +6,7 @@ const modules = computed(() => [
     icon: 'i-lucide-bot',
     titleKey: 'home.module_bots_title',
     descKey: 'home.module_bots_desc',
-    to: auth.loggedIn.value ? '/bots' : '/auth/login',
+    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
   },
   {
     icon: 'i-lucide-building-2',

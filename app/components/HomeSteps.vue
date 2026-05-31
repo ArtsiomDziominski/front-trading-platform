@@ -32,7 +32,7 @@ const steps = computed(() => [
     icon: 'i-lucide-activity',
     titleKey: 'home.step_4_title',
     descKey: 'home.step_4_desc',
-    to: auth.loggedIn.value ? '/bots' : '/auth/login',
+    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
   },
 ])
 </script>

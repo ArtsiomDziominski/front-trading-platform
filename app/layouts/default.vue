@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const auth = useAuth()
 
+const botsNavTo = computed(() => (auth.loggedIn.value ? '/bots' : '/bots/overview'))
+
 onMounted(() => {
   if (auth.user.value === null) {
     auth.fetchUser()
@@ -20,7 +22,7 @@ onMounted(() => {
             <NuxtLink to="/">
               {{ $t('nav.home') }}
             </NuxtLink>
-            <NuxtLink to="/bots">
+            <NuxtLink :to="botsNavTo">
               {{ $t('nav.bots') }}
             </NuxtLink>
             <NuxtLink to="/exchanges">

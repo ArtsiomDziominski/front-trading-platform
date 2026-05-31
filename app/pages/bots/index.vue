@@ -2,7 +2,7 @@
 import type { BotLifecycleStatus } from '#shared/types/bot'
 
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'bots-auth',
 })
 
 type BotFilterKey = 'all' | 'active' | 'stopped' | 'closed'
