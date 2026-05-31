@@ -77,7 +77,7 @@ watch(() => route.path, syncPolling)
           class="market-card"
         >
           <div class="market-card__top">
-            <span class="market-card__symbol">{{ item.symbol }}</span>
+            <span class="market-card__name">{{ item.name }}</span>
             <span
               class="market-card__change"
               :class="changeClass(item.change)"
@@ -85,7 +85,6 @@ watch(() => route.path, syncPolling)
               {{ item.change }}
             </span>
           </div>
-          <p class="market-card__name">{{ item.name }}</p>
           <p class="market-card__price">${{ item.price }}</p>
         </UCard>
       </div>
@@ -135,7 +134,7 @@ watch(() => route.path, syncPolling)
   margin-bottom: 8px;
 }
 
-.market-card__symbol {
+.market-card__name {
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -160,12 +159,6 @@ watch(() => route.path, syncPolling)
 .market-card__change--flat {
   color: var(--color-text-muted);
   background: var(--color-surface-muted);
-}
-
-.market-card__name {
-  margin: 0 0 10px;
-  color: var(--color-text-muted);
-  font-size: 0.82rem;
 }
 
 .market-card__price {

@@ -69,17 +69,25 @@ textarea {
 }
 
 .section-label {
-  display: inline-block;
-  margin: 0 0 12px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--color-surface-alt);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
   color: var(--color-accent);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  box-shadow: var(--shadow-inset-sm);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.section-label::before {
+  content: '';
+  flex-shrink: 0;
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
 }
 
 .section-title {
