@@ -37,9 +37,6 @@ useSeoMeta({
           <UButton size="lg" :to="primaryCta.to">
             {{ primaryCta.label }}
           </UButton>
-          <UButton size="lg" color="neutral" variant="outline" to="/swagger">
-            {{ $t('home.hero_secondary') }}
-          </UButton>
           <UButton
             v-if="!auth.loggedIn.value"
             size="lg"
@@ -85,11 +82,6 @@ useSeoMeta({
             icon-name="i-lucide-shield"
             :title="$t('home.feature_3_title')"
             :description="$t('home.feature_3_desc')"
-          />
-          <FeatureCard
-            icon-name="i-lucide-book-open"
-            :title="$t('home.feature_4_title')"
-            :description="$t('home.feature_4_desc')"
           />
         </div>
       </div>

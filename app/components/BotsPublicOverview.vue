@@ -173,9 +173,6 @@ const capabilities = [
             <UButton size="lg" to="/auth/register">
               {{ $t('bots.public_cta_register') }}
             </UButton>
-            <UButton size="lg" color="neutral" variant="outline" to="/swagger">
-              {{ $t('home.hero_secondary') }}
-            </UButton>
           </div>
         </UCard>
       </div>

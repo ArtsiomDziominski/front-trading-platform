@@ -2,8 +2,7 @@
   "nav": {
     "home": "Главная",
     "bots": "Боты",
-    "exchanges": "Биржи",
-    "api": "API"
+    "exchanges": "Биржи"
   },
   "home": {
     "hero_badge": "Trading Bot Platform",
@@ -11,7 +10,6 @@
     "hero_subtitle": "Мощная платформа для создания, тестирования и запуска алгоритмических торговых ботов. Начни с Binance — подключай другие биржи по мере роста.",
     "hero_cta": "Создать бота",
     "hero_cta_bots": "Мои боты",
-    "hero_secondary": "Документация API",
     "hero_stat_exchanges": "3 биржи",
     "hero_stat_strategies": "5+ стратегий",
     "hero_stat_realtime": "WebSocket в реальном времени",
@@ -37,8 +35,6 @@
     "feature_2_desc": "Binance, Bybit, OKX — подключай любую биржу и управляй всем из одного места.",
     "feature_3_title": "Безопасность",
     "feature_3_desc": "API-ключи шифруются на сервере. Токены живут ограниченное время. Полный аудит действий.",
-    "feature_4_title": "OpenAPI документация",
-    "feature_4_desc": "Полная Swagger-документация со всеми эндпоинтами, схемами и примерами.",
     "strategies_title": "Стратегии",
     "strategies_subtitle": "Готовые типы ботов для разных рыночных условий",
     "strategy_grid_futures_title": "Grid Futures",
@@ -244,10 +240,6 @@
     "status_active": "Активна",
     "status_soon": "Скоро",
     "connect": "Подключить"
-  },
-  "api": {
-    "title": "API Документация",
-    "subtitle": "Swagger UI — интерактивная документация API"
   },
   "settings": {
     "title": "Настройки",

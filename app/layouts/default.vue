@@ -28,9 +28,6 @@ onMounted(() => {
             <NuxtLink to="/exchanges">
               {{ $t('nav.exchanges') }}
             </NuxtLink>
-            <NuxtLink to="/swagger">
-              {{ $t('nav.api') }}
-            </NuxtLink>
           </nav>
 
           <div v-if="!auth.loggedIn.value" class="site-header__auth">
@@ -50,7 +47,7 @@ onMounted(() => {
 
         <div class="site-header__actions">
           <UserMenu v-if="auth.loggedIn.value" />
-          <LangSwitcher />
+          <LangSwitcher v-if="!auth.loggedIn.value" />
         </div>
       </div>
     </header>
