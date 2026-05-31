@@ -50,7 +50,7 @@ const steps = computed(() => [
           v-for="step in steps"
           :key="step.number"
           :to="step.to"
-          class="step-card neumo"
+          class="step-card bento"
         >
           <div class="step-card__head">
             <span class="step-card__number">{{ step.number }}</span>
@@ -75,18 +75,18 @@ const steps = computed(() => [
 .home-steps__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .step-card {
   display: block;
   padding: 28px 24px;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
 }
 
 .step-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-lg);
 }
 

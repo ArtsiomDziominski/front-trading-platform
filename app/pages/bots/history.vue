@@ -187,10 +187,12 @@ onMounted(() => {
 }
 
 .event-item {
-  padding: 16px 18px;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-alt);
-  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-bento);
+  background:
+    linear-gradient(155deg, rgb(255 255 255 / 3%) 0%, transparent 40%),
+    var(--color-surface-alt);
 }
 
 .event-item__head {

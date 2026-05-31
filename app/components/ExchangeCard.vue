@@ -42,8 +42,14 @@ defineProps<{
 
 <style scoped>
 .exchange-card {
-  padding: 32px 24px;
+  padding: 36px 28px;
   height: 100%;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+.exchange-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
 .exchange-card__icon {
@@ -52,9 +58,10 @@ defineProps<{
   justify-content: center;
   width: 64px;
   height: 64px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border-radius: var(--radius-md);
-  background: var(--color-surface-alt);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
   font-size: 2rem;
 }
 

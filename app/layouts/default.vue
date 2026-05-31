@@ -44,27 +44,34 @@ onMounted(() => {
 
 <style scoped>
 .site-header {
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid var(--color-border);
+  background: rgb(6 6 8 / 72%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .site-header__inner {
   display: flex;
-  min-height: 64px;
+  min-height: 68px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
 }
 
 .brand {
-  color: var(--color-accent);
+  color: var(--color-text);
   font-weight: 800;
   font-size: 1.1rem;
+  letter-spacing: -0.03em;
   text-decoration: none;
   flex-shrink: 0;
+  background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .site-header__menu {
@@ -79,26 +86,29 @@ onMounted(() => {
 .nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
   color: var(--color-text-muted);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
 .nav a {
   text-decoration: none;
-  padding: 6px 0;
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .nav a:hover {
   color: var(--color-text);
+  background: var(--color-surface-muted);
 }
 
 .nav a.router-link-active {
   color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  border-color: rgb(52 211 153 / 18%);
 }
 
 .site-header__actions {
@@ -125,7 +135,7 @@ onMounted(() => {
   .nav {
     flex-wrap: wrap;
     justify-content: center;
-    gap: 14px;
+    gap: 8px;
     font-size: 0.85rem;
   }
 

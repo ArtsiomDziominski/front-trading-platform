@@ -119,11 +119,17 @@ watch(() => route.path, syncPolling)
 .market-strip__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .market-card {
-  padding: 20px;
+  padding: 22px;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+.market-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .market-card__top {
@@ -153,7 +159,7 @@ watch(() => route.path, syncPolling)
 
 .market-card__change--down {
   color: var(--color-danger);
-  background: rgb(225 29 72 / 10%);
+  background: rgb(251 113 133 / 12%);
 }
 
 .market-card__change--flat {

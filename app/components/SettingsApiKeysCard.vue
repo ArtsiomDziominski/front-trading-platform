@@ -313,9 +313,10 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
 }
 
 .api-keys-list__main {

@@ -233,7 +233,12 @@ onUnmounted(() => {
       </div>
 
       <div v-else-if="bots.length" class="bots-grid">
-        <BotCard v-for="bot in bots" :key="bot.id" :bot="bot" />
+        <BotCard
+          v-for="(bot, index) in bots"
+          :key="bot.id"
+          :bot="bot"
+          :index="index"
+        />
       </div>
 
       <UCard v-else class="empty-state text-center">
@@ -275,6 +280,15 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.page-header__actions :deep(a.ring-inset),
+.page-header__actions :deep(button.ring-inset),
+.page-header__actions :deep(a.text-default.bg-default),
+.page-header__actions :deep(button.text-default.bg-default) {
+  color: var(--color-text) !important;
+  background-color: var(--color-surface-muted) !important;
+  --tw-ring-color: var(--color-border) !important;
+}
+
 .bots-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -299,8 +313,8 @@ onUnmounted(() => {
 
 .bots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
 }
 
 .state-message {
