@@ -15,8 +15,6 @@
     "hero_stat_realtime": "Real-time WebSocket",
     "market_title": "Market",
     "market_subtitle": "Live quotes for popular pairs",
-    "market_source": "Binance data · refreshes every 60s",
-    "market_error": "Could not load quotes from Binance",
     "steps_title": "How it works",
     "steps_subtitle": "From sign-up to your first trade in four simple steps",
     "step_1_title": "Sign up",

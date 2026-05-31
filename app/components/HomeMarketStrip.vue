@@ -66,26 +66,11 @@ watch(() => route.path, syncPolling)
         <div>
           <span class="section-label">{{ $t('home.market_title') }}</span>
           <h2 class="market-strip__title">{{ $t('home.market_subtitle') }}</h2>
-          <p class="market-strip__source">{{ $t('home.market_source') }}</p>
         </div>
         <span v-if="status === 'pending'" class="market-strip__status">{{ $t('common.loading') }}</span>
       </div>
 
-      <UAlert
-        v-if="error"
-        color="error"
-        variant="subtle"
-        :title="$t('home.market_error')"
-        class="market-strip__error"
-      >
-        <template #description>
-          <UButton size="xs" color="neutral" variant="outline" @click="() => refresh()">
-            {{ $t('common.retry') }}
-          </UButton>
-        </template>
-      </UAlert>
-
-      <div v-else class="market-strip__grid">
+      <div v-if="!error" class="market-strip__grid">
         <UCard
           v-for="item in market"
           :key="item.symbol"
@@ -127,19 +112,9 @@ watch(() => route.path, syncPolling)
   font-weight: 700;
 }
 
-.market-strip__source {
-  margin: 8px 0 0;
-  color: var(--color-text-muted);
-  font-size: 0.82rem;
-}
-
 .market-strip__status {
   color: var(--color-text-muted);
   font-size: 0.85rem;
-}
-
-.market-strip__error {
-  margin-bottom: 8px;
 }
 
 .market-strip__grid {

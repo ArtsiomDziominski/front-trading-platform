@@ -15,8 +15,6 @@
     "hero_stat_realtime": "WebSocket в реальном времени",
     "market_title": "Рынок",
     "market_subtitle": "Актуальные котировки популярных пар",
-    "market_source": "Данные Binance · обновление каждые 60 сек",
-    "market_error": "Не удалось загрузить котировки с Binance",
     "steps_title": "Как это работает",
     "steps_subtitle": "От регистрации до первой сделки — четыре простых шага",
     "step_1_title": "Регистрация",
