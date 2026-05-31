@@ -20,8 +20,14 @@ defineProps<{
 
 <style scoped>
 .feature-card {
-  padding: 32px 24px;
+  padding: 36px 28px;
   height: 100%;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
 .feature-icon {
@@ -30,10 +36,11 @@ defineProps<{
   justify-content: center;
   width: 56px;
   height: 56px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border-radius: var(--radius-md);
   background: var(--color-accent-dim);
   color: var(--color-accent);
+  border: 1px solid rgb(52 211 153 / 14%);
   font-size: 1.6rem;
 }
 

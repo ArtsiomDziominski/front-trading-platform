@@ -209,15 +209,16 @@ function settingValue(setting: CreationHistorySetting): string {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  background: var(--color-surface-muted);
 }
 
 .creation-history__item--selected {
-  box-shadow: var(--shadow-inset-sm);
-  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  border-color: rgb(52 211 153 / 22%);
+  background: var(--color-accent-dim);
+  outline: none;
 }
 
 .creation-history__item-body {

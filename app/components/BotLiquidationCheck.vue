@@ -343,9 +343,10 @@ defineExpose({ clearResult: clearLiquidationResult })
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px 16px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
 }
 
 .liquidation-result__row {

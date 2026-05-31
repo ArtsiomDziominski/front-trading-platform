@@ -55,6 +55,7 @@ const capabilities = [
 <template>
   <main class="bots-public">
     <section class="bots-public-hero page-section">
+      <div class="bots-public-hero__bg" aria-hidden="true" />
       <div class="container bots-public-hero__inner">
         <span class="section-label">{{ $t('bots.public_badge') }}</span>
         <h1 class="bots-public-hero__title">{{ $t('bots.public_title') }}</h1>
@@ -80,7 +81,7 @@ const capabilities = [
         </div>
 
         <ul class="bots-public-capabilities">
-          <li v-for="key in capabilities" :key="key" class="bots-public-capabilities__item neumo-sm">
+          <li v-for="key in capabilities" :key="key" class="bots-public-capabilities__item bento-sm">
             <UIcon name="i-lucide-check-circle-2" class="bots-public-capabilities__icon" />
             <span>{{ $t(key) }}</span>
           </li>
@@ -181,7 +182,22 @@ const capabilities = [
 </template>
 
 <style scoped>
+.bots-public-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.bots-public-hero__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(52 211 153 / 12%), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgb(52 211 153 / 5%), transparent 50%);
+  pointer-events: none;
+}
+
 .bots-public-hero__inner {
+  position: relative;
   text-align: center;
   max-width: 720px;
 }
@@ -250,7 +266,7 @@ const capabilities = [
 .bots-public-soon__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .strategy-card,
@@ -272,10 +288,10 @@ const capabilities = [
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-dim);
   color: var(--color-accent);
-  box-shadow: var(--shadow-inset-sm);
+  border: 1px solid rgb(52 211 153 / 14%);
 }
 
 .strategy-card__icon,

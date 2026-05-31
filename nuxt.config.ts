@@ -3,8 +3,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/eslint', '@nuxtjs/i18n', '@nuxt/ui'],
   colorMode: {
-    preference: 'light',
-    fallback: 'light',
+    preference: 'dark',
+    fallback: 'dark',
     storageKey: 'trading-platform-color-mode',
   },
   css: ['~/assets/css/main.css'],
@@ -27,6 +27,14 @@ export default defineNuxtConfig({
         lang: 'ru',
       },
       title: 'Trading Bot Platform',
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+        },
+      ],
       meta: [
         {
           name: 'description',

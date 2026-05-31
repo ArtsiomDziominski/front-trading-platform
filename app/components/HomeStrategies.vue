@@ -64,7 +64,7 @@ const strategies = [
 .home-strategies__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .strategy-card {
@@ -84,10 +84,10 @@ const strategies = [
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-dim);
   color: var(--color-accent);
-  box-shadow: var(--shadow-inset-sm);
+  border: 1px solid rgb(52 211 153 / 14%);
 }
 
 .strategy-card__icon {

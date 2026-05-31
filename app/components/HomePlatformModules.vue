@@ -81,7 +81,7 @@ const modules = computed(() => [
 .home-modules__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .module-card {
@@ -93,11 +93,12 @@ const modules = computed(() => [
   position: relative;
   height: 100%;
   padding: 28px 24px 24px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
 }
 
 .module-card:hover .module-card__inner {
-  transform: translateY(-2px);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
 .module-card__icon-wrap {
@@ -110,6 +111,7 @@ const modules = computed(() => [
   border-radius: var(--radius-md);
   background: var(--color-accent-dim);
   color: var(--color-accent);
+  border: 1px solid rgb(52 211 153 / 14%);
 }
 
 .module-card__icon {

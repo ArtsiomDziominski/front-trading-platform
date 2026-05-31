@@ -49,7 +49,7 @@ useSeoMeta({
         </div>
 
         <ul class="hero__stats">
-          <li v-for="stat in heroStats" :key="stat.labelKey" class="hero__stat neumo-sm">
+          <li v-for="stat in heroStats" :key="stat.labelKey" class="hero__stat bento-sm">
             <UIcon :name="stat.icon" class="hero__stat-icon" />
             <span>{{ $t(stat.labelKey) }}</span>
           </li>
@@ -124,7 +124,7 @@ useSeoMeta({
 
     <section class="page-section cta-section">
       <div class="container">
-        <UCard class="cta-card neumo">
+        <UCard class="cta-card bento">
           <div class="cta-card__glow" aria-hidden="true" />
           <h2 class="cta-title">{{ $t('home.cta_title') }}</h2>
           <p class="cta-subtitle">{{ $t('home.cta_subtitle') }}</p>
@@ -162,8 +162,9 @@ useSeoMeta({
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(18 168 122 / 18%), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 20%, rgb(18 168 122 / 8%), transparent 50%);
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(52 211 153 / 14%), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgb(52 211 153 / 6%), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 10% 60%, rgb(52 211 153 / 4%), transparent 45%);
   pointer-events: none;
 }
 
@@ -249,7 +250,7 @@ useSeoMeta({
   width: 480px;
   height: 480px;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgb(18 168 122 / 12%), transparent 70%);
+  background: radial-gradient(circle, rgb(52 211 153 / 10%), transparent 70%);
   pointer-events: none;
 }
 
