@@ -29,20 +29,6 @@ onMounted(() => {
               {{ $t('nav.exchanges') }}
             </NuxtLink>
           </nav>
-
-          <div v-if="!auth.loggedIn.value" class="site-header__auth">
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              to="/auth/login"
-            >
-              {{ $t('auth.login') }}
-            </UButton>
-            <UButton size="sm" to="/auth/register">
-              {{ $t('auth.register') }}
-            </UButton>
-          </div>
         </div>
 
         <div class="site-header__actions">
@@ -88,13 +74,6 @@ onMounted(() => {
   justify-content: center;
   gap: 24px;
   min-width: 0;
-}
-
-.site-header__auth {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
 }
 
 .nav {
@@ -148,11 +127,6 @@ onMounted(() => {
     justify-content: center;
     gap: 14px;
     font-size: 0.85rem;
-  }
-
-  .site-header__auth {
-    justify-content: center;
-    width: 100%;
   }
 
   .brand {
