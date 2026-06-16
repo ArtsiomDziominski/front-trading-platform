@@ -32,8 +32,9 @@ export interface TelegramAuthPayload {
 }
 
 interface GoogleAuthUrlResponse {
-  url?: string
+  authorize_url?: string
   authorization_url?: string
+  url?: string
 }
 
 const cookieOptions = {
@@ -115,6 +116,7 @@ export const useAuth = () => {
         setTokens(data)
         return true
       } catch {
+        user.value = null
         clearTokens()
         return false
       } finally {
@@ -188,7 +190,11 @@ export const useAuth = () => {
     try {
       const data = await $fetch<TokenResponse>(`${baseUrl}/auth/register`, {
         method: 'POST',
-        body: { email, password, name: name || null },
+        body: {
+          email,
+          password,
+          ...(name ? { name } : {}),
+        },
       })
       setTokens(data)
       await fetchUser()
@@ -207,7 +213,7 @@ export const useAuth = () => {
 
     try {
       const data = await $fetch<GoogleAuthUrlResponse>(`${baseUrl}/auth/google`)
-      const url = data.url ?? data.authorization_url
+      const url = data.authorize_url ?? data.authorization_url ?? data.url
 
       if (!url) {
         throw new Error('Missing Google auth URL')
