@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { LocaleCode } from '#shared/i18n/locales'
+import type { LocaleCode } from '#shared/types/locale'
 
 const { locale, locales, setLocale } = useI18n()
 

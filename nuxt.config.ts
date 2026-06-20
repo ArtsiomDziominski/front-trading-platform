@@ -1,4 +1,4 @@
-import { buildI18nLocales, parseLocaleCodesFromEnv, resolveDefaultLocale } from './shared/i18n/locales'
+import { buildI18nLocales, parseLocaleCodesFromEnv, resolveDefaultLocale } from './shared/types/locale'
 
 const localeCodes = parseLocaleCodesFromEnv()
 const defaultLocale = resolveDefaultLocale(localeCodes)
