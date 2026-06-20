@@ -25,8 +25,8 @@ export default defineNuxtConfig({
       appName: 'Trading Bot Platform',
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000',
       telegramBotUsername: process.env.NUXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '',
-      locales: localeCodes,
-      defaultLocale,
+      locales: localeCodes ?? ['ru'],
+      defaultLocale: defaultLocale ?? 'ru',
     },
   },
   app: {
