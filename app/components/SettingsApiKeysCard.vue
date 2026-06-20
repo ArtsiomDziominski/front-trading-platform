@@ -13,8 +13,10 @@ const exchange = ref<ExchangeType>('BINANCE')
 const label = ref('')
 const apiKey = ref('')
 const apiSecret = ref('')
+const apiPassphrase = ref('')
 
 const exchangeOptions: ExchangeType[] = ['BINANCE', 'BYBIT', 'OKX', 'OTHER']
+const needsPassphrase = computed(() => exchange.value === 'OKX')
 
 const route = useRoute()
 const sectionRef = ref<HTMLElement | null>(null)
@@ -54,6 +56,7 @@ function resetForm() {
   label.value = ''
   apiKey.value = ''
   apiSecret.value = ''
+  apiPassphrase.value = ''
 }
 
 function openAddModal() {
@@ -93,8 +96,15 @@ async function handleCreateSubmit() {
 
   const trimmedKey = apiKey.value.trim()
   const trimmedSecret = apiSecret.value.trim()
+  const trimmedPassphrase = apiPassphrase.value.trim()
+
   if (!trimmedKey || !trimmedSecret) {
     apiKeys.error.value = t('settings.api_keys_error_required')
+    return
+  }
+
+  if (needsPassphrase.value && !trimmedPassphrase) {
+    apiKeys.error.value = t('settings.api_keys_error_passphrase_required')
     return
   }
 
@@ -103,6 +113,7 @@ async function handleCreateSubmit() {
       exchange: exchange.value,
       api_key: trimmedKey,
       api_secret: trimmedSecret,
+      ...(needsPassphrase.value ? { api_passphrase: trimmedPassphrase } : {}),
       label: label.value.trim() || undefined,
     })
     formSuccess.value = true
@@ -216,6 +227,23 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
               />
               <template #hint>
                 {{ $t('settings.api_keys_secret_hint') }}
+              </template>
+            </UFormField>
+
+            <UFormField
+              v-if="needsPassphrase"
+              :label="$t('settings.api_keys_passphrase')"
+            >
+              <UInput
+                v-model="apiPassphrase"
+                type="password"
+                maxlength="512"
+                autocomplete="new-password"
+                :placeholder="$t('settings.api_keys_passphrase_placeholder')"
+                class="w-full"
+              />
+              <template #hint>
+                {{ $t('settings.api_keys_passphrase_hint') }}
               </template>
             </UFormField>
 

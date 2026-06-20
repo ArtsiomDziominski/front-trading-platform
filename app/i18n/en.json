@@ -295,13 +295,17 @@
     "api_keys_secret": "API secret",
     "api_keys_secret_placeholder": "Paste API secret",
     "api_keys_secret_hint": "The secret is sent once and stored encrypted. It cannot be viewed again.",
+    "api_keys_passphrase": "Passphrase",
+    "api_keys_passphrase_placeholder": "Paste OKX API passphrase",
+    "api_keys_passphrase_hint": "OKX requires a passphrase in addition to the API key and secret.",
     "api_keys_save": "Save API key",
     "api_keys_added_success": "API key added successfully.",
     "api_keys_added": "Added {date}",
     "api_keys_delete": "Delete",
     "api_keys_delete_title": "Delete API key?",
     "api_keys_delete_confirm": "Remove the {exchange} key \"{label}\"? Bots using this key will stop working.",
-    "api_keys_error_required": "API key and secret are required."
+    "api_keys_error_required": "API key and secret are required.",
+    "api_keys_error_passphrase_required": "Passphrase is required for OKX."
   },
   "auth": {
     "login": "Login",

@@ -295,13 +295,17 @@
     "api_keys_secret": "API secret",
     "api_keys_secret_placeholder": "Вставьте API secret",
     "api_keys_secret_hint": "Секрет передаётся один раз и хранится в зашифрованном виде. Просмотреть его снова нельзя.",
+    "api_keys_passphrase": "Passphrase",
+    "api_keys_passphrase_placeholder": "Вставьте passphrase от OKX API",
+    "api_keys_passphrase_hint": "Для OKX нужен passphrase в дополнение к API key и secret.",
     "api_keys_save": "Сохранить ключ",
     "api_keys_added_success": "API-ключ успешно добавлен.",
     "api_keys_added": "Добавлен {date}",
     "api_keys_delete": "Удалить",
     "api_keys_delete_title": "Удалить API-ключ?",
     "api_keys_delete_confirm": "Удалить ключ {exchange} «{label}»? Боты с этим ключом перестанут работать.",
-    "api_keys_error_required": "Укажите API key и secret."
+    "api_keys_error_required": "Укажите API key и secret.",
+    "api_keys_error_passphrase_required": "Для OKX укажите passphrase."
   },
   "auth": {
     "login": "Войти",
