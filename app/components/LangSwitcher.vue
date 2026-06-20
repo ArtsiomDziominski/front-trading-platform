@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import type { LocaleCode } from '#shared/types/locale'
-
 const { locale, locales, setLocale } = useI18n()
+const { public: { locales: enabledLocales } } = useRuntimeConfig()
 
 const localeItems = computed(() =>
-  locales.value.map((loc) => ({
-    label: loc.name ?? loc.code,
-    value: loc.code,
-  })),
+  locales.value
+    .filter((loc) => enabledLocales.includes(loc.code))
+    .map((loc) => ({
+      label: loc.name ?? loc.code,
+      value: loc.code,
+    })),
 )
 
 const localeModel = computed({
   get: () => locale.value,
-  set: (code: string) => setLocale(code as LocaleCode),
+  set: (code: string) => setLocale(code as typeof locale.value),
 })
 </script>
 

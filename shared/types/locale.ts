@@ -5,7 +5,14 @@ export const LOCALE_CATALOG = {
 
 export type LocaleCode = keyof typeof LOCALE_CATALOG
 
-export const DEFAULT_LOCALE_CODES: LocaleCode[] = ['ru', 'en']
+export const DEFAULT_LOCALE_CODES = ['ru', 'en'] as const satisfies readonly LocaleCode[]
+
+/** All locales registered with @nuxtjs/i18n — keeps generated locale types stable across envs. */
+export const ALL_I18N_LOCALES = DEFAULT_LOCALE_CODES.map((code) => ({
+  code,
+  name: LOCALE_CATALOG[code].name,
+  file: LOCALE_CATALOG[code].file,
+}))
 
 export function parseLocaleCodesFromEnv(raw = process.env.NUXT_PUBLIC_LOCALES): LocaleCode[] {
   const fallback = [...DEFAULT_LOCALE_CODES]
@@ -40,7 +47,7 @@ export function resolveDefaultLocale(
   return codes[0]!
 }
 
-export function buildI18nLocales(codes: LocaleCode[]) {
+export function buildI18nLocales<const T extends readonly LocaleCode[]>(codes: T) {
   return codes.map((code) => ({
     code,
     name: LOCALE_CATALOG[code].name,

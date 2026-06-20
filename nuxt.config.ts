@@ -1,8 +1,7 @@
-import { buildI18nLocales, parseLocaleCodesFromEnv, resolveDefaultLocale } from './shared/types/locale'
+import { ALL_I18N_LOCALES, parseLocaleCodesFromEnv, resolveDefaultLocale } from './shared/types/locale'
 
-const localeCodes = parseLocaleCodesFromEnv()
-const defaultLocale = resolveDefaultLocale(localeCodes)
-const i18nLocales = buildI18nLocales(localeCodes)
+const enabledLocaleCodes = parseLocaleCodesFromEnv()
+const defaultLocale = resolveDefaultLocale(enabledLocaleCodes)
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-05-12',
@@ -25,7 +24,7 @@ export default defineNuxtConfig({
       appName: 'Trading Bot Platform',
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000',
       telegramBotUsername: process.env.NUXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? '',
-      locales: localeCodes ?? ['ru'],
+      locales: enabledLocaleCodes,
       defaultLocale: defaultLocale ?? 'ru',
     },
   },
@@ -59,7 +58,7 @@ export default defineNuxtConfig({
     typeCheck: true,
   },
   i18n: {
-    locales: i18nLocales,
+    locales: ALL_I18N_LOCALES,
     defaultLocale,
     strategy: 'prefix_except_default',
     restructureDir: 'app',
