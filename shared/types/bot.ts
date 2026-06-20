@@ -1,3 +1,5 @@
+import type { ExchangeType } from '#shared/types/api-key'
+
 export type BotType =
   | 'GRID_FUTURES'
   | 'GRID_SPOT'
@@ -73,7 +75,7 @@ export interface BotListOut extends BotOut {
 }
 
 export interface BotListItem extends BotListOut {
-  exchange?: string
+  exchange?: ExchangeType
 }
 
 export interface BotBulkActionFailure {

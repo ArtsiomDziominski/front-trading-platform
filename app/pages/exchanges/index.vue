@@ -21,26 +21,26 @@ useSeoMeta({
       </div>
 
       <div class="grid-2cols">
-        <ExchangeCard
-          name="Binance"
-          :description="$t('exchanges.binance_desc')"
-          icon="&#11088;"
-          :active="true"
-          :to="settingsLink"
-        />
-        <ExchangeCard
-          name="Bybit"
-          :description="$t('exchanges.bybit_desc')"
-          icon="&#9632;"
-          :active="false"
-        />
-        <ExchangeCard
-          name="OKX"
-          :description="$t('exchanges.okx_desc')"
-          icon="&#9670;"
-          :active="true"
-          :to="settingsLink"
-        />
+          <ExchangeCard
+            name="Binance"
+            :description="$t('exchanges.binance_desc')"
+            exchange="BINANCE"
+            :active="true"
+            :to="settingsLink"
+          />
+          <ExchangeCard
+            name="Bybit"
+            :description="$t('exchanges.bybit_desc')"
+            exchange="BYBIT"
+            :active="false"
+          />
+          <ExchangeCard
+            name="OKX"
+            :description="$t('exchanges.okx_desc')"
+            exchange="OKX"
+            :active="true"
+            :to="settingsLink"
+          />
       </div>
     </div>
   </main>

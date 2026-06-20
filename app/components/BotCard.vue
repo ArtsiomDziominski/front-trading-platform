@@ -47,7 +47,12 @@
         :transition="{ duration: 0.45, delay: staggerDelay + 0.15 }"
       >
         <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
-        <span class="bot-card__value">{{ bot.exchange || '—' }}</span>
+        <ExchangeIcon
+          v-if="bot.exchange && bot.exchange !== 'OTHER'"
+          :exchange="bot.exchange"
+          size="compact"
+        />
+        <span v-else class="bot-card__value">—</span>
       </motion.div>
 
       <motion.div

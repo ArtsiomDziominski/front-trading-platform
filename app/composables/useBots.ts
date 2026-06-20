@@ -4,12 +4,7 @@ import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
 import type { BotCreate, BotCreationLogOut, BotEventOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
 
-function formatExchange(exchange: ApiKeyOut['exchange']): string {
-  if (exchange === 'OTHER') return 'Other'
-  return exchange.charAt(0) + exchange.slice(1).toLowerCase()
-}
-
-function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, string>): BotListItem {
+function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, ApiKeyOut['exchange']>): BotListItem {
   return {
     ...bot,
     exchange: exchangeByKeyId.get(bot.api_key_id),
@@ -17,7 +12,7 @@ function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, string>): BotLi
 }
 
 function enrichBots(bots: BotListOut[], apiKeys: ApiKeyOut[]): BotListItem[] {
-  const exchangeByKeyId = new Map(apiKeys.map((key) => [key.id, formatExchange(key.exchange)]))
+  const exchangeByKeyId = new Map(apiKeys.map((key) => [key.id, key.exchange]))
   return bots.map((bot) => enrichBot(bot, exchangeByKeyId))
 }
 
@@ -90,7 +85,7 @@ export const useBots = () => {
     }
 
     const exchangeByKeyId = new Map(
-      apiKeysCache.value.map((key) => [key.id, formatExchange(key.exchange)]),
+      apiKeysCache.value.map((key) => [key.id, key.exchange]),
     )
     const enriched = enrichBot(listOut, exchangeByKeyId)
     const index = bots.value.findIndex((b) => b.id === enriched.id)
@@ -194,7 +189,7 @@ export const useBots = () => {
     if (!message.bot) return
 
     const exchangeByKeyId = new Map(
-      apiKeysCache.value.map((key) => [key.id, formatExchange(key.exchange)]),
+      apiKeysCache.value.map((key) => [key.id, key.exchange]),
     )
     const enriched = enrichBot(message.bot, exchangeByKeyId)
     const index = bots.value.findIndex((b) => b.id === enriched.id)

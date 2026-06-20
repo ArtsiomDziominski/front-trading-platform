@@ -1,6 +1,8 @@
 <template>
   <UCard class="exchange-card text-center" :variant="active ? 'outline' : 'subtle'">
-    <div class="exchange-card__icon">{{ icon }}</div>
+    <div class="exchange-card__icon">
+      <ExchangeIcon :exchange="exchange" />
+    </div>
     <h3 class="exchange-card__name">{{ name }}</h3>
     <p class="exchange-card__desc">{{ description }}</p>
     <div class="exchange-card__footer">
@@ -31,10 +33,12 @@
 </template>
 
 <script setup lang="ts">
+import type { ExchangeType } from '#shared/types/api-key'
+
 defineProps<{
   name: string
   description: string
-  icon: string
+  exchange: Exclude<ExchangeType, 'OTHER'>
   active: boolean
   to?: string
 }>()
@@ -62,7 +66,7 @@ defineProps<{
   border-radius: var(--radius-md);
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
-  font-size: 2rem;
+  color: var(--color-text);
 }
 
 .exchange-card__name {

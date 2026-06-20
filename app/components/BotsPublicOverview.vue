@@ -127,20 +127,20 @@ const capabilities = [
           <ExchangeCard
             name="Binance"
             :description="$t('exchanges.binance_desc')"
-            icon="&#11088;"
+            exchange="BINANCE"
             :active="true"
             to="/auth/register"
           />
           <ExchangeCard
             name="Bybit"
             :description="$t('exchanges.bybit_desc')"
-            icon="&#9632;"
+            exchange="BYBIT"
             :active="false"
           />
           <ExchangeCard
             name="OKX"
             :description="$t('exchanges.okx_desc')"
-            icon="&#9670;"
+            exchange="OKX"
             :active="true"
             to="/auth/register"
           />
