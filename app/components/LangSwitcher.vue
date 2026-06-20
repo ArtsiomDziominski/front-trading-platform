@@ -19,6 +19,7 @@ const localeModel = computed({
 
 <template>
   <USelect
+    v-if="localeItems.length > 1"
     v-model="localeModel"
     :items="localeItems"
     :aria-label="$t('common.language')"
