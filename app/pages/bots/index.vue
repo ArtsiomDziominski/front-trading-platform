@@ -313,7 +313,7 @@ onUnmounted(() => {
 
 .bots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 28px;
 }
 
@@ -338,16 +338,76 @@ onUnmounted(() => {
 @media (max-width: 640px) {
   .page-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .page-header__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .page-header__actions > * {
+    width: 100%;
+  }
+
+  /* Promote the primary "create bot" action to the top on mobile */
+  .page-header__actions > :last-child {
+    order: -1;
   }
 
   .bots-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  /* Filter tabs: horizontally scrollable so long localized labels
+     (e.g. RU "Остановленные") never wrap or truncate. */
+  .bots-toolbar :deep([role='tablist']) {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .bots-toolbar :deep([role='tablist'])::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bots-toolbar :deep([role='tablist']) > * {
+    flex: 0 0 auto;
+    min-height: 40px;
+    white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .bots-bulk {
-    justify-content: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .bots-bulk > * {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Destructive "remove all" gets its own full-width row */
+  .bots-bulk > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .bots-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 </style>

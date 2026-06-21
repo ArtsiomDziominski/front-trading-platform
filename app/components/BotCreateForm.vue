@@ -307,8 +307,28 @@ defineExpose({ applyPayload, scrollIntoView })
 }
 
 @media (max-width: 640px) {
+  .create-form-card {
+    padding: 20px;
+  }
+
   .field-row {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions > * {
+    width: 100%;
+  }
+
+  .form-actions :deep(button),
+  .form-actions :deep(a) {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 }
 </style>

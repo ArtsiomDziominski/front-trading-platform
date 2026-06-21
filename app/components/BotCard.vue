@@ -571,4 +571,57 @@ async function handleStop() {
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 640px) {
+  .bot-card {
+    padding: 20px;
+  }
+
+  .bot-card__header {
+    margin-bottom: 20px;
+  }
+
+  .bot-card__symbol {
+    font-size: 1.15rem;
+  }
+
+  .bot-card__bento {
+    gap: 10px;
+  }
+
+  .bot-card__cell {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .bot-card__cell--pnl {
+    padding: 16px 16px;
+  }
+
+  .bot-card__pnl {
+    font-size: 1.05rem;
+  }
+
+  .bot-card__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+
+  .bot-card__action {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.82rem;
+  }
+}
+
+@media (hover: none) {
+  /* Disable lift animation residue on touch devices to avoid sticky hover state */
+  .bot-card__action:hover:not(:disabled) {
+    background: rgb(255 255 255 / 3%);
+    border-color: var(--bento-border);
+  }
+}
 </style>

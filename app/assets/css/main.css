@@ -50,9 +50,15 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   min-width: 320px;
   margin: 0;
+  overflow-x: clip;
   background:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgb(52 211 153 / 7%), transparent 55%),
     radial-gradient(ellipse 45% 35% at 100% 0%, rgb(52 211 153 / 4%), transparent 50%),
@@ -60,6 +66,7 @@ body {
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -74,13 +81,22 @@ textarea {
   font: inherit;
 }
 
+button,
+a,
+[role='button'] {
+  touch-action: manipulation;
+}
+
 .app-shell {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .container {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 .page-section {
@@ -247,4 +263,26 @@ html.dark button.inline-flex.text-default.bg-default:hover {
   width: auto;
   max-width: 88px;
   height: 28px;
+}
+
+/* Prevent iOS Safari from auto-zooming when focusing form fields:
+   any control below 16px triggers a zoom-in on tap. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Respect users who prefer reduced motion (accessibility / 2026 baseline). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

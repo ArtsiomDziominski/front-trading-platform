@@ -47,10 +47,11 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
+  padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid var(--color-border);
   background: rgb(6 6 8 / 72%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
 }
 
 .site-header__inner {
@@ -121,7 +122,7 @@ onMounted(() => {
 @media (max-width: 768px) {
   .site-header__inner {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     padding: 10px 0;
   }
 
@@ -133,10 +134,28 @@ onMounted(() => {
   }
 
   .nav {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    display: flex;
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: stretch;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
     font-size: 0.85rem;
+  }
+
+  /* Equal-width segmented nav with comfortable tap targets */
+  .nav a {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 10px;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .brand {

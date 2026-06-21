@@ -342,4 +342,34 @@ const capabilities = [
   justify-content: center;
   gap: 12px;
 }
+
+@media (max-width: 640px) {
+  .bots-public-hero__actions,
+  .bots-public-cta__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bots-public-hero__actions :deep(a),
+  .bots-public-hero__actions :deep(button),
+  .bots-public-cta__actions :deep(a),
+  .bots-public-cta__actions :deep(button) {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .strategy-card,
+  .soon-card {
+    padding: 22px 20px;
+  }
+
+  .bots-public-cta__card {
+    padding: 32px 20px;
+  }
+
+  .bots-public-cta__title {
+    font-size: 1.35rem;
+  }
+}
 </style>

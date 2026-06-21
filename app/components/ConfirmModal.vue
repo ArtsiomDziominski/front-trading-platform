@@ -35,7 +35,7 @@ function onCancel() {
     :title="title"
     :dismissible="!loading"
     :close="false"
-    :ui="{ footer: 'justify-end gap-2' }"
+    :ui="{ footer: 'flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
   >
     <template #body>
       <p class="text-muted text-sm leading-relaxed">
@@ -48,6 +48,7 @@ function onCancel() {
         color="neutral"
         variant="outline"
         size="sm"
+        class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
         :disabled="loading"
         @click="onCancel"
       >
@@ -56,6 +57,7 @@ function onCancel() {
       <UButton
         :color="confirmColor"
         size="sm"
+        class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
         :loading="loading"
         @click="emit('confirm')"
       >

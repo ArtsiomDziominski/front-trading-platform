@@ -302,16 +302,26 @@ onMounted(() => {
 @media (max-width: 640px) {
   .page-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .page-header > :last-child {
+    width: 100%;
   }
 
   .history-filter {
     max-width: none;
   }
 
+  .event-item {
+    padding: 16px;
+  }
+
   .event-item__head {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
   }
 }
 </style>

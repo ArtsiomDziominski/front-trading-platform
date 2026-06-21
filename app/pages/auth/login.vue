@@ -182,6 +182,7 @@ function handleTelegramError(message: string) {
   display: flex;
   align-items: center;
   min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
 }
 
 .auth-container {
