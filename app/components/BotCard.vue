@@ -46,7 +46,6 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.15 }"
       >
-        <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
         <img
           v-if="bot.exchange && bot.exchange !== 'OTHER'"
           :src="EXCHANGE_IMAGES[bot.exchange]"
@@ -64,7 +63,6 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.2 }"
       >
-        <span class="bot-card__label">{{ $t('bots.type') }}</span>
         <span class="bot-card__value">{{ typeLabel }}</span>
       </motion.div>
 
@@ -75,7 +73,6 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.25 }"
       >
-        <span class="bot-card__label">{{ $t('bots.pnl') }}</span>
         <span class="bot-card__pnl" :class="pnlClass">{{ pnlLabel }}</span>
       </motion.div>
     </div>
@@ -469,14 +466,6 @@ async function handleStop() {
   background:
     linear-gradient(135deg, rgb(251 113 133 / 10%) 0%, rgb(251 113 133 / 3%) 100%),
     var(--bento-surface);
-}
-
-.bot-card__label {
-  color: var(--bento-muted);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .bot-card__value {
