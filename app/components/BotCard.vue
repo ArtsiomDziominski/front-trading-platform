@@ -47,11 +47,14 @@
         :transition="{ duration: 0.45, delay: staggerDelay + 0.15 }"
       >
         <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
-        <ExchangeIcon
+        <img
           v-if="bot.exchange && bot.exchange !== 'OTHER'"
-          :exchange="bot.exchange"
-          size="compact"
-        />
+          :src="EXCHANGE_IMAGES[bot.exchange]"
+          :alt="exchangeDisplayName(bot.exchange)"
+          class="exchange-icon exchange-icon--compact"
+          loading="lazy"
+          decoding="async"
+        >
         <span v-else class="bot-card__value">—</span>
       </motion.div>
 
@@ -153,7 +156,7 @@
 
 <script setup lang="ts">
 import { motion } from 'motion-v'
-import ExchangeIcon from '~/components/ExchangeIcon.vue'
+import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
 import type { BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
 

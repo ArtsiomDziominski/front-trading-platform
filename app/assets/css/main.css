@@ -232,3 +232,19 @@ html.dark button.inline-flex.text-default.bg-default:hover {
     margin-bottom: 24px;
   }
 }
+
+.exchange-icon {
+  display: block;
+  object-fit: contain;
+}
+
+.exchange-icon--md {
+  width: 36px;
+  height: 36px;
+}
+
+.exchange-icon--compact {
+  width: auto;
+  max-width: 88px;
+  height: 28px;
+}
