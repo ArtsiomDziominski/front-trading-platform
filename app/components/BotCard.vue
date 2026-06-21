@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { motion } from 'motion-v'
+import ExchangeIcon from '~/components/ExchangeIcon.vue'
 import type { BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
 

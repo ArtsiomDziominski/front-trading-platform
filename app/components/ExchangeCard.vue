@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import ExchangeIcon from '~/components/ExchangeIcon.vue'
 import type { ExchangeType } from '#shared/types/api-key'
 
 defineProps<{
