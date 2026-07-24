@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { motion } from 'motion-v'
+
 const { t } = useI18n()
 const auth = useAuth()
+
+useHomeSmoothScroll()
 
 const settingsLink = computed(() =>
   auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
@@ -18,6 +22,8 @@ const primaryCta = computed(() =>
     : { label: t('home.hero_cta'), to: '/auth/register' },
 )
 
+const heroEase = [0.22, 1, 0.36, 1] as const
+
 useSeoMeta({
   title: () => t('nav.home'),
   description: () => t('home.hero_subtitle'),
@@ -29,11 +35,39 @@ useSeoMeta({
     <section class="hero">
       <div class="hero__bg" aria-hidden="true" />
       <div class="container hero__inner">
-        <span class="section-label">{{ $t('home.hero_badge') }}</span>
-        <h1 class="hero__title">{{ $t('home.hero_title') }}</h1>
-        <p class="hero__copy">{{ $t('home.hero_subtitle') }}</p>
+        <motion.span
+          class="section-label"
+          :initial="{ opacity: 0, y: 16 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.7, ease: heroEase }"
+        >
+          {{ $t('home.hero_badge') }}
+        </motion.span>
 
-        <div class="hero__actions">
+        <motion.h1
+          class="hero__title"
+          :initial="{ opacity: 0, y: 28, filter: 'blur(8px)' }"
+          :animate="{ opacity: 1, y: 0, filter: 'blur(0px)' }"
+          :transition="{ duration: 0.95, delay: 0.08, ease: heroEase }"
+        >
+          {{ $t('home.hero_title') }}
+        </motion.h1>
+
+        <motion.p
+          class="hero__copy"
+          :initial="{ opacity: 0, y: 20 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.85, delay: 0.18, ease: heroEase }"
+        >
+          {{ $t('home.hero_subtitle') }}
+        </motion.p>
+
+        <motion.div
+          class="hero__actions"
+          :initial="{ opacity: 0, y: 16 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.8, delay: 0.28, ease: heroEase }"
+        >
           <UButton size="lg" :to="primaryCta.to">
             {{ primaryCta.label }}
           </UButton>
@@ -46,105 +80,124 @@ useSeoMeta({
           >
             {{ $t('home.cta_login') }}
           </UButton>
-        </div>
+        </motion.div>
 
-        <ul class="hero__stats">
+        <motion.ul
+          class="hero__stats"
+          :initial="{ opacity: 0, y: 18 }"
+          :animate="{ opacity: 1, y: 0 }"
+          :transition="{ duration: 0.8, delay: 0.38, ease: heroEase }"
+        >
           <li v-for="stat in heroStats" :key="stat.labelKey" class="hero__stat bento-sm">
             <UIcon :name="stat.icon" class="hero__stat-icon" />
             <span>{{ $t(stat.labelKey) }}</span>
           </li>
-        </ul>
+        </motion.ul>
       </div>
     </section>
 
-    <HomeMarketStrip />
+    <ScrollReveal>
+      <HomeMarketStrip />
+    </ScrollReveal>
 
-    <HomeSteps />
+    <ScrollReveal :delay="0.05">
+      <HomeSteps />
+    </ScrollReveal>
 
-    <section class="page-section">
-      <div class="container">
-        <div class="section-header">
-          <span class="section-label">{{ $t('home.features_title') }}</span>
-          <h2 class="section-title">{{ $t('home.features_subtitle') }}</h2>
-        </div>
-        <div class="grid-2cols">
-          <FeatureCard
-            icon-name="i-lucide-sparkles"
-            :title="$t('home.feature_1_title')"
-            :description="$t('home.feature_1_desc')"
-          />
-          <FeatureCard
-            icon-name="i-lucide-globe"
-            :title="$t('home.feature_2_title')"
-            :description="$t('home.feature_2_desc')"
-          />
-          <FeatureCard
-            icon-name="i-lucide-shield"
-            :title="$t('home.feature_3_title')"
-            :description="$t('home.feature_3_desc')"
-          />
-        </div>
-      </div>
-    </section>
-
-    <HomeStrategies />
-
-    <HomePlatformModules />
-
-    <section class="page-section">
-      <div class="container">
-        <div class="section-header">
-          <span class="section-label">{{ $t('home.exchanges_title') }}</span>
-          <h2 class="section-title">{{ $t('home.exchanges_subtitle') }}</h2>
-        </div>
-        <div class="grid-2cols">
-          <ExchangeCard
-            name="Binance"
-            :description="$t('exchanges.binance_desc')"
-            exchange="BINANCE"
-            :active="true"
-            :to="settingsLink"
-          />
-          <ExchangeCard
-            name="Bybit"
-            :description="$t('exchanges.bybit_desc')"
-            exchange="BYBIT"
-            :active="false"
-          />
-          <ExchangeCard
-            name="OKX"
-            :description="$t('exchanges.okx_desc')"
-            exchange="OKX"
-            :active="true"
-            :to="settingsLink"
-          />
-        </div>
-      </div>
-    </section>
-
-    <section class="page-section cta-section">
-      <div class="container">
-        <UCard class="cta-card bento">
-          <div class="cta-card__glow" aria-hidden="true" />
-          <h2 class="cta-title">{{ $t('home.cta_title') }}</h2>
-          <p class="cta-subtitle">{{ $t('home.cta_subtitle') }}</p>
-          <div class="cta-card__actions">
-            <UButton size="lg" :to="auth.loggedIn.value ? '/bots/create' : '/auth/register'">
-              {{ $t('home.cta_button') }}
-            </UButton>
-            <UButton
-              v-if="!auth.loggedIn.value"
-              size="lg"
-              color="neutral"
-              variant="outline"
-              to="/auth/login"
-            >
-              {{ $t('home.cta_login') }}
-            </UButton>
+    <ScrollReveal>
+      <section class="page-section">
+        <div class="container">
+          <div class="section-header">
+            <span class="section-label">{{ $t('home.features_title') }}</span>
+            <h2 class="section-title">{{ $t('home.features_subtitle') }}</h2>
           </div>
-        </UCard>
-      </div>
-    </section>
+          <div class="grid-2cols">
+            <FeatureCard
+              icon-name="i-lucide-sparkles"
+              :title="$t('home.feature_1_title')"
+              :description="$t('home.feature_1_desc')"
+            />
+            <FeatureCard
+              icon-name="i-lucide-globe"
+              :title="$t('home.feature_2_title')"
+              :description="$t('home.feature_2_desc')"
+            />
+            <FeatureCard
+              icon-name="i-lucide-shield"
+              :title="$t('home.feature_3_title')"
+              :description="$t('home.feature_3_desc')"
+            />
+          </div>
+        </div>
+      </section>
+    </ScrollReveal>
+
+    <ScrollReveal>
+      <HomeStrategies />
+    </ScrollReveal>
+
+    <ScrollReveal>
+      <HomePlatformModules />
+    </ScrollReveal>
+
+    <ScrollReveal>
+      <section class="page-section">
+        <div class="container">
+          <div class="section-header">
+            <span class="section-label">{{ $t('home.exchanges_title') }}</span>
+            <h2 class="section-title">{{ $t('home.exchanges_subtitle') }}</h2>
+          </div>
+          <div class="grid-2cols">
+            <ExchangeCard
+              name="Binance"
+              :description="$t('exchanges.binance_desc')"
+              exchange="BINANCE"
+              :active="true"
+              :to="settingsLink"
+            />
+            <ExchangeCard
+              name="Bybit"
+              :description="$t('exchanges.bybit_desc')"
+              exchange="BYBIT"
+              :active="false"
+            />
+            <ExchangeCard
+              name="OKX"
+              :description="$t('exchanges.okx_desc')"
+              exchange="OKX"
+              :active="true"
+              :to="settingsLink"
+            />
+          </div>
+        </div>
+      </section>
+    </ScrollReveal>
+
+    <ScrollReveal :distance="36">
+      <section class="page-section cta-section">
+        <div class="container">
+          <UCard class="cta-card bento">
+            <div class="cta-card__glow" aria-hidden="true" />
+            <h2 class="cta-title">{{ $t('home.cta_title') }}</h2>
+            <p class="cta-subtitle">{{ $t('home.cta_subtitle') }}</p>
+            <div class="cta-card__actions">
+              <UButton size="lg" :to="auth.loggedIn.value ? '/bots/create' : '/auth/register'">
+                {{ $t('home.cta_button') }}
+              </UButton>
+              <UButton
+                v-if="!auth.loggedIn.value"
+                size="lg"
+                color="neutral"
+                variant="outline"
+                to="/auth/login"
+              >
+                {{ $t('home.cta_login') }}
+              </UButton>
+            </div>
+          </UCard>
+        </div>
+      </section>
+    </ScrollReveal>
   </main>
 </template>
 

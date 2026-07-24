@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "lenis/dist/lenis.css";
 
 :root {
   color-scheme: dark;
@@ -276,6 +277,15 @@ html.dark button.inline-flex.text-default.bg-default:hover {
 }
 
 /* Respect users who prefer reduced motion (accessibility / 2026 baseline). */
+html.home-smooth-scroll {
+  scroll-behavior: auto;
+}
+
+html.home-smooth-scroll,
+html.home-smooth-scroll body {
+  height: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
