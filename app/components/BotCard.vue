@@ -356,7 +356,7 @@ async function handleStop() {
   height: 55%;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: radial-gradient(circle, rgb(52 211 153 / 10%) 0%, transparent 70%);
+  background: radial-gradient(circle, rgb(186 242 74 / 14%) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -415,8 +415,8 @@ async function handleStop() {
 
 .bot-card__status--active {
   color: var(--bento-accent);
-  border-color: rgb(52 211 153 / 22%);
-  background: linear-gradient(135deg, rgb(52 211 153 / 14%) 0%, rgb(52 211 153 / 6%) 100%);
+  border-color: rgb(186 242 74 / 28%);
+  background: linear-gradient(135deg, rgb(186 242 74 / 18%) 0%, rgb(186 242 74 / 8%) 100%);
 }
 
 .bot-card__status--stopped,
@@ -455,9 +455,9 @@ async function handleStop() {
 }
 
 .bot-card__cell--pnl-up {
-  border-color: rgb(52 211 153 / 18%);
+  border-color: rgb(186 242 74 / 24%);
   background:
-    linear-gradient(135deg, rgb(52 211 153 / 10%) 0%, rgb(52 211 153 / 3%) 100%),
+    linear-gradient(135deg, rgb(186 242 74 / 14%) 0%, rgb(186 242 74 / 5%) 100%),
     var(--bento-surface);
 }
 

@@ -111,7 +111,10 @@ async function handleSubmit() {
 .auth-title {
   margin: 0 0 28px;
   font-size: 1.6rem;
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-weight: 400;
   text-align: center;
+  color: var(--color-on-surface);
 }
 
 .auth-form {

@@ -10,9 +10,9 @@ function isHomeRoute(path: string): boolean {
 }
 
 function changeClass(change: string): string {
-  if (change.startsWith('+') && change !== '+0.00%') return 'market-card__change--up'
-  if (change.startsWith('-')) return 'market-card__change--down'
-  return 'market-card__change--flat'
+  if (change.startsWith('+') && change !== '+0.00%') return 'is-up'
+  if (change.startsWith('-')) return 'is-down'
+  return 'is-flat'
 }
 
 let pollTimer: ReturnType<typeof setInterval> | undefined
@@ -26,11 +26,9 @@ function stopPolling() {
 
 function startPolling() {
   stopPolling()
-
   if (!import.meta.client || !isHomeRoute(route.path) || document.hidden) {
     return
   }
-
   pollTimer = setInterval(() => {
     if (isHomeRoute(route.path) && !document.hidden) {
       void refresh()
@@ -39,11 +37,8 @@ function startPolling() {
 }
 
 function syncPolling() {
-  if (isHomeRoute(route.path)) {
-    startPolling()
-  } else {
-    stopPolling()
-  }
+  if (isHomeRoute(route.path)) startPolling()
+  else stopPolling()
 }
 
 onMounted(() => {
@@ -60,18 +55,29 @@ watch(() => route.path, syncPolling)
 </script>
 
 <template>
-  <section class="market-strip" aria-label="Market summary">
+  <section
+    class="market"
+    aria-label="Market summary"
+  >
     <div class="container">
-      <div class="market-strip__header">
+      <header class="market__header">
         <div>
-          <span class="section-label">{{ $t('home.market_title') }}</span>
-          <h2 class="market-strip__title">{{ $t('home.market_subtitle') }}</h2>
+          <h2>{{ $t('home.market_title') }}</h2>
+          <p>{{ $t('home.market_subtitle') }}</p>
         </div>
-        <span v-if="status === 'pending'" class="market-strip__status">{{ $t('common.loading') }}</span>
-      </div>
+        <span
+          v-if="status === 'pending'"
+          class="market__status"
+        >
+          {{ $t('common.loading') }}
+        </span>
+      </header>
 
-      <div v-if="!error" class="market-strip__grid">
-        <UCard
+      <div
+        v-if="!error"
+        class="market__grid"
+      >
+        <article
           v-for="item in market"
           :key="item.symbol"
           class="market-card"
@@ -86,91 +92,112 @@ watch(() => route.path, syncPolling)
             </span>
           </div>
           <p class="market-card__price">${{ item.price }}</p>
-        </UCard>
+          <span class="market-card__symbol">{{ item.symbol }}</span>
+        </article>
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.market-strip {
-  padding: 32px 0 48px;
+.market {
+  padding: 72px 0 40px;
+  background: #e5ffc3;
+  color: #013330;
 }
 
-.market-strip__header {
+.market__header {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  align-items: end;
   margin-bottom: 24px;
 }
 
-.market-strip__title {
+.market__header h2 {
   margin: 0;
-  font-size: clamp(1.2rem, 3vw, 1.6rem);
-  font-weight: 700;
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  line-height: 1;
 }
 
-.market-strip__status {
-  color: var(--color-text-muted);
+.market__header p {
+  margin: 10px 0 0;
+  color: rgb(1 51 48 / 68%);
+  font-size: 1.02rem;
+}
+
+.market__status {
+  color: rgb(1 51 48 / 55%);
   font-size: 0.85rem;
+  font-weight: 650;
 }
 
-.market-strip__grid {
+.market__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .market-card {
-  padding: 22px;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
-}
-
-.market-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 22px;
+  background: #013330;
+  color: #e5ffc3;
 }
 
 .market-card__top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 10px;
+  align-items: center;
 }
 
 .market-card__name {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .market-card__change {
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 999px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 750;
 }
 
-.market-card__change--up {
-  color: var(--color-accent);
-  background: var(--color-accent-dim);
+.market-card__change.is-up {
+  background: rgb(186 242 74 / 18%);
+  color: #baf24a;
 }
 
-.market-card__change--down {
-  color: var(--color-danger);
-  background: rgb(251 113 133 / 12%);
+.market-card__change.is-down {
+  background: rgb(251 113 133 / 18%);
+  color: #fb7185;
 }
 
-.market-card__change--flat {
-  color: var(--color-text-muted);
-  background: var(--color-surface-muted);
+.market-card__change.is-flat {
+  background: rgb(229 255 195 / 10%);
+  color: rgb(229 255 195 / 70%);
 }
 
 .market-card__price {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+}
+
+.market-card__symbol {
+  color: rgb(229 255 195 / 55%);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+@media (min-width: 900px) {
+  .market__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 </style>

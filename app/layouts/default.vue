@@ -14,11 +14,18 @@ onMounted(() => {
   <div class="app-shell">
     <header class="site-header">
       <div class="container site-header__inner">
-        <NuxtLink class="brand" to="/">
+        <NuxtLink
+          class="brand"
+          to="/"
+        >
           Bot Platform
         </NuxtLink>
+
         <div class="site-header__menu">
-          <nav class="nav" aria-label="Основная навигация">
+          <nav
+            class="nav"
+            aria-label="Основная навигация"
+          >
             <NuxtLink to="/">
               {{ $t('nav.home') }}
             </NuxtLink>
@@ -33,7 +40,15 @@ onMounted(() => {
 
         <div class="site-header__actions">
           <UserMenu v-if="auth.loggedIn.value" />
-          <LangSwitcher v-if="!auth.loggedIn.value" />
+          <template v-else>
+            <LangSwitcher />
+            <NuxtLink
+              class="header-cta"
+              to="/auth/register"
+            >
+              {{ $t('home.hero_cta') }}
+            </NuxtLink>
+          </template>
         </div>
       </div>
     </header>
@@ -49,30 +64,26 @@ onMounted(() => {
   z-index: 100;
   padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid var(--color-border);
-  background: rgb(6 6 8 / 72%);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgb(229 255 195 / 82%);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 
 .site-header__inner {
   display: flex;
-  min-height: 68px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
 }
 
 .brand {
-  color: var(--color-text);
-  font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: -0.03em;
-  text-decoration: none;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--color-text);
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
 }
 
 .site-header__menu {
@@ -80,43 +91,55 @@ onMounted(() => {
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 24px;
   min-width: 0;
 }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--color-text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 .nav a {
-  text-decoration: none;
-  padding: 8px 14px;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
   border: 1px solid transparent;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
-.nav a:hover {
-  color: var(--color-text);
-  background: var(--color-surface-muted);
-}
-
+.nav a:hover,
 .nav a.router-link-active {
-  color: var(--color-accent);
-  background: var(--color-accent-dim);
-  border-color: rgb(52 211 153 / 18%);
+  color: var(--color-text);
+  background: rgb(1 51 48 / 8%);
 }
 
 .site-header__actions {
   display: flex;
-  align-items: center;
-  gap: 12px;
   flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
 }
 
 @media (max-width: 768px) {
@@ -128,38 +151,27 @@ onMounted(() => {
 
   .site-header__menu {
     order: 3;
-    flex-direction: column;
     width: 100%;
-    gap: 12px;
   }
 
   .nav {
-    display: flex;
     width: 100%;
-    flex-wrap: nowrap;
     justify-content: stretch;
     gap: 6px;
     padding: 4px;
     border-radius: 14px;
-    background: var(--color-surface-muted);
     border: 1px solid var(--color-border);
+    background: rgb(1 51 48 / 5%);
     font-size: 0.85rem;
   }
 
-  /* Equal-width segmented nav with comfortable tap targets */
   .nav a {
     flex: 1 1 0;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 40px;
-    padding: 8px 10px;
-    text-align: center;
     white-space: nowrap;
-  }
-
-  .brand {
-    font-size: 1rem;
   }
 
   .site-header__actions {

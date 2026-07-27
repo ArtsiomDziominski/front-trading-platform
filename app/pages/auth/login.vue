@@ -196,7 +196,10 @@ function handleTelegramError(message: string) {
 .auth-title {
   margin: 0 0 28px;
   font-size: 1.6rem;
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-weight: 400;
   text-align: center;
+  color: var(--color-on-surface);
 }
 
 .auth-form {
@@ -230,6 +233,6 @@ function handleTelegramError(message: string) {
 }
 
 .auth-link-text {
-  color: var(--color-text-muted);
+  color: var(--color-on-surface-muted);
 }
 </style>

@@ -3,48 +3,54 @@
 @import "lenis/dist/lenis.css";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --color-bg: #060608;
-  --color-surface: #0c0c10;
-  --color-surface-alt: #14141c;
-  --color-surface-muted: rgb(255 255 255 / 4%);
-  --color-border: rgb(255 255 255 / 7%);
-  --color-text: #f4f4f8;
-  --color-text-muted: rgb(255 255 255 / 42%);
-  --color-accent: #34d399;
-  --color-accent-dim: rgb(52 211 153 / 12%);
+  /* MetaMask-like marketing tokens (homepage language) */
+  --mm-green-dark: #013330;
+  --mm-green: #baf24a;
+  --mm-green-light: #e5ffc3;
+  --mm-blue-light: #cee9fd;
+
+  --color-bg: var(--mm-green-light);
+  --color-surface: var(--mm-green-dark);
+  --color-surface-alt: #024843;
+  --color-surface-muted: rgb(1 51 48 / 8%);
+  --color-border: rgb(1 51 48 / 12%);
+  --color-text: var(--mm-green-dark);
+  --color-text-muted: rgb(1 51 48 / 62%);
+  --color-on-surface: var(--mm-green-light);
+  --color-on-surface-muted: rgb(229 255 195 / 72%);
+  --color-accent: var(--mm-green);
+  --color-accent-dim: rgb(186 242 74 / 18%);
   --color-danger: #fb7185;
-  --color-warning: #fbbf24;
+  --color-warning: #f5a623;
 
-  --shadow-sm: 0 8px 24px rgb(0 0 0 / 24%);
-  --shadow-md: 0 16px 40px rgb(0 0 0 / 32%);
-  --shadow-lg: 0 24px 56px rgb(0 0 0 / 40%);
-  --shadow-inset-sm: inset 0 1px 0 rgb(255 255 255 / 4%);
-  --shadow-inset-md: inset 0 1px 0 rgb(255 255 255 / 6%);
+  --shadow-sm: 0 8px 24px rgb(1 51 48 / 10%);
+  --shadow-md: 0 16px 40px rgb(1 51 48 / 14%);
+  --shadow-lg: 0 24px 56px rgb(1 51 48 / 18%);
+  --shadow-inset-sm: inset 0 1px 0 rgb(255 255 255 / 8%);
+  --shadow-inset-md: inset 0 1px 0 rgb(255 255 255 / 10%);
   --shadow-elevated:
-    0 1px 0 rgb(255 255 255 / 5%) inset,
-    0 24px 48px rgb(0 0 0 / 28%);
+    0 1px 0 rgb(255 255 255 / 8%) inset,
+    0 18px 40px rgb(1 51 48 / 16%);
 
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 20px;
   --radius-xl: 24px;
-  --radius-bento: 22px;
+  --radius-bento: 28px;
 
   --bento-bg: var(--color-surface);
-  --bento-surface: var(--color-surface-muted);
-  --bento-border: var(--color-border);
-  --bento-text: var(--color-text);
-  --bento-muted: var(--color-text-muted);
+  --bento-surface: rgb(229 255 195 / 8%);
+  --bento-border: rgb(229 255 195 / 12%);
+  --bento-text: var(--color-on-surface);
+  --bento-muted: var(--color-on-surface-muted);
   --bento-accent: var(--color-accent);
   --bento-danger: var(--color-danger);
   --bento-radius: var(--radius-bento);
   --bento-cell-radius: var(--radius-md);
 
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -61,8 +67,8 @@ body {
   margin: 0;
   overflow-x: clip;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgb(52 211 153 / 7%), transparent 55%),
-    radial-gradient(ellipse 45% 35% at 100% 0%, rgb(52 211 153 / 4%), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgb(186 242 74 / 28%), transparent 55%),
+    radial-gradient(ellipse 40% 35% at 100% 0%, rgb(206 233 253 / 45%), transparent 50%),
     var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
@@ -109,11 +115,11 @@ a,
   align-items: center;
   gap: 10px;
   margin: 0 0 10px;
-  color: var(--color-accent);
+  color: var(--color-text);
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -123,15 +129,16 @@ a,
   width: 20px;
   height: 2px;
   border-radius: 999px;
-  background: currentColor;
-  opacity: 0.9;
+  background: var(--color-accent);
+  opacity: 0.95;
 }
 
 .section-title {
   margin: 0 0 8px;
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-  font-weight: 700;
-  line-height: 1.15;
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1.05;
   letter-spacing: -0.03em;
 }
 
@@ -144,51 +151,49 @@ a,
 
 .eyebrow {
   margin: 0 0 10px;
-  color: var(--color-accent);
+  color: var(--color-text);
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Bento card utilities (neumo aliases kept for compatibility) */
+/* Dark teal cards on cream canvas (homepage format) */
 .bento,
 .neumo {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgb(229 255 195 / 12%);
   border-radius: var(--radius-bento);
   background:
-    linear-gradient(155deg, rgb(255 255 255 / 4%) 0%, transparent 42%),
-    linear-gradient(180deg, var(--color-surface-alt) 0%, var(--color-surface) 100%);
+    linear-gradient(160deg, #024843 0%, var(--color-surface) 100%);
+  color: var(--color-on-surface);
   box-shadow: var(--shadow-elevated);
 }
 
 .bento-sm,
 .neumo-sm {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgb(229 255 195 / 10%);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(155deg, rgb(255 255 255 / 3%) 0%, transparent 40%),
-    var(--color-surface-alt);
+  background: var(--color-surface-alt);
+  color: var(--color-on-surface);
   box-shadow: var(--shadow-sm);
 }
 
 .bento-inset,
 .neumo-inset {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgb(229 255 195 / 10%);
   border-radius: var(--radius-md);
-  background: var(--color-surface-muted);
+  background: rgb(229 255 195 / 6%);
   box-shadow: var(--shadow-inset-sm);
 }
 
 .bento-sm-inset,
 .neumo-sm-inset {
-  border: 1px solid var(--color-border);
+  border: 1px solid rgb(229 255 195 / 8%);
   border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
+  background: rgb(229 255 195 / 5%);
   box-shadow: var(--shadow-inset-sm);
 }
 
-/* Shared bento styling for UCard surfaces across the app */
 .feature-card,
 .exchange-card,
 .strategy-card,
@@ -203,13 +208,70 @@ a,
 .empty-keys-card,
 .cta-card,
 .bots-public-cta__card,
-.soon-card {
-  border: 1px solid var(--color-border) !important;
+.soon-card,
+.bot-card,
+.step-card {
+  --color-text: var(--color-on-surface);
+  --color-text-muted: var(--color-on-surface-muted);
+  --color-border: rgb(229 255 195 / 12%);
+  --color-surface-muted: rgb(229 255 195 / 8%);
+  border: 1px solid rgb(229 255 195 / 12%) !important;
   border-radius: var(--radius-bento) !important;
   background:
-    linear-gradient(155deg, rgb(255 255 255 / 4%) 0%, transparent 42%),
-    linear-gradient(180deg, var(--color-surface-alt) 0%, var(--color-surface) 100%) !important;
+    linear-gradient(160deg, #024843 0%, var(--color-surface) 100%) !important;
+  color: var(--color-on-surface) !important;
   box-shadow: var(--shadow-elevated) !important;
+}
+
+/* Dark cards: readable labels, inputs, separators (auth/settings) */
+.auth-card,
+.settings-card,
+.create-form-card {
+  --ui-text: var(--color-on-surface);
+  --ui-text-muted: var(--color-on-surface-muted);
+  --ui-text-dimmed: rgb(229 255 195 / 55%);
+  --ui-border: rgb(229 255 195 / 14%);
+}
+
+.auth-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed),
+.settings-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed),
+.create-form-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed) {
+  color: var(--color-on-surface-muted) !important;
+}
+
+.auth-card .auth-title,
+.settings-card .settings-title,
+.create-form-card .create-form-title {
+  color: var(--color-on-surface);
+}
+
+.auth-card .auth-link-text,
+.settings-card .settings-muted {
+  color: var(--color-on-surface-muted);
+}
+
+.auth-card .auth-link,
+.settings-card .settings-link {
+  color: var(--color-accent);
+}
+
+.auth-card :is(input, textarea, select),
+.settings-card :is(input, textarea, select),
+.create-form-card :is(input, textarea, select) {
+  color: var(--mm-green-dark) !important;
+  background: #fff !important;
+}
+
+.auth-card :is(input, textarea)::placeholder,
+.settings-card :is(input, textarea)::placeholder,
+.create-form-card :is(input, textarea)::placeholder {
+  color: rgb(1 51 48 / 45%) !important;
+}
+
+.auth-card [data-slot="separator"] :is(span, .text-muted),
+.settings-card [data-slot="separator"] :is(span, .text-muted) {
+  color: var(--color-on-surface-muted) !important;
+  background: var(--color-surface) !important;
 }
 
 .grid-2cols {
@@ -218,22 +280,57 @@ a,
   gap: 24px;
 }
 
-/* Neutral outline buttons: prevent light text on light background */
-html.dark a.ring-inset.text-default,
-html.dark button.ring-inset.text-default,
-html.dark a.inline-flex.text-default.bg-default,
-html.dark button.inline-flex.text-default.bg-default {
+/* Shared marketing CTA button */
+.mm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.mm-btn:hover {
+  transform: scale(1.03);
+  background: #d4ff6a;
+}
+
+.mm-btn--dark {
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
+.mm-btn--ghost {
+  background: transparent;
+  color: var(--color-on-surface);
+  border: 1px solid rgb(229 255 195 / 35%);
+}
+
+/* Nuxt UI outline buttons on cream canvas */
+a.ring-inset.text-default,
+button.ring-inset.text-default,
+a.inline-flex.text-default.bg-default,
+button.inline-flex.text-default.bg-default {
   color: var(--color-text) !important;
-  background-color: var(--color-surface-muted) !important;
+  background-color: rgb(1 51 48 / 6%) !important;
   --tw-ring-color: var(--color-border) !important;
 }
 
-html.dark a.ring-inset.text-default:hover,
-html.dark button.ring-inset.text-default:hover,
-html.dark a.inline-flex.text-default.bg-default:hover,
-html.dark button.inline-flex.text-default.bg-default:hover {
-  background-color: rgb(255 255 255 / 8%) !important;
-  --tw-ring-color: rgb(255 255 255 / 12%) !important;
+a.ring-inset.text-default:hover,
+button.ring-inset.text-default:hover,
+a.inline-flex.text-default.bg-default:hover,
+button.inline-flex.text-default.bg-default:hover {
+  background-color: rgb(1 51 48 / 10%) !important;
+  --tw-ring-color: rgb(1 51 48 / 18%) !important;
 }
 
 @media (max-width: 640px) {
@@ -266,8 +363,6 @@ html.dark button.inline-flex.text-default.bg-default:hover {
   height: 28px;
 }
 
-/* Prevent iOS Safari from auto-zooming when focusing form fields:
-   any control below 16px triggers a zoom-in on tap. */
 @media (max-width: 640px) {
   input,
   select,
@@ -276,7 +371,6 @@ html.dark button.inline-flex.text-default.bg-default:hover {
   }
 }
 
-/* Respect users who prefer reduced motion (accessibility / 2026 baseline). */
 html.home-smooth-scroll {
   scroll-behavior: auto;
 }

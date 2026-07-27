@@ -216,7 +216,7 @@ function settingValue(setting: CreationHistorySetting): string {
 }
 
 .creation-history__item--selected {
-  border-color: rgb(52 211 153 / 22%);
+  border-color: rgb(186 242 74 / 28%);
   background: var(--color-accent-dim);
   outline: none;
 }
