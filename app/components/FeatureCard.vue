@@ -40,7 +40,7 @@ defineProps<{
   border-radius: var(--radius-md);
   background: var(--color-accent-dim);
   color: var(--color-accent);
-  border: 1px solid rgb(52 211 153 / 14%);
+  border: 1px solid rgb(186 242 74 / 22%);
   font-size: 1.6rem;
 }
 

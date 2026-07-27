@@ -191,8 +191,8 @@ const capabilities = [
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(52 211 153 / 12%), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 20%, rgb(52 211 153 / 5%), transparent 50%);
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(186 242 74 / 22%), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgb(206 233 253 / 35%), transparent 50%);
   pointer-events: none;
 }
 
@@ -291,7 +291,7 @@ const capabilities = [
   border-radius: var(--radius-md);
   background: var(--color-accent-dim);
   color: var(--color-accent);
-  border: 1px solid rgb(52 211 153 / 14%);
+  border: 1px solid rgb(186 242 74 / 22%);
 }
 
 .strategy-card__icon,

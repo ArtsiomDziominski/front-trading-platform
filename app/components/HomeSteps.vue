@@ -5,6 +5,8 @@ const settingsLink = computed(() =>
   auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
 )
 
+const ctaTo = computed(() => (auth.loggedIn.value ? '/bots/create' : '/auth/register'))
+
 const steps = computed(() => [
   {
     number: '01',
@@ -38,98 +40,206 @@ const steps = computed(() => [
 </script>
 
 <template>
-  <section class="page-section home-steps">
+  <section class="beginner">
     <div class="container">
-      <div class="section-header">
-        <span class="section-label">{{ $t('home.steps_title') }}</span>
-        <h2 class="section-title">{{ $t('home.steps_subtitle') }}</h2>
-      </div>
+      <header class="beginner__header">
+        <div
+          class="beginner__art"
+          aria-hidden="true"
+        >
+          <div class="beginner__blob beginner__blob--1" />
+          <div class="beginner__blob beginner__blob--2" />
+          <div class="beginner__blob beginner__blob--3" />
+        </div>
+        <div class="beginner__intro">
+          <h2>{{ $t('home.steps_title') }}</h2>
+          <p>{{ $t('home.steps_subtitle') }}</p>
+          <NuxtLink
+            class="beginner__cta"
+            :to="ctaTo"
+          >
+            {{ $t('home.steps_cta') }}
+          </NuxtLink>
+        </div>
+      </header>
 
-      <div class="home-steps__grid">
-        <NuxtLink
+      <ol class="beginner__steps">
+        <li
           v-for="step in steps"
           :key="step.number"
-          :to="step.to"
-          class="step-card bento"
         >
-          <div class="step-card__head">
-            <span class="step-card__number">{{ step.number }}</span>
-            <span class="step-card__icon-wrap">
-              <UIcon :name="step.icon" class="step-card__icon" />
-            </span>
-          </div>
-          <h3 class="step-card__title">{{ $t(step.titleKey) }}</h3>
-          <p class="step-card__desc">{{ $t(step.descKey) }}</p>
-        </NuxtLink>
-      </div>
+          <NuxtLink
+            :to="step.to"
+            class="step"
+          >
+            <div class="step__top">
+              <span class="step__num">{{ step.number }}</span>
+              <UIcon
+                :name="step.icon"
+                class="step__icon"
+              />
+            </div>
+            <h3>{{ $t(step.titleKey) }}</h3>
+            <p>{{ $t(step.descKey) }}</p>
+          </NuxtLink>
+        </li>
+      </ol>
     </div>
   </section>
 </template>
 
 <style scoped>
-.section-header {
-  text-align: center;
-  margin-bottom: 36px;
+.beginner {
+  padding: 80px 0 100px;
+  background: #e5ffc3;
+  color: #013330;
 }
 
-.home-steps__grid {
+.beginner__header {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
-}
-
-.step-card {
-  display: block;
-  padding: 28px 24px;
-  text-decoration: none;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
-}
-
-.step-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
-}
-
-.step-card__head {
-  display: flex;
+  gap: 32px;
+  margin-bottom: 36px;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
 }
 
-.step-card__number {
-  color: var(--color-accent);
+.beginner__art {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 160px;
+}
+
+.beginner__blob {
+  border-radius: 24px;
+  background: #013330;
+}
+
+.beginner__blob--1 {
+  background:
+    radial-gradient(circle at 40% 40%, rgb(186 242 74 / 50%), transparent 50%),
+    #013330;
+}
+
+.beginner__blob--2 {
+  transform: translateY(14px);
+  background:
+    radial-gradient(circle at 50% 40%, rgb(206 233 253 / 55%), transparent 50%),
+    #013330;
+}
+
+.beginner__blob--3 {
+  background:
+    radial-gradient(circle at 45% 40%, rgb(255 200 120 / 40%), transparent 50%),
+    #013330;
+}
+
+.beginner__intro h2 {
+  margin: 0;
+  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.beginner__intro p {
+  max-width: 46ch;
+  margin: 14px 0 0;
+  color: rgb(1 51 48 / 70%);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.beginner__cta {
+  display: inline-flex;
+  margin-top: 22px;
+  min-height: 48px;
+  align-items: center;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #013330;
+  color: #e5ffc3;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.beginner__steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  gap: 10px;
+  height: 100%;
+  padding: 22px;
+  border-radius: 24px;
+  background: #013330;
+  color: #e5ffc3;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.step:hover {
+  transform: translateY(-4px);
+}
+
+.step__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step__num {
+  color: #baf24a;
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
-.step-card__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent-dim);
-  color: var(--color-accent);
-}
-
-.step-card__icon {
+.step__icon {
   width: 22px;
   height: 22px;
+  color: #baf24a;
 }
 
-.step-card__title {
-  margin: 0 0 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.step-card__desc {
+.step h3 {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.step p {
+  margin: 0;
+  color: rgb(229 255 195 / 75%);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .beginner__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .beginner__header {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 48px;
+  }
+
+  .beginner__blob {
+    min-height: 200px;
+  }
+
+  .beginner__steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 </style>
