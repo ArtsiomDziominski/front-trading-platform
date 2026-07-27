@@ -32,5 +32,13 @@ export default defineAppConfig({
         base: 'rounded-xl',
       },
     },
+    formField: {
+      slots: {
+        label: 'block font-medium text-[var(--color-text-muted)]',
+        description: 'text-[var(--color-text-muted)]',
+        hint: 'text-[var(--color-text-muted)]',
+        help: 'text-[var(--color-text-muted)]',
+      },
+    },
   },
 })

@@ -223,6 +223,57 @@ a,
   box-shadow: var(--shadow-elevated) !important;
 }
 
+/* Dark cards: readable labels, inputs, separators (auth/settings) */
+.auth-card,
+.settings-card,
+.create-form-card {
+  --ui-text: var(--color-on-surface);
+  --ui-text-muted: var(--color-on-surface-muted);
+  --ui-text-dimmed: rgb(229 255 195 / 55%);
+  --ui-border: rgb(229 255 195 / 14%);
+}
+
+.auth-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed),
+.settings-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed),
+.create-form-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed) {
+  color: var(--color-on-surface-muted) !important;
+}
+
+.auth-card .auth-title,
+.settings-card .settings-title,
+.create-form-card .create-form-title {
+  color: var(--color-on-surface);
+}
+
+.auth-card .auth-link-text,
+.settings-card .settings-muted {
+  color: var(--color-on-surface-muted);
+}
+
+.auth-card .auth-link,
+.settings-card .settings-link {
+  color: var(--color-accent);
+}
+
+.auth-card :is(input, textarea, select),
+.settings-card :is(input, textarea, select),
+.create-form-card :is(input, textarea, select) {
+  color: var(--mm-green-dark) !important;
+  background: #fff !important;
+}
+
+.auth-card :is(input, textarea)::placeholder,
+.settings-card :is(input, textarea)::placeholder,
+.create-form-card :is(input, textarea)::placeholder {
+  color: rgb(1 51 48 / 45%) !important;
+}
+
+.auth-card [data-slot="separator"] :is(span, .text-muted),
+.settings-card [data-slot="separator"] :is(span, .text-muted) {
+  color: var(--color-on-surface-muted) !important;
+  background: var(--color-surface) !important;
+}
+
 .grid-2cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
