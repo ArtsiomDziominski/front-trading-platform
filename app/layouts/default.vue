@@ -1,7 +1,30 @@
 <script setup lang="ts">
 const auth = useAuth()
+const route = useRoute()
+const { t } = useI18n()
 
 const botsNavTo = computed(() => (auth.loggedIn.value ? '/bots' : '/bots/overview'))
+
+const bottomNavItems = computed(() => [
+  {
+    to: '/',
+    label: t('nav.home'),
+    icon: 'i-lucide-house',
+    isActive: route.path === '/',
+  },
+  {
+    to: botsNavTo.value,
+    label: t('nav.bots'),
+    icon: 'i-lucide-bot',
+    isActive: route.path.startsWith('/bots'),
+  },
+  {
+    to: '/exchanges',
+    label: t('nav.exchanges'),
+    icon: 'i-lucide-landmark',
+    isActive: route.path.startsWith('/exchanges'),
+  },
+])
 
 onMounted(() => {
   if (auth.user.value === null) {
@@ -53,7 +76,28 @@ onMounted(() => {
       </div>
     </header>
 
-    <slot />
+    <div class="app-shell__content">
+      <slot />
+    </div>
+
+    <nav
+      class="bottom-nav"
+      aria-label="Мобильная навигация"
+    >
+      <NuxtLink
+        v-for="item in bottomNavItems"
+        :key="item.to"
+        :to="item.to"
+        class="bottom-nav__item"
+        :class="{ 'bottom-nav__item--active': item.isActive }"
+      >
+        <UIcon
+          :name="item.icon"
+          class="bottom-nav__icon"
+        />
+        <span>{{ item.label }}</span>
+      </NuxtLink>
+    </nav>
   </div>
 </template>
 
@@ -142,40 +186,66 @@ onMounted(() => {
   text-decoration: none;
 }
 
-@media (max-width: 768px) {
-  .site-header__inner {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px 0;
+.app-shell__content {
+  min-width: 0;
+}
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .site-header {
+    display: none;
   }
 
-  .site-header__menu {
-    order: 3;
-    width: 100%;
+  .bottom-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: rgb(229 255 195 / 92%);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
   }
 
-  .nav {
-    width: 100%;
-    justify-content: stretch;
-    gap: 6px;
-    padding: 4px;
-    border-radius: 14px;
-    border: 1px solid var(--color-border);
-    background: rgb(1 51 48 / 5%);
-    font-size: 0.85rem;
-  }
-
-  .nav a {
-    flex: 1 1 0;
+  .bottom-nav__item {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 40px;
-    white-space: nowrap;
+    gap: 4px;
+    min-height: 52px;
+    padding: 8px 6px;
+    border-radius: 14px;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    transition:
+      color 0.2s ease,
+      background 0.2s ease;
   }
 
-  .site-header__actions {
-    margin-left: auto;
+  .bottom-nav__icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .bottom-nav__item--active {
+    color: var(--color-text);
+    background: rgb(1 51 48 / 10%);
+  }
+
+  .app-shell__content {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
   }
 }
 </style>
