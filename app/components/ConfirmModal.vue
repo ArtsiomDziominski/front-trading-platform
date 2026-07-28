@@ -30,7 +30,7 @@ function onCancel() {
 </script>
 
 <template>
-  <UModal
+  <AppModal
     v-model:open="open"
     :title="title"
     :dismissible="!loading"
@@ -64,5 +64,5 @@ function onCancel() {
         {{ loading ? loadingLabel : confirmLabel }}
       </UButton>
     </template>
-  </UModal>
+  </AppModal>
 </template>
