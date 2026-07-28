@@ -1,0 +1,23 @@
+{
+  "name": "Trading Bot Platform",
+  "short_name": "Trading Bot",
+  "description": "Платформа для создания торговых ботов. Binance, Bybit, OKX.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#e5ffc3",
+  "theme_color": "#013330",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

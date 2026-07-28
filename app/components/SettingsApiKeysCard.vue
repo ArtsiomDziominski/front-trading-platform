@@ -180,12 +180,12 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
         {{ $t('settings.api_keys_add') }}
       </UButton>
 
-      <UModal
+      <AppModal
         v-model:open="addModalOpen"
         :title="$t('settings.api_keys_add_title')"
         :dismissible="!apiKeys.creating.value"
         scrollable
-        :ui="{ footer: 'justify-end gap-2' }"
+        :ui="{ footer: 'flex-col-reverse gap-2 sm:flex-row sm:justify-end' }"
       >
         <template #body>
           <form class="api-keys-form flex flex-col gap-4" @submit.prevent="handleCreateSubmit">
@@ -261,6 +261,7 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
             color="neutral"
             variant="outline"
             size="sm"
+            class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
             :disabled="apiKeys.creating.value"
             @click="closeAddModal"
           >
@@ -268,13 +269,14 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
           </UButton>
           <UButton
             size="sm"
+            class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
             :loading="apiKeys.creating.value"
             @click="handleCreateSubmit"
           >
             {{ $t('settings.api_keys_save') }}
           </UButton>
         </template>
-      </UModal>
+      </AppModal>
 
       <ConfirmModal
         v-model="deleteConfirmOpen"
