@@ -34,14 +34,13 @@ async function handleSubmit() {
 
         <template v-if="sent">
           <UAlert color="success" variant="subtle" :title="$t('auth.reset_password_sent')" />
-          <UButton
+          <AppButton
             class="mt-5 w-full justify-center"
-            color="neutral"
-            variant="outline"
+            variant="secondary"
             to="/auth/login"
           >
             {{ $t('auth.register_link_login') }}
-          </UButton>
+          </AppButton>
         </template>
 
         <template v-else>
@@ -70,7 +69,7 @@ async function handleSubmit() {
 
             <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />
 
-            <UButton
+            <AppButton
               class="w-full justify-center"
               size="lg"
               type="submit"
@@ -78,7 +77,7 @@ async function handleSubmit() {
               block
             >
               {{ auth.loading.value ? $t('common.loading') : $t('auth.reset_password_submit') }}
-            </UButton>
+            </AppButton>
           </form>
 
           <div class="auth-links">

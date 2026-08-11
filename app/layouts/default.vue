@@ -108,12 +108,12 @@ onMounted(() => {
           <UserMenu v-if="auth.loggedIn.value" />
           <template v-else>
             <LangSwitcher />
-            <NuxtLink
-              class="header-cta"
+            <AppButton
+              size="sm"
               to="/auth/register"
             >
               {{ $t('home.hero_cta') }}
-            </NuxtLink>
+            </AppButton>
           </template>
         </div>
       </div>
@@ -229,22 +229,6 @@ onMounted(() => {
   flex-shrink: 0;
   align-items: center;
   gap: 10px;
-}
-
-.header-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-decoration: none;
 }
 
 .app-shell__content {

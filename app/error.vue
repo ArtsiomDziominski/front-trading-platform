@@ -13,9 +13,9 @@ const handleError = () => clearError({ redirect: '/' })
     <div class="container text-center">
       <h1 class="section-title">{{ error.statusCode }}</h1>
       <p class="section-subtitle">{{ error.statusMessage || 'Что-то пошло не так.' }}</p>
-      <UButton class="mt-6" @click="handleError">
+      <AppButton class="mt-6" @click="handleError">
         На главную
-      </UButton>
+      </AppButton>
     </div>
   </main>
 </template>

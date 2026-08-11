@@ -268,17 +268,16 @@ defineExpose({ applyPayload, scrollIntoView })
         <UAlert v-if="engineWarning" color="warning" variant="subtle" :title="engineWarning" />
 
         <div class="form-actions flex flex-wrap gap-2">
-          <UButton type="submit" :loading="creating">
+          <AppButton type="submit" :loading="creating">
             {{ $t('bots.create_submit') }}
-          </UButton>
-          <UButton
+          </AppButton>
+          <AppButton
             v-if="createdBotId"
-            color="neutral"
-            variant="outline"
+            variant="secondary"
             to="/bots"
           >
             {{ $t('bots.back_to_bots') }}
-          </UButton>
+          </AppButton>
         </div>
       </form>
     </div>

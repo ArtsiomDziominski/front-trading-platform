@@ -56,17 +56,14 @@ const exchanges = [
           </div>
           <h3>{{ item.name }}</h3>
           <p>{{ $t(item.descKey) }}</p>
-          <NuxtLink
+          <AppButton
             v-if="item.active"
             :to="settingsLink"
-            class="ex-card__link"
+            size="sm"
+            class="ex-card__cta"
           >
             {{ $t('home.exchanges_connect') }}
-            <UIcon
-              name="i-lucide-arrow-right"
-              class="ex-card__arrow"
-            />
-          </NuxtLink>
+          </AppButton>
         </article>
       </div>
     </div>
@@ -154,20 +151,9 @@ const exchanges = [
   line-height: 1.5;
 }
 
-.ex-card__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.ex-card__cta {
   margin-top: 4px;
-  color: #baf24a;
-  font-size: 0.9rem;
-  font-weight: 750;
-  text-decoration: none;
-}
-
-.ex-card__arrow {
-  width: 16px;
-  height: 16px;
+  justify-self: start;
 }
 
 @media (min-width: 768px) {

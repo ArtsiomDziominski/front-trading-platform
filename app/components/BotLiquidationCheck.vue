@@ -274,17 +274,16 @@ defineExpose({ clearResult: clearLiquidationResult })
 
       <UAlert v-if="liquidationCheckError" color="error" variant="subtle" :title="liquidationCheckError" />
 
-      <UButton
+      <AppButton
         type="button"
-        color="neutral"
-        variant="outline"
+        variant="secondary"
         class="w-full"
         :loading="liquidationChecking"
         :disabled="creating"
         @click="handleCheckLiquidation"
       >
         {{ $t('bots.liquidation_check_submit') }}
-      </UButton>
+      </AppButton>
 
       <div v-if="liquidationResult" class="liquidation-result" role="status">
         <div class="liquidation-result__row">

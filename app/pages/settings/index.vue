@@ -129,9 +129,9 @@ async function handlePasswordReset() {
               :title="$t('settings.profile_saved')"
             />
 
-            <UButton type="submit" :loading="auth.loading.value">
+            <AppButton type="submit" :loading="auth.loading.value">
               {{ $t('settings.save_profile') }}
-            </UButton>
+            </AppButton>
           </form>
         </UCard>
 
@@ -151,20 +151,21 @@ async function handlePasswordReset() {
             :title="$t('auth.reset_password_sent')"
           />
 
-          <UButton
-            color="neutral"
-            variant="outline"
-            type="button"
-            :disabled="auth.loading.value || passwordSent"
-            :loading="auth.loading.value"
-            @click="handlePasswordReset"
-          >
-            {{ $t('settings.send_password_reset') }}
-          </UButton>
+          <div class="settings-security__actions">
+            <AppButton
+              variant="secondary"
+              type="button"
+              :disabled="auth.loading.value || passwordSent"
+              :loading="auth.loading.value"
+              @click="handlePasswordReset"
+            >
+              {{ $t('settings.send_password_reset') }}
+            </AppButton>
 
-          <NuxtLink to="/auth/reset-password" class="settings-link">
-            {{ $t('settings.reset_password_other_email') }}
-          </NuxtLink>
+            <NuxtLink to="/auth/reset-password" class="settings-link">
+              {{ $t('settings.reset_password_other_email') }}
+            </NuxtLink>
+          </div>
         </UCard>
       </div>
     </div>
@@ -208,9 +209,14 @@ async function handlePasswordReset() {
   gap: 18px;
 }
 
+.settings-security__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .settings-link {
-  display: inline-block;
-  margin-top: 16px;
   color: var(--color-accent);
   font-size: 0.88rem;
   text-decoration: none;

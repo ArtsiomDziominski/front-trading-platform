@@ -111,9 +111,9 @@ onMounted(() => {
         <div>
           <h1 class="section-title">{{ $t('bots.event_history_subtitle') }}</h1>
         </div>
-        <UButton color="neutral" variant="outline" to="/bots">
+        <AppButton variant="secondary" to="/bots">
           {{ $t('bots.back_to_bots') }}
-        </UButton>
+        </AppButton>
       </div>
 
       <div class="history-toolbar">
@@ -134,9 +134,9 @@ onMounted(() => {
 
       <div v-else-if="eventsError" class="state-message state-message--error" role="alert">
         <p>{{ eventsError }}</p>
-        <UButton color="neutral" variant="outline" size="sm" @click="loadEvents">
+        <AppButton variant="secondary" size="sm" @click="loadEvents">
           {{ $t('common.retry') }}
-        </UButton>
+        </AppButton>
       </div>
 
       <ul v-else-if="events.length" class="event-list">

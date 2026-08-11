@@ -163,22 +163,22 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
               {{ $t('settings.api_keys_added', { date: formatCreatedAt(key.created_at) }) }}
             </p>
           </div>
-          <UButton
-            color="error"
+          <AppButton
+            variant="secondary"
             size="sm"
             :loading="apiKeys.deletingId.value === key.id"
             @click="openDeleteConfirm(key)"
           >
             {{ $t('settings.api_keys_delete') }}
-          </UButton>
+          </AppButton>
         </li>
       </ul>
 
       <p v-else class="api-keys-empty">{{ $t('settings.api_keys_empty') }}</p>
 
-      <UButton class="mt-2" @click="openAddModal">
+      <AppButton class="mt-2" @click="openAddModal">
         {{ $t('settings.api_keys_add') }}
-      </UButton>
+      </AppButton>
 
       <AppModal
         v-model:open="addModalOpen"
@@ -257,24 +257,23 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
         </template>
 
         <template #footer>
-          <UButton
-            color="neutral"
-            variant="outline"
+          <AppButton
+            variant="secondary"
             size="sm"
             class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
             :disabled="apiKeys.creating.value"
             @click="closeAddModal"
           >
             {{ $t('common.cancel') }}
-          </UButton>
-          <UButton
+          </AppButton>
+          <AppButton
             size="sm"
             class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
             :loading="apiKeys.creating.value"
             @click="handleCreateSubmit"
           >
             {{ $t('settings.api_keys_save') }}
-          </UButton>
+          </AppButton>
         </template>
       </AppModal>
 

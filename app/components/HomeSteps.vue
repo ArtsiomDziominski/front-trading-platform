@@ -54,12 +54,12 @@ const steps = computed(() => [
         <div class="beginner__intro">
           <h2>{{ $t('home.steps_title') }}</h2>
           <p>{{ $t('home.steps_subtitle') }}</p>
-          <NuxtLink
+          <AppButton
             class="beginner__cta"
             :to="ctaTo"
           >
             {{ $t('home.steps_cta') }}
-          </NuxtLink>
+          </AppButton>
         </div>
       </header>
 
@@ -150,19 +150,7 @@ const steps = computed(() => [
 }
 
 .beginner__cta {
-  display: inline-flex;
   margin-top: 22px;
-  min-height: 48px;
-  align-items: center;
-  padding: 0 22px;
-  border-radius: 999px;
-  background: #013330;
-  color: #e5ffc3;
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  text-decoration: none;
 }
 
 .beginner__steps {

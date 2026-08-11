@@ -61,12 +61,12 @@ const capabilities = [
         <p class="bots-public-hero__copy">{{ $t('bots.public_subtitle') }}</p>
 
         <div class="bots-public-hero__actions">
-          <UButton size="lg" to="/auth/register">
+          <AppButton size="lg" to="/auth/register">
             {{ $t('bots.public_cta_register') }}
-          </UButton>
-          <UButton size="lg" color="neutral" variant="outline" to="/auth/login">
+          </AppButton>
+          <AppButton size="lg" variant="secondary" to="/auth/login">
             {{ $t('auth.login') }}
-          </UButton>
+          </AppButton>
         </div>
       </div>
     </section>
@@ -166,9 +166,9 @@ const capabilities = [
           <h2 class="bots-public-cta__title">{{ $t('bots.public_cta_title') }}</h2>
           <p class="bots-public-cta__desc">{{ $t('bots.public_cta_desc') }}</p>
           <div class="bots-public-cta__actions">
-            <UButton size="lg" to="/auth/register">
+            <AppButton size="lg" to="/auth/register">
               {{ $t('bots.public_cta_register') }}
-            </UButton>
+            </AppButton>
           </div>
         </UCard>
       </div>

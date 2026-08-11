@@ -93,16 +93,16 @@
         :delay-duration="200"
         :content="{ side: 'top', sideOffset: 8 }"
       >
-        <motion.button
-          type="button"
+        <AppButton
+          variant="secondary"
+          size="sm"
           class="bot-card__action"
           :disabled="isBusy"
-          :while-tap="{ scale: 0.96 }"
+          :loading="isBotActionLoading(bot.id, 'stop')"
           @click="handleStop"
         >
-          <span v-if="isBotActionLoading(bot.id, 'stop')" class="bot-card__action-spinner" aria-hidden="true" />
           {{ $t('bots.action_stop') }}
-        </motion.button>
+        </AppButton>
       </UTooltip>
 
       <UTooltip
@@ -111,16 +111,16 @@
         :delay-duration="200"
         :content="{ side: 'top', sideOffset: 8 }"
       >
-        <motion.button
-          type="button"
+        <AppButton
+          variant="secondary"
+          size="sm"
           class="bot-card__action"
           :disabled="isBusy"
-          :while-tap="{ scale: 0.96 }"
+          :loading="isBotActionLoading(bot.id, 'redeploy')"
           @click="openConfirm('redeploy')"
         >
-          <span v-if="isBotActionLoading(bot.id, 'redeploy')" class="bot-card__action-spinner" aria-hidden="true" />
           {{ $t('bots.action_redeploy') }}
-        </motion.button>
+        </AppButton>
       </UTooltip>
 
       <UTooltip
@@ -129,16 +129,16 @@
         :delay-duration="200"
         :content="{ side: 'top', sideOffset: 8 }"
       >
-        <motion.button
-          type="button"
+        <AppButton
+          variant="secondary"
+          size="sm"
           class="bot-card__action"
           :disabled="isBusy"
-          :while-tap="{ scale: 0.96 }"
+          :loading="isBotActionLoading(bot.id, 'close')"
           @click="openConfirm('close')"
         >
-          <span v-if="isBotActionLoading(bot.id, 'close')" class="bot-card__action-spinner" aria-hidden="true" />
           {{ $t('bots.action_close') }}
-        </motion.button>
+        </AppButton>
       </UTooltip>
 
       <UTooltip
@@ -147,16 +147,16 @@
         :delay-duration="200"
         :content="{ side: 'top', sideOffset: 8 }"
       >
-        <motion.button
-          type="button"
-          class="bot-card__action bot-card__action--danger"
+        <AppButton
+          variant="secondary"
+          size="sm"
+          class="bot-card__action"
           :disabled="isBusy"
-          :while-tap="{ scale: 0.96 }"
+          :loading="isBotActionLoading(bot.id, 'remove')"
           @click="openConfirm('remove')"
         >
-          <span v-if="isBotActionLoading(bot.id, 'remove')" class="bot-card__action-spinner" aria-hidden="true" />
           {{ $t('bots.action_remove') }}
-        </motion.button>
+        </AppButton>
       </UTooltip>
     </motion.div>
 
@@ -534,57 +534,8 @@ async function handleStop() {
   border-top: 1px solid var(--bento-border);
 }
 
-.bot-card__actions :deep([data-slot='trigger']),
-.bot-card__actions > :deep(*) {
-  display: inline-flex;
-}
-
 .bot-card__action {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--bento-border);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 3%);
-  color: var(--bento-text);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.bot-card__action:hover:not(:disabled) {
-  background: rgb(255 255 255 / 7%);
-  border-color: rgb(255 255 255 / 12%);
-}
-
-.bot-card__action:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.bot-card__action--danger {
-  color: var(--bento-danger);
-  border-color: rgb(251 113 133 / 22%);
-  background: linear-gradient(135deg, rgb(251 113 133 / 10%) 0%, rgb(251 113 133 / 4%) 100%);
-}
-
-.bot-card__action--danger:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(251 113 133 / 16%) 0%, rgb(251 113 133 / 8%) 100%);
-  border-color: rgb(251 113 133 / 32%);
-}
-
-.bot-card__action-spinner {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgb(255 255 255 / 18%);
-  border-top-color: currentColor;
-  border-radius: 999px;
-  animation: bot-card-spin 0.7s linear infinite;
 }
 
 .bot-card__action-error {
@@ -593,12 +544,6 @@ async function handleStop() {
   margin: 14px 0 0;
   font-size: 0.78rem;
   color: var(--bento-danger);
-}
-
-@keyframes bot-card-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @media (max-width: 640px) {
@@ -647,16 +592,6 @@ async function handleStop() {
 
   .bot-card__action {
     width: 100%;
-    min-height: 44px;
-    font-size: 0.82rem;
-  }
-}
-
-@media (hover: none) {
-  /* Disable lift animation residue on touch devices to avoid sticky hover state */
-  .bot-card__action:hover:not(:disabled) {
-    background: rgb(255 255 255 / 3%);
-    border-color: var(--bento-border);
   }
 }
 </style>

@@ -90,7 +90,7 @@ async function handleSubmit() {
 
           <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />
 
-          <UButton
+          <AppButton
             class="w-full justify-center"
             size="lg"
             type="submit"
@@ -99,7 +99,7 @@ async function handleSubmit() {
             block
           >
             {{ auth.loading.value ? $t('common.loading') : $t('auth.register_submit') }}
-          </UButton>
+          </AppButton>
         </form>
 
         <div class="auth-links">

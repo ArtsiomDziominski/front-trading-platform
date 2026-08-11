@@ -128,7 +128,7 @@ function handleTelegramError(message: string) {
             :title="formError"
           />
 
-          <UButton
+          <AppButton
             class="w-full justify-center"
             size="lg"
             type="submit"
@@ -137,22 +137,21 @@ function handleTelegramError(message: string) {
             block
           >
             {{ auth.loading.value ? $t('common.loading') : $t('auth.login_submit') }}
-          </UButton>
+          </AppButton>
         </form>
 
         <USeparator :label="$t('auth.login_or')" class="my-6" />
 
         <div class="auth-oauth">
-          <UButton
-            color="neutral"
-            variant="outline"
+          <AppButton
+            variant="secondary"
             class="w-full justify-center"
             type="button"
             :disabled="auth.loading.value"
             @click="handleGoogleLogin"
           >
             {{ $t('auth.login_google') }}
-          </UButton>
+          </AppButton>
 
           <TelegramLogin
             v-if="showTelegram"

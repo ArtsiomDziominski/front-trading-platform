@@ -48,14 +48,13 @@ onMounted(async () => {
         </p>
         <template v-else>
           <UAlert color="error" variant="subtle" :title="message" class="mb-5" />
-          <UButton
-            color="neutral"
-            variant="outline"
+          <AppButton
+            variant="secondary"
             class="w-full justify-center"
             to="/auth/login"
           >
             {{ $t('auth.login_submit') }}
-          </UButton>
+          </AppButton>
         </template>
       </UCard>
     </div>

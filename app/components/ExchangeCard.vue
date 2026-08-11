@@ -18,16 +18,14 @@
         variant="subtle"
         :label="$t('exchanges.status_soon')"
       />
-      <UButton
+      <AppButton
         v-if="active && to"
         size="sm"
-        color="primary"
-        variant="soft"
         class="exchange-card__cta"
         :to="to"
       >
         {{ $t('exchanges.connect') }}
-      </UButton>
+      </AppButton>
     </div>
   </UCard>
 </template>

@@ -18,7 +18,7 @@ export default defineAppConfig({
           color: 'neutral',
           variant: 'outline',
           class:
-            'ring-[rgb(1_51_48/22%)] text-[var(--mm-green-dark)] bg-white hover:bg-[rgb(255_255_255/90%)] hover:ring-[rgb(1_51_48/34%)]',
+            'ring-[rgb(1_51_48/28%)] text-[var(--mm-green-dark)] bg-white hover:bg-[#f3f7ea] hover:ring-[rgb(1_51_48/40%)]',
         },
         {
           color: 'primary',

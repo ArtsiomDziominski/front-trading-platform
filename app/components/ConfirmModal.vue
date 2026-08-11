@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
   cancelLabel: string
   loadingLabel?: string
   loading?: boolean
+  /** Kept for callers; confirm action always uses primary AppButton. */
   confirmVariant?: 'primary' | 'danger'
 }>(), {
   loading: false,
@@ -19,8 +20,6 @@ const emit = defineEmits<{
   confirm: []
   cancel: []
 }>()
-
-const confirmColor = computed(() => (props.confirmVariant === 'danger' ? 'error' : 'primary'))
 
 function onCancel() {
   if (props.loading) return
@@ -44,25 +43,24 @@ function onCancel() {
     </template>
 
     <template #footer>
-      <UButton
-        color="neutral"
-        variant="outline"
+      <AppButton
+        variant="secondary"
         size="sm"
         class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
         :disabled="loading"
         @click="onCancel"
       >
         {{ cancelLabel }}
-      </UButton>
-      <UButton
-        :color="confirmColor"
+      </AppButton>
+      <AppButton
+        variant="primary"
         size="sm"
         class="w-full justify-center min-h-11 sm:w-auto sm:min-h-0"
         :loading="loading"
         @click="emit('confirm')"
       >
         {{ loading ? loadingLabel : confirmLabel }}
-      </UButton>
+      </AppButton>
     </template>
   </AppModal>
 </template>

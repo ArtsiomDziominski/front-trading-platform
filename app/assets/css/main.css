@@ -257,57 +257,47 @@ a,
   gap: 24px;
 }
 
-/* Shared marketing CTA button */
-.mm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 180px;
-  min-height: 48px;
-  padding: 0 22px;
-  border-radius: 999px;
-  background: var(--color-accent);
-  color: var(--color-text);
-  font-size: 0.88rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: transform 0.25s ease, background 0.25s ease;
+/* AppButton on dark cards */
+.empty-state :is(a, button).app-button--primary,
+.empty-keys-card :is(a, button).app-button--primary,
+.settings-card :is(a, button).app-button--primary,
+.auth-card :is(a, button).app-button--primary,
+.create-form-card :is(a, button).app-button--primary,
+.bot-card :is(a, button).app-button--primary,
+.liquidation-card :is(a, button).app-button--primary,
+.creation-history :is(a, button).app-button--primary,
+.bots-public-cta__card :is(a, button).app-button--primary,
+.ex-card :is(a, button).app-button--primary {
+  color: #013330 !important;
 }
 
-.mm-btn:hover {
-  transform: scale(1.03);
-  background: #d4ff6a;
+.empty-state :is(a, button).app-button--secondary,
+.empty-keys-card :is(a, button).app-button--secondary,
+.settings-card :is(a, button).app-button--secondary,
+.auth-card :is(a, button).app-button--secondary,
+.create-form-card :is(a, button).app-button--secondary,
+.bot-card :is(a, button).app-button--secondary,
+.liquidation-card :is(a, button).app-button--secondary,
+.creation-history :is(a, button).app-button--secondary,
+.bots-public-cta__card :is(a, button).app-button--secondary,
+.ex-card :is(a, button).app-button--secondary {
+  color: #013330 !important;
+  background: #e5ffc3 !important;
+  --tw-ring-color: rgb(229 255 195 / 70%) !important;
 }
 
-.mm-btn--dark {
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-}
-
-.mm-btn--ghost {
-  background: transparent;
-  color: var(--color-on-surface);
-  border: 1px solid rgb(229 255 195 / 35%);
-}
-
-/* Nuxt UI buttons: readable on cream canvas and dark cards */
-a.ring-inset.text-default,
-button.ring-inset.text-default,
-a.inline-flex.text-default.bg-default,
-button.inline-flex.text-default.bg-default {
-  color: var(--mm-green-dark) !important;
-  background-color: #fff !important;
-  --tw-ring-color: rgb(1 51 48 / 22%) !important;
-}
-
-a.ring-inset.text-default:hover,
-button.ring-inset.text-default:hover,
-a.inline-flex.text-default.bg-default:hover,
-button.inline-flex.text-default.bg-default:hover {
-  background-color: rgb(255 255 255 / 90%) !important;
-  --tw-ring-color: rgb(1 51 48 / 34%) !important;
+.empty-state :is(a, button).app-button--secondary:hover,
+.empty-keys-card :is(a, button).app-button--secondary:hover,
+.settings-card :is(a, button).app-button--secondary:hover,
+.auth-card :is(a, button).app-button--secondary:hover,
+.create-form-card :is(a, button).app-button--secondary:hover,
+.bot-card :is(a, button).app-button--secondary:hover,
+.liquidation-card :is(a, button).app-button--secondary:hover,
+.creation-history :is(a, button).app-button--secondary:hover,
+.bots-public-cta__card :is(a, button).app-button--secondary:hover,
+.ex-card :is(a, button).app-button--secondary:hover {
+  background: #f2ffe0 !important;
+  --tw-ring-color: rgb(229 255 195 / 85%) !important;
 }
 
 @media (max-width: 640px) {

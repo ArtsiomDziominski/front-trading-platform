@@ -51,9 +51,8 @@ const menuItems = computed(() => [
     :items="menuItems"
     :content="{ align: 'end' }"
   >
-    <UButton
-      color="neutral"
-      variant="ghost"
+    <AppButton
+      variant="secondary"
       class="gap-2"
       :aria-label="displayName"
     >
@@ -62,6 +61,6 @@ const menuItems = computed(() => [
         {{ displayName }}
       </span>
       <UIcon name="i-lucide-chevron-down" class="size-4 text-muted hidden sm:inline" />
-    </UButton>
+    </AppButton>
   </UDropdownMenu>
 </template>

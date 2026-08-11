@@ -120,12 +120,12 @@ useSeoMeta({
           class="hero-cta-wrap"
           :style="{ opacity: String(ctaOpacity), pointerEvents: ctaOpacity > 0.2 ? 'auto' : 'none' }"
         >
-          <NuxtLink
-            class="mm-btn"
+          <AppButton
+            size="lg"
             :to="primaryCta.to"
           >
             {{ primaryCta.label }}
-          </NuxtLink>
+          </AppButton>
           <p class="hero-cta-note">
             {{ $t('home.hero_subtitle') }}
           </p>
@@ -215,19 +215,20 @@ useSeoMeta({
             {{ $t('home.cta_subtitle') }}
           </p>
           <div class="mm-cta__actions">
-            <NuxtLink
-              class="mm-btn mm-btn--light"
+            <AppButton
+              size="lg"
               :to="auth.loggedIn.value ? '/bots/create' : '/auth/register'"
             >
               {{ $t('home.cta_button') }}
-            </NuxtLink>
-            <NuxtLink
+            </AppButton>
+            <AppButton
               v-if="!auth.loggedIn.value"
-              class="mm-btn mm-btn--ghost"
+              variant="secondary"
+              size="lg"
               to="/auth/login"
             >
               {{ $t('home.cta_login') }}
-            </NuxtLink>
+            </AppButton>
           </div>
           <p class="mm-cta__note">
             {{ $t('home.cta_note') }}
@@ -339,43 +340,6 @@ useSeoMeta({
   font-size: 0.92rem;
   line-height: 1.45;
   text-align: center;
-}
-
-.mm-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 220px;
-  min-height: 52px;
-  padding: 0 28px;
-  border-radius: 999px;
-  background: var(--mm-green);
-  color: var(--mm-green-dark);
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: transform 0.25s ease, background 0.25s ease;
-}
-
-.mm-btn:hover {
-  transform: scale(1.03);
-  background: #d4ff6a;
-}
-
-.mm-btn--light {
-  background: var(--mm-green-light);
-}
-
-.mm-btn--ghost {
-  background: transparent;
-  color: var(--mm-green-light);
-  border: 1px solid rgb(229 255 195 / 35%);
-}
-
-.mm-btn--ghost:hover {
-  background: rgb(229 255 195 / 10%);
 }
 
 .hero-phone {

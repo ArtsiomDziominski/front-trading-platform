@@ -198,41 +198,39 @@ async function handleSendTestMessage() {
       </div>
 
       <div class="telegram-link__actions">
-        <UButton
-          color="neutral"
-          variant="outline"
+        <AppButton
+          variant="secondary"
           :loading="userSettings.linkCodeLoading.value"
           @click="handleRequestLinkCode"
         >
           {{ $t('settings.telegram_get_link_code') }}
-        </UButton>
-        <UButton
-          color="neutral"
-          variant="outline"
+        </AppButton>
+        <AppButton
+          variant="secondary"
           size="sm"
           :loading="userSettings.loading.value"
           @click="handleRefreshStatus"
         >
           {{ $t('settings.telegram_check_link') }}
-        </UButton>
+        </AppButton>
       </div>
 
       <div v-if="linkCodeValue" class="link-code-box">
         <p class="link-code-box__label">{{ $t('settings.telegram_link_code') }}</p>
         <div class="link-code-box__row">
           <code class="link-code-box__code">{{ linkCodeValue }}</code>
-          <UButton color="neutral" variant="outline" size="sm" @click="copyLinkCode">
+          <AppButton variant="secondary" size="sm" @click="copyLinkCode">
             {{ linkCodeCopied ? $t('settings.telegram_copied') : $t('settings.telegram_copy') }}
-          </UButton>
+          </AppButton>
         </div>
         <p v-if="linkCodeExpiresLabel" class="text-muted text-sm mt-2">
           {{ $t('settings.telegram_link_expires', { date: linkCodeExpiresLabel }) }}
         </p>
 
         <div v-if="botDeepLink" class="bot-open">
-          <UButton class="bot-open__button" @click="openBotDeepLink">
+          <AppButton class="bot-open__button" @click="openBotDeepLink">
             {{ $t('settings.telegram_open_bot') }}
-          </UButton>
+          </AppButton>
 
           <div v-if="botQrDataUrl" class="bot-qr">
             <img
@@ -280,13 +278,13 @@ async function handleSendTestMessage() {
       <UAlert v-if="telegramError" color="error" variant="subtle" :title="telegramError" />
       <UAlert v-if="telegramSuccess" color="success" variant="subtle" :title="telegramSuccess" />
 
-      <UButton
+      <AppButton
         type="submit"
         :disabled="!telegramLinked"
         :loading="userSettings.loading.value"
       >
         {{ $t('settings.telegram_save') }}
-      </UButton>
+      </AppButton>
     </form>
 
     <div v-if="telegramLinked" class="telegram-test">
@@ -300,12 +298,12 @@ async function handleSendTestMessage() {
         :title="$t('settings.telegram_test_sent')"
       />
 
-      <UButton
+      <AppButton
         :loading="userSettings.loading.value"
         @click="handleSendTestMessage"
       >
         {{ $t('settings.telegram_test_send') }}
-      </UButton>
+      </AppButton>
     </div>
   </UCard>
 </template>

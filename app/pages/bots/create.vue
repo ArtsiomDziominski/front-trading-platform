@@ -104,9 +104,9 @@ async function handleBotCreated() {
         <div>
           <h1 class="section-title">{{ $t('bots.create_subtitle') }}</h1>
         </div>
-        <UButton color="neutral" variant="outline" to="/bots">
+        <AppButton variant="secondary" to="/bots">
           {{ $t('bots.back_to_bots') }}
-        </UButton>
+        </AppButton>
       </div>
 
       <p v-if="keysLoading" class="state-message" role="status">
@@ -115,9 +115,9 @@ async function handleBotCreated() {
 
       <UCard v-else-if="!apiKeys.length" class="empty-keys-card text-center">
         <p class="empty-keys-card__desc mb-4">{{ $t('bots.no_api_keys') }}</p>
-        <UButton to="/settings#api-keys">
+        <AppButton to="/settings#api-keys">
           {{ $t('bots.manage_api_keys') }}
-        </UButton>
+        </AppButton>
       </UCard>
 
       <div v-else class="create-layout">

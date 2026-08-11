@@ -13,9 +13,9 @@
 
     <div v-else-if="error" class="creation-history__state creation-history__state--error" role="alert">
       <p>{{ error }}</p>
-      <UButton color="neutral" variant="outline" size="sm" @click="$emit('retry')">
+      <AppButton variant="secondary" size="sm" @click="$emit('retry')">
         {{ $t('common.retry') }}
-      </UButton>
+      </AppButton>
     </div>
 
     <ul v-else-if="items.length" class="creation-history__list">
@@ -52,15 +52,14 @@
             {{ item.error_message }}
           </p>
         </div>
-        <UButton
-          color="neutral"
-          variant="outline"
+        <AppButton
+          variant="secondary"
           size="sm"
           class="creation-history__copy-btn"
           @click="$emit('select', item)"
         >
           {{ $t('bots.copy_settings') }}
-        </UButton>
+        </AppButton>
       </li>
     </ul>
 

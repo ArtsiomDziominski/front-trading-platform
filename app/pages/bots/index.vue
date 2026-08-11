@@ -194,14 +194,12 @@ onUnmounted(() => {
           <h1 class="section-title">{{ $t('bots.subtitle') }}</h1>
         </div>
         <div class="page-header__actions">
-          <UButton class="bots-btn bots-btn--cta" to="/bots/create" size="sm">
+          <AppButton to="/bots/create" size="sm">
             + {{ $t('bots.create_bot') }}
-          </UButton>
+          </AppButton>
           <UDropdownMenu :items="pageActionItems" :content="{ align: 'end' }">
-            <UButton
-              class="bots-btn bots-btn--outline"
-              color="neutral"
-              variant="outline"
+            <AppButton
+              variant="secondary"
               size="sm"
               icon="i-lucide-ellipsis"
               square
@@ -209,10 +207,8 @@ onUnmounted(() => {
             />
           </UDropdownMenu>
           <UTooltip :text="$t('bots.help_open')" :delay-duration="200">
-            <UButton
-              class="bots-btn bots-btn--outline"
-              color="neutral"
-              variant="outline"
+            <AppButton
+              variant="secondary"
               size="sm"
               icon="i-lucide-circle-help"
               square
@@ -232,16 +228,13 @@ onUnmounted(() => {
             role="tablist"
             :aria-label="$t('bots.filter_label')"
           >
-            <UButton
+            <AppButton
               v-for="option in filterOptions"
               :key="option.key"
-              class="bots-btn"
-              :class="filter === option.key ? 'bots-btn--active' : 'bots-btn--outline'"
               role="tab"
               :aria-selected="filter === option.key"
               :label="$t(option.labelKey)"
-              :color="filter === option.key ? 'primary' : 'neutral'"
-              :variant="filter === option.key ? 'solid' : 'outline'"
+              :variant="filter === option.key ? 'primary' : 'secondary'"
               @click="filter = option.key"
             />
           </UFieldGroup>
@@ -249,7 +242,7 @@ onUnmounted(() => {
           <USelect
             v-else
             v-model="filter"
-            class="bots-toolbar__select bots-btn bots-btn--outline"
+            class="bots-toolbar__select"
             size="sm"
             icon="i-lucide-filter"
             :items="filterSelectItems"
@@ -263,10 +256,8 @@ onUnmounted(() => {
             :content="{ align: 'end' }"
             :aria-label="$t('bots.bulk_actions_label')"
           >
-            <UButton
-              class="bots-btn bots-btn--outline"
-              color="neutral"
-              variant="outline"
+            <AppButton
+              variant="secondary"
               size="sm"
               icon="i-lucide-list-checks"
               trailing-icon="i-lucide-chevron-down"
@@ -274,7 +265,7 @@ onUnmounted(() => {
               :loading="isBulkBusy"
             >
               {{ $t('bots.bulk_actions_label') }}
-            </UButton>
+            </AppButton>
           </UDropdownMenu>
         </div>
       </div>
@@ -312,9 +303,9 @@ onUnmounted(() => {
 
       <div v-else-if="error" class="state-message state-message--error" role="alert">
         <p>{{ error }}</p>
-        <UButton color="neutral" variant="outline" size="sm" @click="() => void loadBots()">
+        <AppButton variant="secondary" size="sm" @click="() => void loadBots()">
           {{ $t('common.retry') }}
-        </UButton>
+        </AppButton>
       </div>
 
       <div v-else-if="bots.length" class="bots-grid">
@@ -329,12 +320,12 @@ onUnmounted(() => {
       <UCard v-else class="empty-state text-center">
         <p class="empty-state__text">{{ $t('bots.no_bots') }}</p>
         <div class="empty-state__actions">
-          <UButton class="empty-state__btn empty-state__btn--primary" to="/bots/create">
+          <AppButton to="/bots/create">
             {{ $t('bots.create_first') }}
-          </UButton>
-          <UButton class="empty-state__btn empty-state__btn--ghost" to="/settings#api-keys">
+          </AppButton>
+          <AppButton variant="secondary" to="/settings#api-keys">
             {{ $t('bots.add_api_keys') }}
-          </UButton>
+          </AppButton>
         </div>
       </UCard>
     </div>
@@ -376,37 +367,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-}
-
-.bots-btn--cta {
-  color: var(--color-on-surface) !important;
-  background: var(--color-surface) !important;
-  --tw-ring-color: transparent !important;
-}
-
-.bots-btn--cta:hover {
-  background: #024843 !important;
-}
-
-.bots-btn--outline {
-  color: var(--color-text) !important;
-  background: #fff !important;
-  --tw-ring-color: rgb(1 51 48 / 22%) !important;
-}
-
-.bots-btn--outline:hover {
-  background: rgb(255 255 255 / 88%) !important;
-  --tw-ring-color: rgb(1 51 48 / 34%) !important;
-}
-
-.bots-btn--active {
-  color: var(--mm-green-dark) !important;
-  background: var(--color-accent) !important;
-  --tw-ring-color: rgb(1 51 48 / 28%) !important;
-}
-
-.bots-btn--active:hover {
-  background: #d4ff6a !important;
 }
 
 .bots-toolbar {
@@ -485,27 +445,6 @@ onUnmounted(() => {
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-}
-
-.empty-state__btn--primary {
-  color: var(--mm-green-dark) !important;
-  background: var(--color-accent) !important;
-  --tw-ring-color: transparent !important;
-}
-
-.empty-state__btn--primary:hover {
-  background: #d4ff6a !important;
-}
-
-.empty-state__btn--ghost {
-  color: var(--color-on-surface) !important;
-  background: transparent !important;
-  --tw-ring-color: rgb(229 255 195 / 35%) !important;
-}
-
-.empty-state__btn--ghost:hover {
-  background: rgb(229 255 195 / 8%) !important;
-  --tw-ring-color: rgb(229 255 195 / 48%) !important;
 }
 
 @media (max-width: 640px) {
