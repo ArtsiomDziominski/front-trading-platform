@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import type { TelegramLinkCode, TelegramNotificationItem } from '#shared/types/user-settings'
+import type {
+  TelegramLinkCode,
+  TelegramNotificationId,
+  TelegramNotificationItem,
+} from '#shared/types/user-settings'
+
+const LINK_POLL_INTERVAL_MS = 3000
+const LINK_POLL_TIMEOUT_MS = 3 * 60 * 1000
 
 const { t } = useI18n()
 const config = useRuntimeConfig()
@@ -7,6 +14,8 @@ const userSettings = useUserSettings()
 
 const masterEnabled = ref(false)
 const notificationItems = ref<TelegramNotificationItem[]>([])
+const profitAlertPercent = ref('')
+const profitAlertUsd = ref('')
 const telegramError = ref('')
 const telegramSuccess = ref('')
 
@@ -14,11 +23,30 @@ const linkCode = ref<TelegramLinkCode | null>(null)
 const linkCodeCopied = ref(false)
 const botQrDataUrl = ref('')
 const unlinkConfirmOpen = ref(false)
+const linkPolling = ref(false)
 
 const testMessageSent = ref(false)
 
+let linkPollTimer: ReturnType<typeof setInterval> | null = null
+let linkPollDeadline = 0
+
 function normalizeBotUsername(value?: string | null) {
   return value?.trim().replace(/^@/, '') || ''
+}
+
+function formatThreshold(value: number | null | undefined) {
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
+
+function parseThresholdInput(raw: string | number | null | undefined): { value: number | null, hasInvalid: boolean } {
+  const trimmed = String(raw ?? '').trim().replace(',', '.')
+  if (!trimmed) return { value: null, hasInvalid: false }
+
+  const n = Number(trimmed)
+  if (!Number.isFinite(n) || n < 0) return { value: null, hasInvalid: true }
+  if (n === 0) return { value: null, hasInvalid: false }
+  return { value: n, hasInvalid: false }
 }
 
 const botUsername = computed(() => {
@@ -48,6 +76,16 @@ const linkCodeExpiresLabel = computed(() => {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date)
+})
+
+const profitAlertEnabled = computed(() => {
+  return notificationItems.value.find(item => item.id === 'profit_alert')?.enabled ?? false
+})
+
+const hasPrefsDisabled = computed(() => !telegramLinked.value || !masterEnabled.value)
+
+const hasThresholdsDisabled = computed(() => {
+  return hasPrefsDisabled.value || !profitAlertEnabled.value
 })
 
 watch(botProfileLink, async (link) => {
@@ -83,6 +121,45 @@ function syncFromSettings() {
 
   masterEnabled.value = s.telegram_notifications_enabled
   notificationItems.value = s.telegram_notifications.map(item => ({ ...item }))
+  profitAlertPercent.value = formatThreshold(s.telegram_profit_alert_percent)
+  profitAlertUsd.value = formatThreshold(s.telegram_profit_alert_usd)
+}
+
+function stopLinkPolling() {
+  if (linkPollTimer) {
+    clearInterval(linkPollTimer)
+    linkPollTimer = null
+  }
+  linkPolling.value = false
+}
+
+async function pollLinkStatus() {
+  if (Date.now() >= linkPollDeadline) {
+    stopLinkPolling()
+    return
+  }
+
+  try {
+    await userSettings.fetchSettings()
+    if (userSettings.settings.value?.telegram_linked) {
+      stopLinkPolling()
+      telegramSuccess.value = t('settings.telegram_linked')
+    }
+  } catch {
+    // keep polling until timeout; surface last error only on manual refresh
+  }
+}
+
+function startLinkPolling() {
+  stopLinkPolling()
+  if (!import.meta.client) return
+
+  linkPolling.value = true
+  linkPollDeadline = Date.now() + LINK_POLL_TIMEOUT_MS
+  void pollLinkStatus()
+  linkPollTimer = setInterval(() => {
+    void pollLinkStatus()
+  }, LINK_POLL_INTERVAL_MS)
 }
 
 watch(() => userSettings.settings.value, syncFromSettings, { immediate: true })
@@ -91,7 +168,12 @@ watch(telegramLinked, (linked) => {
   if (linked) {
     linkCode.value = null
     linkCodeCopied.value = false
+    stopLinkPolling()
   }
+})
+
+onBeforeUnmount(() => {
+  stopLinkPolling()
 })
 
 async function handleSaveTelegram() {
@@ -99,13 +181,24 @@ async function handleSaveTelegram() {
   telegramSuccess.value = ''
   testMessageSent.value = false
 
+  const percent = parseThresholdInput(profitAlertPercent.value)
+  const usd = parseThresholdInput(profitAlertUsd.value)
+
+  if (percent.hasInvalid || usd.hasInvalid) {
+    telegramError.value = t('settings.telegram_profit_alert_invalid')
+    return
+  }
+
   try {
     await userSettings.updateSettings({
       telegram_notifications_enabled: masterEnabled.value,
       telegram_notification_prefs: userSettings.buildPrefsUpdate(notificationItems.value),
+      telegram_profit_alert_percent: percent.value,
+      telegram_profit_alert_usd: usd.value,
     })
     telegramSuccess.value = t('settings.telegram_saved')
   } catch {
+    syncFromSettings()
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
   }
 }
@@ -117,6 +210,7 @@ async function handleRefreshStatus() {
   try {
     await userSettings.fetchSettings()
     if (userSettings.settings.value?.telegram_linked) {
+      stopLinkPolling()
       telegramSuccess.value = t('settings.telegram_linked')
     }
   } catch {
@@ -135,6 +229,7 @@ async function handleRequestLinkCode() {
     if (!data) return
 
     linkCode.value = data
+    startLinkPolling()
   } catch {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
   }
@@ -150,6 +245,7 @@ async function handleUnlinkConfirm() {
     unlinkConfirmOpen.value = false
     linkCode.value = null
     linkCodeCopied.value = false
+    stopLinkPolling()
     telegramSuccess.value = t('settings.telegram_unlinked')
   } catch {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
@@ -178,6 +274,10 @@ async function handleSendTestMessage() {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
   }
 }
+
+function isProfitAlertItem(id: TelegramNotificationId) {
+  return id === 'profit_alert'
+}
 </script>
 
 <template>
@@ -198,7 +298,7 @@ async function handleSendTestMessage() {
         variant="solid"
         size="sm"
         :loading="userSettings.unlinkLoading.value"
-        @click="unlinkConfirmOpen = true"
+        @click="() => { unlinkConfirmOpen = true }"
       >
         {{ $t('settings.telegram_unlink') }}
       </UButton>
@@ -236,6 +336,10 @@ async function handleSendTestMessage() {
           {{ $t('settings.telegram_check_link') }}
         </AppButton>
       </div>
+
+      <p v-if="linkPolling" class="text-muted text-sm">
+        {{ $t('settings.telegram_link_polling') }}
+      </p>
 
       <div v-if="linkCodeValue" class="link-code-box">
         <p class="link-code-box__label">{{ $t('settings.telegram_link_code') }}</p>
@@ -279,22 +383,56 @@ async function handleSendTestMessage() {
 
       <div
         class="notification-types flex flex-col gap-3"
-        :class="{ 'notification-types--disabled': !telegramLinked || !masterEnabled }"
+        :class="{ 'notification-types--disabled': hasPrefsDisabled }"
       >
         <p class="text-muted text-sm font-semibold mb-1">
           {{ $t('settings.telegram_notification_types') }}
         </p>
 
-        <UFormField
+        <div
           v-for="item in notificationItems"
           :key="item.id"
-          :label="item.label"
+          class="notification-item"
         >
-          <USwitch
-            v-model="item.enabled"
-            :disabled="!telegramLinked || !masterEnabled"
-          />
-        </UFormField>
+          <UFormField :label="item.label">
+            <USwitch
+              v-model="item.enabled"
+              :disabled="hasPrefsDisabled"
+            />
+          </UFormField>
+
+          <div
+            v-if="isProfitAlertItem(item.id)"
+            class="profit-alert-thresholds"
+            :class="{ 'profit-alert-thresholds--disabled': hasThresholdsDisabled }"
+          >
+            <p class="text-muted text-sm">
+              {{ $t('settings.telegram_profit_alert_hint') }}
+            </p>
+
+            <div class="profit-alert-thresholds__row">
+              <UFormField :label="$t('settings.telegram_profit_alert_percent')" class="flex-1">
+                <UInput
+                  v-model="profitAlertPercent"
+                  inputmode="decimal"
+                  :placeholder="$t('settings.telegram_profit_alert_off')"
+                  :disabled="hasThresholdsDisabled"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField :label="$t('settings.telegram_profit_alert_usd')" class="flex-1">
+                <UInput
+                  v-model="profitAlertUsd"
+                  inputmode="decimal"
+                  :placeholder="$t('settings.telegram_profit_alert_off')"
+                  :disabled="hasThresholdsDisabled"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
+          </div>
+        </div>
       </div>
 
       <UAlert v-if="telegramError" color="error" variant="subtle" :title="telegramError" />
@@ -479,6 +617,32 @@ async function handleSendTestMessage() {
 
 .notification-types--disabled {
   opacity: 0.55;
+}
+
+.notification-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profit-alert-thresholds {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.profit-alert-thresholds--disabled {
+  opacity: 0.55;
+}
+
+.profit-alert-thresholds__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .telegram-test {

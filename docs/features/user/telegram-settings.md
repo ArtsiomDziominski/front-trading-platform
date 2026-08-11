@@ -2,19 +2,22 @@
 
 Страница: `/settings` (карточка `SettingsTelegramCard`).
 
-Источник правды по состоянию — `GET /user/settings` (`useUserSettings`).
+Источник правды по состоянию — `GET /user/settings` (`useUserSettings`).  
+После любого `PATCH` / `DELETE` store заменяется телом ответа (`UserSettingsOut`).
 
 ## Поля UI
 
 | Поле | Смысл |
 |------|--------|
-| `telegram_linked` | чат привязан (`telegram_chat_id` на бэке) |
+| `telegram_linked` | чат привязан |
 | `telegram_notifications_enabled` | мастер-переключатель |
-| `telegram_notifications` | список `{ id, label, enabled }` для свитчей |
-| `telegram_notification_prefs` | те же флаги объектом |
+| `telegram_notifications` | список `{ id, label, enabled }` для свитчей (включая `profit_alert`) |
+| `telegram_notification_prefs` | те же флаги объектом (удобно для PATCH одного ключа) |
+| `telegram_profit_alert_percent` | порог ROE %; `null` / `0` = выкл. |
+| `telegram_profit_alert_usd` | порог нереализ. PnL USDT; `null` / `0` = выкл. |
 
 Кнопка «Отвязать» видна только при `telegram_linked === true`.  
-Выключение уведомлений ≠ отвязка.
+Выключение уведомлений ≠ отвязка. Prefs и пороги после отвязки **сохраняются**.
 
 ## Потоки
 
@@ -23,11 +26,11 @@ flowchart TD
   A[Не привязан] --> B[POST /user/telegram/link-code]
   B --> C[Показать code + expires_at]
   C --> D[Пользователь шлёт code боту текстом]
-  D --> E[GET /user/settings]
+  D --> E[Polling GET /user/settings]
   E -->|telegram_linked true| F[Привязан]
   F --> G[DELETE /user/telegram]
   G -->|200 UserSettingsOut| A
-  F --> H[PATCH /user/settings prefs]
+  F --> H[PATCH /user/settings сохранить]
   F --> I[POST /user/telegram/send тест]
 ```
 
@@ -35,7 +38,7 @@ flowchart TD
 
 1. `POST /user/telegram/link-code` → `{ code, expires_at }`
 2. Пользователь отправляет `code` боту сообщением
-3. «Проверить привязку» → `GET /user/settings`
+3. UI polling `GET /user/settings` (~3 с, до 3 мин) + кнопка «Проверить привязку»
 
 Повторный `link-code` инвалидирует предыдущий код.
 
@@ -44,18 +47,28 @@ flowchart TD
 `DELETE /user/telegram` → `200` с телом как у settings (`telegram_linked: false`).  
 Store обновляется из ответа без лишнего GET.
 
-`400` — уже не привязан (`detail`: «Telegram не привязан.»).
-
-Prefs и мастер-флаг **не** сбрасываются.
+`400` — уже не привязан.
 
 ### Уведомления
 
-`PATCH /user/settings` — частичное обновление (`telegram_notifications_enabled`, `telegram_notification_prefs`).
+Кнопка «Сохранить настройки Telegram» → `PATCH /user/settings` с мастером, prefs и порогами `%` / `USDT`.
+
+Чекбоксы рендерятся из `telegram_notifications` (без хардкода id).  
+При `master === false` чекбоксы и пороги дизейблятся.
+
+### Алерт прибыли
+
+Блок порогов показывается под пунктом `id === 'profit_alert'`.
+
+- Достаточно одного активного порога (OR на бэке).
+- Оба выкл. → сообщений нет, даже при `profit_alert: true`.
+- Инпуты дизейблятся, если нет привязки / мастер выкл. / чекбокс `profit_alert` выкл.
+- Фронт **не** шлёт алерт сам — только настройки; живой PnL из `GET /bots` / WS.
 
 ### Тест
 
 `POST /user/telegram/send` `{ "message": "..." }`  
-Нужны `telegram_linked` и `TELEGRAM_BOT_TOKEN` на сервере.
+`400` — не привязан; `503` — нет токена бота / очередь.
 
 ## Код
 

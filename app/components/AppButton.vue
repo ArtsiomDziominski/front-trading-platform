@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false })
+
 type AppButtonVariant = 'primary' | 'secondary'
 
 const props = withDefaults(defineProps<{
@@ -11,14 +13,17 @@ const props = withDefaults(defineProps<{
   variant: 'primary',
 })
 
+const attrs = useAttrs()
+
 const uiColor = computed(() => (props.variant === 'primary' ? 'primary' : 'neutral'))
 const uiVariant = computed(() => (props.variant === 'primary' ? 'solid' : 'outline'))
 </script>
 
 <template>
   <UButton
+    v-bind="attrs"
     class="app-button"
-    :class="variant === 'primary' ? 'app-button--primary' : 'app-button--secondary'"
+    :class="props.variant === 'primary' ? 'app-button--primary' : 'app-button--secondary'"
     :color="uiColor"
     :variant="uiVariant"
   >

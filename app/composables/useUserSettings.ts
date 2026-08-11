@@ -6,6 +6,21 @@ import type {
   UserSettingsUpdate,
 } from '#shared/types/user-settings'
 
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const n = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(n) || n === 0) return null
+  return n
+}
+
+function normalizeSettings(data: UserSettings): UserSettings {
+  return {
+    ...data,
+    telegram_profit_alert_percent: toNullableNumber(data.telegram_profit_alert_percent),
+    telegram_profit_alert_usd: toNullableNumber(data.telegram_profit_alert_usd),
+  }
+}
+
 export const useUserSettings = () => {
   const config = useRuntimeConfig()
   const baseUrl = config.public.apiBaseUrl
@@ -31,14 +46,27 @@ export const useUserSettings = () => {
     throw e
   }
 
+  function applySettings(data: UserSettings) {
+    const normalized = normalizeSettings(data)
+    settings.value = normalized
+
+    if (auth.user.value) {
+      auth.user.value = {
+        ...auth.user.value,
+        telegram_notifications_enabled: normalized.telegram_notifications_enabled,
+      }
+    }
+
+    return normalized
+  }
+
   async function fetchSettings() {
     loading.value = true
     error.value = null
 
     try {
       const data = await auth.authFetch<UserSettings>(`${baseUrl}/user/settings`)
-      settings.value = data
-      return data
+      return applySettings(data)
     } catch (e) {
       handleError(e)
     } finally {
@@ -55,16 +83,7 @@ export const useUserSettings = () => {
         method: 'PATCH',
         body: payload,
       })
-      settings.value = data
-
-      if (auth.user.value) {
-        auth.user.value = {
-          ...auth.user.value,
-          telegram_notifications_enabled: data.telegram_notifications_enabled,
-        }
-      }
-
-      return data
+      return applySettings(data)
     } catch (e) {
       handleError(e)
     } finally {
@@ -111,16 +130,7 @@ export const useUserSettings = () => {
       const data = await auth.authFetch<UserSettings>(`${baseUrl}/user/telegram`, {
         method: 'DELETE',
       })
-      settings.value = data
-
-      if (auth.user.value) {
-        auth.user.value = {
-          ...auth.user.value,
-          telegram_notifications_enabled: data.telegram_notifications_enabled,
-        }
-      }
-
-      return data
+      return applySettings(data)
     } catch (e) {
       handleError(e)
     } finally {
