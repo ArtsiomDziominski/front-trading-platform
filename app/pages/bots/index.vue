@@ -318,6 +318,9 @@ onUnmounted(() => {
       </div>
 
       <UCard v-else class="empty-state text-center">
+        <div class="empty-state__icon" aria-hidden="true">
+          <UIcon name="i-lucide-bot-off" class="empty-state__glyph" />
+        </div>
         <p class="empty-state__text">{{ $t('bots.no_bots') }}</p>
         <div class="empty-state__actions">
           <AppButton to="/bots/create">
@@ -432,6 +435,24 @@ onUnmounted(() => {
 
 .empty-state {
   padding: 64px 24px;
+}
+
+.empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  border: 1px solid rgb(229 255 195 / 18%);
+  background: rgb(229 255 195 / 8%);
+  color: var(--color-accent);
+}
+
+.empty-state__glyph {
+  width: 32px;
+  height: 32px;
 }
 
 .empty-state__text {
