@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import type { BotEventOut, BotListItem } from '#shared/types/bot'
-import { botEventTypeTone, formatBotEventPayload, translateBotEventType } from '~/utils/botEventType'
+import {
+  botEventTypeTone,
+  extractBotEventMessage,
+  formatBotEventPayloadWithoutMessage,
+  translateBotEventType,
+} from '~/utils/botEventType'
+import { parseBotEventMessage } from '~/utils/parseBotEventMessage'
 
 definePageMeta({
   middleware: 'auth',
@@ -56,14 +62,51 @@ function eventTypeClass(eventType: string): string {
   return `event-item__type--${botEventTypeTone(eventType)}`
 }
 
-function formatPayload(payload: BotEventOut['payload']): string {
-  return formatBotEventPayload(t, te, payload)
-}
-
 function botLabel(botId: number): string {
   const bot = botById.value.get(botId)
   return bot ? `#${bot.id} · ${bot.symbol}` : `#${botId}`
 }
+
+function resolveEventMessage(payload: BotEventOut['payload']) {
+  const raw = extractBotEventMessage(payload)
+  if (!raw) return null
+
+  const parsed = parseBotEventMessage(raw)
+
+  if (!parsed.parsed) {
+    return {
+      text: parsed.fallback || raw,
+      meta: [] as Array<{ title: string; description: string }>,
+    }
+  }
+
+  const meta = [
+    ...(parsed.exchange
+      ? [{ title: t('bots.event_history_exchange'), description: parsed.exchange }]
+      : []),
+    ...parsed.fields,
+  ]
+
+  if (parsed.primary) {
+    return {
+      text: parsed.primary,
+      meta,
+    }
+  }
+
+  return {
+    text: parsed.exchange || t('bots.event_history_message_title'),
+    meta: parsed.fields,
+  }
+}
+
+const eventRows = computed(() =>
+  events.value.map((event) => ({
+    event,
+    message: resolveEventMessage(event.payload),
+    payloadText: formatBotEventPayloadWithoutMessage(t, te, event.payload),
+  })),
+)
 
 async function loadEvents() {
   eventsLoading.value = true
@@ -109,7 +152,8 @@ onMounted(() => {
     <div class="container history-container">
       <div class="page-header">
         <div>
-          <h1 class="section-title">{{ $t('bots.event_history_subtitle') }}</h1>
+          <h1 class="section-title">{{ $t('bots.event_history_title') }}</h1>
+          <p class="page-header__message">{{ $t('bots.event_history_subtitle') }}</p>
         </div>
         <AppButton variant="secondary" to="/bots">
           {{ $t('bots.back_to_bots') }}
@@ -139,8 +183,8 @@ onMounted(() => {
         </AppButton>
       </div>
 
-      <ul v-else-if="events.length" class="event-list">
-        <li v-for="event in events" :key="event.id" class="event-item">
+      <ul v-else-if="eventRows.length" class="event-list">
+        <li v-for="{ event, message, payloadText } in eventRows" :key="event.id" class="event-item">
           <div class="event-item__head">
             <span class="event-item__type" :class="eventTypeClass(event.event_type)">
               {{ eventTypeLabel(event.event_type) }}
@@ -148,7 +192,20 @@ onMounted(() => {
             <time class="event-item__time">{{ formatDate(event.created_at) }}</time>
           </div>
           <p class="event-item__bot">{{ botLabel(event.bot_id) }}</p>
-          <pre v-if="formatPayload(event.payload)" class="event-item__payload">{{ formatPayload(event.payload) }}</pre>
+          <div v-if="message" class="event-item__error" role="alert">
+            <p class="event-item__error-text">{{ message.text }}</p>
+            <dl v-if="message.meta.length" class="event-item__error-meta">
+              <div
+                v-for="field in message.meta"
+                :key="`${event.id}-${field.title}`"
+                class="event-item__error-meta-item"
+              >
+                <dt class="event-item__error-meta-key">{{ field.title }}</dt>
+                <dd class="event-item__error-meta-value">{{ field.description }}</dd>
+              </div>
+            </dl>
+          </div>
+          <pre v-if="payloadText" class="event-item__payload">{{ payloadText }}</pre>
         </li>
       </ul>
 
@@ -166,6 +223,13 @@ onMounted(() => {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.page-header__message {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 .history-toolbar {
@@ -187,8 +251,9 @@ onMounted(() => {
 
 .event-item {
   padding: 18px 20px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--bento-border);
   border-radius: var(--radius-bento);
+  color: var(--color-on-surface);
   background:
     linear-gradient(155deg, rgb(255 255 255 / 3%) 0%, transparent 40%),
     var(--color-surface-alt);
@@ -228,8 +293,8 @@ onMounted(() => {
 }
 
 .event-item__type--closed {
-  color: var(--color-text-muted);
-  background: var(--color-surface-muted);
+  color: var(--color-on-surface-muted);
+  background: var(--bento-surface);
 }
 
 .event-item__type--removed {
@@ -253,20 +318,68 @@ onMounted(() => {
 }
 
 .event-item__type--default {
-  color: var(--color-text);
-  background: var(--color-surface);
+  color: var(--color-on-surface);
+  background: var(--bento-surface);
 }
 
 .event-item__time {
-  color: var(--color-text-muted);
+  color: var(--color-on-surface-muted);
   font-size: 0.78rem;
   white-space: nowrap;
 }
 
 .event-item__bot {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--color-on-surface-muted);
   font-size: 0.85rem;
+}
+
+.event-item__error {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgb(251 113 133 / 22%);
+  background: linear-gradient(135deg, rgb(251 113 133 / 14%) 0%, rgb(251 113 133 / 6%) 100%);
+}
+
+.event-item__error-text {
+  margin: 0;
+  color: var(--bento-danger);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.event-item__error-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 8px 0 0;
+}
+
+.event-item__error-meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.event-item__error-meta-key {
+  margin: 0;
+  color: var(--color-on-surface-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.event-item__error-meta-value {
+  margin: 0;
+  color: var(--color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 500;
+  word-break: break-word;
 }
 
 .event-item__payload {
@@ -274,8 +387,9 @@ onMounted(() => {
   padding: 12px;
   overflow-x: auto;
   border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
-  color: var(--color-text);
+  border: 1px solid var(--bento-border);
+  background: var(--bento-surface);
+  color: var(--color-on-surface);
   font-size: 0.78rem;
   line-height: 1.45;
 }

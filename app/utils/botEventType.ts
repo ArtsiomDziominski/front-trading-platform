@@ -23,6 +23,8 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   bot_config_updated: 'bots.event_type_bot_config_updated',
   grid_redeployed: 'bots.event_type_bot_grid_redeployed',
   config_updated: 'bots.event_type_bot_config_updated',
+  created: 'bots.event_type_created',
+  removed_from_tracking: 'bots.event_type_removed_from_tracking',
   active: 'bots.status_active',
   stopped: 'bots.status_stopped',
   closed: 'bots.status_closed',
@@ -161,4 +163,26 @@ export function formatBotEventPayload(
   const translated = translateBotEventPayload(t, te, payload)
   if (!translated || !Object.keys(translated).length) return ''
   return JSON.stringify(translated, null, 2)
+}
+
+export function extractBotEventMessage(
+  payload: Record<string, unknown> | null,
+): string | null {
+  if (!payload || typeof payload.message !== 'string') return null
+  const raw = payload.message.trim()
+  return raw || null
+}
+
+export function formatBotEventPayloadWithoutMessage(
+  t: TranslateFn,
+  te: HasKeyFn,
+  payload: Record<string, unknown> | null,
+): string {
+  if (!payload) return ''
+
+  const rest = Object.fromEntries(
+    Object.entries(payload).filter(([key]) => key !== 'message'),
+  )
+
+  return formatBotEventPayload(t, te, rest)
 }
