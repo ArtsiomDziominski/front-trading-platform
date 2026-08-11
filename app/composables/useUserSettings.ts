@@ -15,6 +15,7 @@ export const useUserSettings = () => {
   const settings = useState<UserSettings | null>('user_settings', () => null)
   const loading = useState<boolean>('user_settings_loading', () => false)
   const linkCodeLoading = useState<boolean>('telegram_link_code_loading', () => false)
+  const unlinkLoading = useState<boolean>('telegram_unlink_loading', () => false)
   const error = useState<string | null>('user_settings_error', () => null)
 
   function errorFallback(): string {
@@ -102,6 +103,31 @@ export const useUserSettings = () => {
     }
   }
 
+  async function unlinkTelegram(): Promise<UserSettings | undefined> {
+    unlinkLoading.value = true
+    error.value = null
+
+    try {
+      const data = await auth.authFetch<UserSettings>(`${baseUrl}/user/telegram`, {
+        method: 'DELETE',
+      })
+      settings.value = data
+
+      if (auth.user.value) {
+        auth.user.value = {
+          ...auth.user.value,
+          telegram_notifications_enabled: data.telegram_notifications_enabled,
+        }
+      }
+
+      return data
+    } catch (e) {
+      handleError(e)
+    } finally {
+      unlinkLoading.value = false
+    }
+  }
+
   function buildPrefsUpdate(
     items: { id: keyof TelegramNotificationPrefsUpdate & string, enabled: boolean }[],
   ): TelegramNotificationPrefsUpdate {
@@ -116,11 +142,13 @@ export const useUserSettings = () => {
     settings,
     loading,
     linkCodeLoading,
+    unlinkLoading,
     error,
     fetchSettings,
     updateSettings,
     requestLinkCode,
     sendTestMessage,
+    unlinkTelegram,
     buildPrefsUpdate,
   }
 }

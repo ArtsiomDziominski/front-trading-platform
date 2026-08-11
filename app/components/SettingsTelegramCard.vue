@@ -13,6 +13,7 @@ const telegramSuccess = ref('')
 const linkCode = ref<TelegramLinkCode | null>(null)
 const linkCodeCopied = ref(false)
 const botQrDataUrl = ref('')
+const unlinkConfirmOpen = ref(false)
 
 const testMessageSent = ref(false)
 
@@ -36,11 +37,6 @@ const botProfileLink = computed(() => {
   return `https://t.me/${botUsername.value}`
 })
 
-const botDeepLink = computed(() => {
-  if (!botUsername.value || !linkCodeValue.value) return ''
-  return `https://t.me/${botUsername.value}?start=${encodeURIComponent(linkCodeValue.value)}`
-})
-
 const linkCodeExpiresLabel = computed(() => {
   const expiresAt = linkCode.value?.expires_at
   if (!expiresAt) return ''
@@ -54,7 +50,7 @@ const linkCodeExpiresLabel = computed(() => {
   }).format(date)
 })
 
-watch(botDeepLink, async (link) => {
+watch(botProfileLink, async (link) => {
   if (!import.meta.client || !link) {
     botQrDataUrl.value = ''
     return
@@ -76,9 +72,9 @@ watch(botDeepLink, async (link) => {
   }
 }, { immediate: true })
 
-function openBotDeepLink() {
-  if (!botDeepLink.value || !import.meta.client) return
-  window.open(botDeepLink.value, '_blank', 'noopener,noreferrer')
+function openBotProfile() {
+  if (!botProfileLink.value || !import.meta.client) return
+  window.open(botProfileLink.value, '_blank', 'noopener,noreferrer')
 }
 
 function syncFromSettings() {
@@ -90,6 +86,13 @@ function syncFromSettings() {
 }
 
 watch(() => userSettings.settings.value, syncFromSettings, { immediate: true })
+
+watch(telegramLinked, (linked) => {
+  if (linked) {
+    linkCode.value = null
+    linkCodeCopied.value = false
+  }
+})
 
 async function handleSaveTelegram() {
   telegramError.value = ''
@@ -123,6 +126,7 @@ async function handleRefreshStatus() {
 
 async function handleRequestLinkCode() {
   telegramError.value = ''
+  telegramSuccess.value = ''
   linkCodeCopied.value = false
   linkCode.value = null
 
@@ -131,16 +135,22 @@ async function handleRequestLinkCode() {
     if (!data) return
 
     linkCode.value = data
+  } catch {
+    telegramError.value = userSettings.error.value || t('auth.error_unknown')
+  }
+}
 
-    const code = data.code ?? data.link_code ?? ''
-    const username = botUsername.value || normalizeBotUsername(data.bot_username)
-    if (username && code && import.meta.client) {
-      window.open(
-        `https://t.me/${username}?start=${encodeURIComponent(code)}`,
-        '_blank',
-        'noopener,noreferrer',
-      )
-    }
+async function handleUnlinkConfirm() {
+  telegramError.value = ''
+  telegramSuccess.value = ''
+  testMessageSent.value = false
+
+  try {
+    await userSettings.unlinkTelegram()
+    unlinkConfirmOpen.value = false
+    linkCode.value = null
+    linkCodeCopied.value = false
+    telegramSuccess.value = t('settings.telegram_unlinked')
   } catch {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
   }
@@ -175,12 +185,24 @@ async function handleSendTestMessage() {
     <h2 class="settings-card__title">{{ $t('settings.telegram_section') }}</h2>
     <p class="settings-card__desc">{{ $t('settings.telegram_section_desc') }}</p>
 
-    <UBadge
-      class="mb-5"
-      :color="telegramLinked ? 'primary' : 'warning'"
-      variant="subtle"
-      :label="telegramLinked ? $t('settings.telegram_linked') : $t('settings.telegram_not_linked')"
-    />
+    <div class="telegram-status">
+      <UBadge
+        :color="telegramLinked ? 'primary' : 'warning'"
+        variant="subtle"
+        :label="telegramLinked ? $t('settings.telegram_linked') : $t('settings.telegram_not_linked')"
+      />
+      <UButton
+        v-if="telegramLinked"
+        class="telegram-unlink"
+        color="error"
+        variant="solid"
+        size="sm"
+        :loading="userSettings.unlinkLoading.value"
+        @click="unlinkConfirmOpen = true"
+      >
+        {{ $t('settings.telegram_unlink') }}
+      </UButton>
+    </div>
 
     <div v-if="!telegramLinked" class="telegram-link">
       <p class="text-muted text-sm">{{ $t('settings.telegram_link_hint') }}</p>
@@ -227,8 +249,8 @@ async function handleSendTestMessage() {
           {{ $t('settings.telegram_link_expires', { date: linkCodeExpiresLabel }) }}
         </p>
 
-        <div v-if="botDeepLink" class="bot-open">
-          <AppButton class="bot-open__button" @click="openBotDeepLink">
+        <div v-if="botProfileLink" class="bot-open">
+          <AppButton class="bot-open__button" @click="openBotProfile">
             {{ $t('settings.telegram_open_bot') }}
           </AppButton>
 
@@ -305,6 +327,18 @@ async function handleSendTestMessage() {
         {{ $t('settings.telegram_test_send') }}
       </AppButton>
     </div>
+
+    <ConfirmModal
+      v-model="unlinkConfirmOpen"
+      :title="$t('settings.telegram_unlink_title')"
+      :message="$t('settings.telegram_unlink_confirm')"
+      :confirm-label="$t('settings.telegram_unlink')"
+      :cancel-label="$t('common.cancel')"
+      :loading-label="$t('common.loading')"
+      :loading="userSettings.unlinkLoading.value"
+      confirm-variant="danger"
+      @confirm="handleUnlinkConfirm"
+    />
   </UCard>
 </template>
 
@@ -325,13 +359,33 @@ async function handleSendTestMessage() {
   line-height: 1.5;
 }
 
+.telegram-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.telegram-unlink {
+  margin-left: auto;
+  color: #fff !important;
+  background: #dc2626 !important;
+  --tw-ring-color: transparent !important;
+}
+
+.telegram-unlink:hover {
+  background: #b91c1c !important;
+}
+
 .telegram-link {
   display: flex;
   flex-direction: column;
   gap: 14px;
   margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .telegram-link__actions {
