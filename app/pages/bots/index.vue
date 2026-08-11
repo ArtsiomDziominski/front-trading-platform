@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import type { BotLifecycleStatus } from '#shared/types/bot'
 
 definePageMeta({
@@ -15,6 +16,7 @@ const FILTER_STATUSES: Record<Exclude<BotFilterKey, 'all'>, BotLifecycleStatus[]
 }
 
 const { t } = useI18n()
+const isDesktop = useMediaQuery('(min-width: 641px)', { ssrWidth: 1024 })
 const {
   bots,
   loading,
@@ -33,6 +35,7 @@ const {
 let unsubscribeWs: (() => void) | undefined
 
 const filter = ref<BotFilterKey>('all')
+const helpOpen = ref(false)
 const confirmOpen = ref(false)
 const confirmLoading = ref(false)
 const pendingBulkAction = ref<BulkActionKey | null>(null)
@@ -44,11 +47,53 @@ const filterOptions: { key: BotFilterKey, labelKey: string }[] = [
   { key: 'closed', labelKey: 'bots.filter_closed' },
 ]
 
-const bulkActions: { key: BulkActionKey, labelKey: string, variant: 'secondary' | 'danger' }[] = [
-  { key: 'stop-all', labelKey: 'bots.bulk_stop_all', variant: 'secondary' },
-  { key: 'close-all', labelKey: 'bots.bulk_close_all', variant: 'secondary' },
-  { key: 'remove-all', labelKey: 'bots.bulk_remove_all', variant: 'danger' },
-]
+const filterSelectItems = computed(() =>
+  filterOptions.map(option => ({
+    label: t(option.labelKey),
+    value: option.key,
+  })),
+)
+
+const isBulkBusy = computed(() => Boolean(bulkActionLoading.value))
+
+const pageActionItems = computed(() => [
+  [
+    {
+      label: t('bots.event_history_open'),
+      icon: 'i-lucide-history',
+      to: '/bots/history',
+    },
+    {
+      label: t('bots.manage_api_keys'),
+      icon: 'i-lucide-key-round',
+      to: '/settings#api-keys',
+    },
+  ],
+])
+
+const bulkActionItems = computed(() => [
+  [
+    {
+      label: t('bots.bulk_stop_all'),
+      icon: 'i-lucide-pause',
+      disabled: isBulkBusy.value || loading.value,
+      onSelect: () => openBulkConfirm('stop-all'),
+    },
+    {
+      label: t('bots.bulk_close_all'),
+      icon: 'i-lucide-square',
+      disabled: isBulkBusy.value || loading.value,
+      onSelect: () => openBulkConfirm('close-all'),
+    },
+    {
+      label: t('bots.bulk_remove_all'),
+      icon: 'i-lucide-trash-2',
+      color: 'error' as const,
+      disabled: isBulkBusy.value || loading.value,
+      onSelect: () => openBulkConfirm('remove-all'),
+    },
+  ],
+])
 
 const confirmCopy = computed(() => {
   switch (pendingBulkAction.value) {
@@ -82,8 +127,6 @@ const confirmCopy = computed(() => {
       }
   }
 })
-
-const isBulkBusy = computed(() => Boolean(bulkActionLoading.value))
 
 useSeoMeta({
   title: () => t('bots.title'),
@@ -147,50 +190,87 @@ onUnmounted(() => {
   <main class="page-section">
     <div class="container">
       <div class="page-header">
-        <div>
-          <span class="section-label">{{ $t('bots.title') }}</span>
+        <div class="page-header__heading">
           <h1 class="section-title">{{ $t('bots.subtitle') }}</h1>
         </div>
         <div class="page-header__actions">
-          <UButton color="neutral" variant="outline" to="/bots/history">
-            {{ $t('bots.event_history_open') }}
-          </UButton>
-          <UButton color="neutral" variant="outline" to="/settings#api-keys">
-            {{ $t('bots.manage_api_keys') }}
-          </UButton>
-          <UButton to="/bots/create">
+          <UButton to="/bots/create" size="sm">
             + {{ $t('bots.create_bot') }}
           </UButton>
+          <UDropdownMenu :items="pageActionItems" :content="{ align: 'end' }">
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-ellipsis"
+              square
+              :aria-label="$t('bots.page_actions')"
+            />
+          </UDropdownMenu>
+          <UTooltip :text="$t('bots.help_open')" :delay-duration="200">
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-circle-help"
+              square
+              :aria-label="$t('bots.help_open')"
+              @click="helpOpen = true"
+            />
+          </UTooltip>
         </div>
       </div>
 
       <div class="bots-toolbar">
-        <UFieldGroup size="sm" role="tablist" :aria-label="$t('bots.filter_label')">
-          <UButton
-            v-for="option in filterOptions"
-            :key="option.key"
-            role="tab"
-            :aria-selected="filter === option.key"
-            :label="$t(option.labelKey)"
-            :color="filter === option.key ? 'primary' : 'neutral'"
-            :variant="filter === option.key ? 'solid' : 'outline'"
-            @click="filter = option.key"
-          />
-        </UFieldGroup>
-
-        <div class="bots-bulk" :aria-label="$t('bots.bulk_actions_label')">
-          <UButton
-            v-for="action in bulkActions"
-            :key="action.key"
+        <div class="bots-toolbar__filters">
+          <UFieldGroup
+            v-if="isDesktop"
+            class="bots-toolbar__tabs"
             size="sm"
-            :color="action.variant === 'danger' ? 'error' : 'neutral'"
-            :variant="action.variant === 'danger' ? 'solid' : 'outline'"
-            :disabled="isBulkBusy || loading"
-            :loading="bulkActionLoading === action.key"
-            @click="openBulkConfirm(action.key)"
+            role="tablist"
+            :aria-label="$t('bots.filter_label')"
           >
-            {{ $t(action.labelKey) }}
-          </UButton>
+            <UButton
+              v-for="option in filterOptions"
+              :key="option.key"
+              role="tab"
+              :aria-selected="filter === option.key"
+              :label="$t(option.labelKey)"
+              :color="filter === option.key ? 'primary' : 'neutral'"
+              :variant="filter === option.key ? 'solid' : 'outline'"
+              @click="filter = option.key"
+            />
+          </UFieldGroup>
+
+          <USelect
+            v-else
+            v-model="filter"
+            class="bots-toolbar__select"
+            size="sm"
+            icon="i-lucide-filter"
+            :items="filterSelectItems"
+            :aria-label="$t('bots.filter_label')"
+          />
+        </div>
+
+        <div class="bots-toolbar__bulk">
+          <UDropdownMenu
+            :items="bulkActionItems"
+            :content="{ align: 'end' }"
+            :aria-label="$t('bots.bulk_actions_label')"
+          >
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-list-checks"
+              trailing-icon="i-lucide-chevron-down"
+              :disabled="isBulkBusy || loading"
+              :loading="isBulkBusy"
+            >
+              {{ $t('bots.bulk_actions_label') }}
+            </UButton>
+          </UDropdownMenu>
         </div>
       </div>
 
@@ -242,12 +322,19 @@ onUnmounted(() => {
       </div>
 
       <UCard v-else class="empty-state text-center">
-        <p class="text-muted mb-4">{{ $t('bots.no_bots') }}</p>
-        <UButton to="/bots/create">
-          {{ $t('bots.create_first') }}
-        </UButton>
+        <p class="empty-state__text">{{ $t('bots.no_bots') }}</p>
+        <div class="empty-state__actions">
+          <UButton class="empty-state__btn empty-state__btn--primary" to="/bots/create">
+            {{ $t('bots.create_first') }}
+          </UButton>
+          <UButton class="empty-state__btn empty-state__btn--ghost" to="/settings#api-keys">
+            {{ $t('bots.add_api_keys') }}
+          </UButton>
+        </div>
       </UCard>
     </div>
+
+    <BotsHelpModal v-model="helpOpen" />
 
     <ConfirmModal
       v-model="confirmOpen"
@@ -273,11 +360,17 @@ onUnmounted(() => {
   margin-bottom: 24px;
 }
 
+.page-header__heading {
+  min-width: 0;
+  flex: 1;
+}
+
 .page-header__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .page-header__actions :deep(a.ring-inset),
@@ -291,17 +384,30 @@ onUnmounted(() => {
 
 .bots-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   margin-bottom: 28px;
 }
 
-.bots-bulk {
+.bots-toolbar__filters {
+  min-width: 0;
+  flex: 1;
+}
+
+.bots-toolbar__tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  width: max-content;
+  max-width: 100%;
+}
+
+.bots-toolbar__select {
+  width: 100%;
+  min-width: 0;
+}
+
+.bots-toolbar__bulk {
+  flex-shrink: 0;
 }
 
 .bulk-feedback__list {
@@ -335,6 +441,40 @@ onUnmounted(() => {
   padding: 64px 24px;
 }
 
+.empty-state__text {
+  margin: 0 0 20px;
+  color: var(--color-on-surface-muted);
+  line-height: 1.5;
+}
+
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.empty-state__btn--primary {
+  color: var(--mm-green-dark) !important;
+  background: var(--color-accent) !important;
+  --tw-ring-color: transparent !important;
+}
+
+.empty-state__btn--primary:hover {
+  background: #d4ff6a !important;
+}
+
+.empty-state__btn--ghost {
+  color: var(--color-on-surface) !important;
+  background: transparent !important;
+  --tw-ring-color: rgb(229 255 195 / 35%) !important;
+}
+
+.empty-state__btn--ghost:hover {
+  background: rgb(229 255 195 / 8%) !important;
+  --tw-ring-color: rgb(229 255 195 / 48%) !important;
+}
+
 @media (max-width: 640px) {
   .page-header {
     flex-direction: column;
@@ -344,65 +484,24 @@ onUnmounted(() => {
   }
 
   .page-header__actions {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    gap: 8px;
-  }
-
-  .page-header__actions > * {
     width: 100%;
   }
 
-  /* Promote the primary "create bot" action to the top on mobile */
-  .page-header__actions > :last-child {
-    order: -1;
+  .page-header__actions > :first-child {
+    flex: 1;
   }
 
   .bots-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
     margin-bottom: 22px;
   }
 
-  /* Filter tabs: horizontally scrollable so long localized labels
-     (e.g. RU "Остановленные") never wrap or truncate. */
-  .bots-toolbar :deep([role='tablist']) {
-    display: flex;
+  .bots-toolbar__bulk {
+    flex: 1;
+  }
+
+  .bots-toolbar__bulk :deep(button) {
     width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-  }
-
-  .bots-toolbar :deep([role='tablist'])::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bots-toolbar :deep([role='tablist']) > * {
-    flex: 0 0 auto;
-    min-height: 40px;
-    white-space: nowrap;
-    scroll-snap-align: start;
-  }
-
-  .bots-bulk {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .bots-bulk > * {
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
-  }
-
-  /* Destructive "remove all" gets its own full-width row */
-  .bots-bulk > :last-child {
-    grid-column: 1 / -1;
+    justify-content: space-between;
   }
 
   .bots-grid {

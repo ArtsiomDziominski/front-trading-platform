@@ -12,21 +12,30 @@ const telegramSuccess = ref('')
 
 const linkCode = ref<TelegramLinkCode | null>(null)
 const linkCodeCopied = ref(false)
+const botQrDataUrl = ref('')
 
 const testMessage = ref('')
 const testMessageSent = ref(false)
 
+function normalizeBotUsername(value?: string | null) {
+  return value?.trim().replace(/^@/, '') || ''
+}
+
 const botUsername = computed(() => {
   return (
-    linkCode.value?.bot_username?.trim()
-    || config.public.telegramBotUsername?.trim()
-    || ''
+    normalizeBotUsername(config.public.telegramBotUsername)
+    || normalizeBotUsername(linkCode.value?.bot_username)
   )
 })
 
 const telegramLinked = computed(() => userSettings.settings.value?.telegram_linked ?? false)
 
 const linkCodeValue = computed(() => linkCode.value?.code ?? linkCode.value?.link_code ?? '')
+
+const botProfileLink = computed(() => {
+  if (!botUsername.value) return ''
+  return `https://t.me/${botUsername.value}`
+})
 
 const botDeepLink = computed(() => {
   if (!botUsername.value || !linkCodeValue.value) return ''
@@ -45,6 +54,33 @@ const linkCodeExpiresLabel = computed(() => {
     timeStyle: 'short',
   }).format(date)
 })
+
+watch(botDeepLink, async (link) => {
+  if (!import.meta.client || !link) {
+    botQrDataUrl.value = ''
+    return
+  }
+
+  try {
+    const { default: QRCode } = await import('qrcode')
+    botQrDataUrl.value = await QRCode.toDataURL(link, {
+      width: 176,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#013330',
+        light: '#ffffff',
+      },
+    })
+  } catch {
+    botQrDataUrl.value = ''
+  }
+}, { immediate: true })
+
+function openBotDeepLink() {
+  if (!botDeepLink.value || !import.meta.client) return
+  window.open(botDeepLink.value, '_blank', 'noopener,noreferrer')
+}
 
 function syncFromSettings() {
   const s = userSettings.settings.value
@@ -93,8 +129,18 @@ async function handleRequestLinkCode() {
 
   try {
     const data = await userSettings.requestLinkCode()
-    if (data) {
-      linkCode.value = data
+    if (!data) return
+
+    linkCode.value = data
+
+    const code = data.code ?? data.link_code ?? ''
+    const username = botUsername.value || normalizeBotUsername(data.bot_username)
+    if (username && code && import.meta.client) {
+      window.open(
+        `https://t.me/${username}?start=${encodeURIComponent(code)}`,
+        '_blank',
+        'noopener,noreferrer',
+      )
     }
   } catch {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
@@ -146,6 +192,18 @@ async function handleSendTestMessage() {
     <div v-if="!telegramLinked" class="telegram-link">
       <p class="text-muted text-sm">{{ $t('settings.telegram_link_hint') }}</p>
 
+      <div v-if="botProfileLink" class="telegram-bot-link">
+        <span class="telegram-bot-link__label">{{ $t('settings.telegram_bot_label') }}</span>
+        <ULink
+          :to="botProfileLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="settings-link"
+        >
+          @{{ botUsername }}
+        </ULink>
+      </div>
+
       <div class="telegram-link__actions">
         <UButton
           color="neutral"
@@ -177,14 +235,23 @@ async function handleSendTestMessage() {
         <p v-if="linkCodeExpiresLabel" class="text-muted text-sm mt-2">
           {{ $t('settings.telegram_link_expires', { date: linkCodeExpiresLabel }) }}
         </p>
-        <ULink
-          v-if="botDeepLink"
-          :to="botDeepLink"
-          target="_blank"
-          class="settings-link mt-2 inline-block"
-        >
-          {{ $t('settings.telegram_open_bot') }}
-        </ULink>
+
+        <div v-if="botDeepLink" class="bot-open">
+          <UButton class="bot-open__button" @click="openBotDeepLink">
+            {{ $t('settings.telegram_open_bot') }}
+          </UButton>
+
+          <div v-if="botQrDataUrl" class="bot-qr">
+            <img
+              :src="botQrDataUrl"
+              :alt="$t('settings.telegram_qr_alt')"
+              class="bot-qr__image"
+              width="176"
+              height="176"
+            >
+            <p class="bot-qr__hint">{{ $t('settings.telegram_qr_hint') }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -197,22 +264,25 @@ async function handleSendTestMessage() {
         {{ $t('settings.telegram_prefs_disabled_hint') }}
       </p>
 
-      <fieldset
-        class="notification-types flex flex-col gap-3 rounded-lg p-4 bg-elevated/50"
-        :disabled="!telegramLinked || !masterEnabled"
+      <div
+        class="notification-types flex flex-col gap-3"
+        :class="{ 'notification-types--disabled': !telegramLinked || !masterEnabled }"
       >
-        <legend class="text-muted text-sm font-semibold mb-1">
+        <p class="text-muted text-sm font-semibold mb-1">
           {{ $t('settings.telegram_notification_types') }}
-        </legend>
+        </p>
 
         <UFormField
           v-for="item in notificationItems"
           :key="item.id"
           :label="item.label"
         >
-          <USwitch v-model="item.enabled" />
+          <USwitch
+            v-model="item.enabled"
+            :disabled="!telegramLinked || !masterEnabled"
+          />
         </UFormField>
-      </fieldset>
+      </div>
 
       <UAlert v-if="telegramError" color="error" variant="subtle" :title="telegramError" />
       <UAlert v-if="telegramSuccess" color="success" variant="subtle" :title="telegramSuccess" />
@@ -292,6 +362,18 @@ async function handleSendTestMessage() {
   gap: 10px;
 }
 
+.telegram-bot-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.telegram-bot-link__label {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
 .link-code-box {
   padding: 16px 18px;
   border: 1px solid var(--color-border);
@@ -323,7 +405,47 @@ async function handleSendTestMessage() {
   letter-spacing: 0.08em;
 }
 
-.notification-types:disabled {
+.bot-open {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.bot-open__button {
+  align-self: flex-start;
+}
+
+.bot-qr {
+  display: none;
+  width: fit-content;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.bot-qr__image {
+  display: block;
+  width: 176px;
+  height: 176px;
+}
+
+.bot-qr__hint {
+  margin: 10px 0 0;
+  max-width: 176px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+@media (min-width: 768px) {
+  .bot-qr {
+    display: block;
+  }
+}
+
+.notification-types--disabled {
   opacity: 0.55;
 }
 

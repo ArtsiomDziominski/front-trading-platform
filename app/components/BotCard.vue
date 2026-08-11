@@ -46,6 +46,7 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.15 }"
       >
+        <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
         <img
           v-if="bot.exchange && bot.exchange !== 'OTHER'"
           :src="EXCHANGE_IMAGES[bot.exchange]"
@@ -63,6 +64,7 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.2 }"
       >
+        <span class="bot-card__label">{{ $t('bots.type') }}</span>
         <span class="bot-card__value">{{ typeLabel }}</span>
       </motion.div>
 
@@ -73,6 +75,7 @@
         :animate="{ opacity: 1, y: 0 }"
         :transition="{ duration: 0.45, delay: staggerDelay + 0.25 }"
       >
+        <span class="bot-card__label">{{ $t('bots.pnl') }}</span>
         <span class="bot-card__pnl" :class="pnlClass">{{ pnlLabel }}</span>
       </motion.div>
     </div>
@@ -84,53 +87,77 @@
       :animate="{ opacity: 1 }"
       :transition="{ duration: 0.4, delay: staggerDelay + 0.3 }"
     >
-      <motion.button
+      <UTooltip
         v-if="canStop"
-        type="button"
-        class="bot-card__action"
-        :disabled="isBusy"
-        :while-tap="{ scale: 0.96 }"
-        @click="handleStop"
+        :text="$t('bots.action_stop_hint')"
+        :delay-duration="200"
+        :content="{ side: 'top', sideOffset: 8 }"
       >
-        <span v-if="isBotActionLoading(bot.id, 'stop')" class="bot-card__action-spinner" aria-hidden="true" />
-        {{ $t('bots.action_stop') }}
-      </motion.button>
+        <motion.button
+          type="button"
+          class="bot-card__action"
+          :disabled="isBusy"
+          :while-tap="{ scale: 0.96 }"
+          @click="handleStop"
+        >
+          <span v-if="isBotActionLoading(bot.id, 'stop')" class="bot-card__action-spinner" aria-hidden="true" />
+          {{ $t('bots.action_stop') }}
+        </motion.button>
+      </UTooltip>
 
-      <motion.button
+      <UTooltip
         v-if="canRedeploy"
-        type="button"
-        class="bot-card__action"
-        :disabled="isBusy"
-        :while-tap="{ scale: 0.96 }"
-        @click="openConfirm('redeploy')"
+        :text="$t('bots.action_redeploy_hint')"
+        :delay-duration="200"
+        :content="{ side: 'top', sideOffset: 8 }"
       >
-        <span v-if="isBotActionLoading(bot.id, 'redeploy')" class="bot-card__action-spinner" aria-hidden="true" />
-        {{ $t('bots.action_redeploy') }}
-      </motion.button>
+        <motion.button
+          type="button"
+          class="bot-card__action"
+          :disabled="isBusy"
+          :while-tap="{ scale: 0.96 }"
+          @click="openConfirm('redeploy')"
+        >
+          <span v-if="isBotActionLoading(bot.id, 'redeploy')" class="bot-card__action-spinner" aria-hidden="true" />
+          {{ $t('bots.action_redeploy') }}
+        </motion.button>
+      </UTooltip>
 
-      <motion.button
+      <UTooltip
         v-if="canClose"
-        type="button"
-        class="bot-card__action"
-        :disabled="isBusy"
-        :while-tap="{ scale: 0.96 }"
-        @click="openConfirm('close')"
+        :text="$t('bots.action_close_hint')"
+        :delay-duration="200"
+        :content="{ side: 'top', sideOffset: 8 }"
       >
-        <span v-if="isBotActionLoading(bot.id, 'close')" class="bot-card__action-spinner" aria-hidden="true" />
-        {{ $t('bots.action_close') }}
-      </motion.button>
+        <motion.button
+          type="button"
+          class="bot-card__action"
+          :disabled="isBusy"
+          :while-tap="{ scale: 0.96 }"
+          @click="openConfirm('close')"
+        >
+          <span v-if="isBotActionLoading(bot.id, 'close')" class="bot-card__action-spinner" aria-hidden="true" />
+          {{ $t('bots.action_close') }}
+        </motion.button>
+      </UTooltip>
 
-      <motion.button
+      <UTooltip
         v-if="canRemove"
-        type="button"
-        class="bot-card__action bot-card__action--danger"
-        :disabled="isBusy"
-        :while-tap="{ scale: 0.96 }"
-        @click="openConfirm('remove')"
+        :text="$t('bots.action_remove_hint')"
+        :delay-duration="200"
+        :content="{ side: 'top', sideOffset: 8 }"
       >
-        <span v-if="isBotActionLoading(bot.id, 'remove')" class="bot-card__action-spinner" aria-hidden="true" />
-        {{ $t('bots.action_remove') }}
-      </motion.button>
+        <motion.button
+          type="button"
+          class="bot-card__action bot-card__action--danger"
+          :disabled="isBusy"
+          :while-tap="{ scale: 0.96 }"
+          @click="openConfirm('remove')"
+        >
+          <span v-if="isBotActionLoading(bot.id, 'remove')" class="bot-card__action-spinner" aria-hidden="true" />
+          {{ $t('bots.action_remove') }}
+        </motion.button>
+      </UTooltip>
     </motion.div>
 
     <p v-if="actionError" class="bot-card__action-error" role="alert">
@@ -448,6 +475,14 @@ async function handleStop() {
   background: var(--bento-surface);
 }
 
+.bot-card__label {
+  color: var(--bento-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .bot-card__cell--pnl {
   grid-column: 1 / -1;
   gap: 12px;
@@ -497,6 +532,11 @@ async function handleStop() {
   margin-top: 24px;
   padding-top: 22px;
   border-top: 1px solid var(--bento-border);
+}
+
+.bot-card__actions :deep([data-slot='trigger']),
+.bot-card__actions > :deep(*) {
+  display: inline-flex;
 }
 
 .bot-card__action {
@@ -597,6 +637,12 @@ async function handleStop() {
     gap: 8px;
     margin-top: 18px;
     padding-top: 18px;
+  }
+
+  .bot-card__actions :deep([data-slot='trigger']),
+  .bot-card__actions > :deep(*) {
+    display: flex;
+    width: 100%;
   }
 
   .bot-card__action {
