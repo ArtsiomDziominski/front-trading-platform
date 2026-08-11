@@ -14,7 +14,6 @@ const linkCode = ref<TelegramLinkCode | null>(null)
 const linkCodeCopied = ref(false)
 const botQrDataUrl = ref('')
 
-const testMessage = ref('')
 const testMessageSent = ref(false)
 
 function normalizeBotUsername(value?: string | null) {
@@ -162,14 +161,8 @@ async function handleSendTestMessage() {
   telegramError.value = ''
   testMessageSent.value = false
 
-  const message = testMessage.value.trim() || t('settings.telegram_test_default')
-  if (!message) {
-    telegramError.value = t('auth.error_required')
-    return
-  }
-
   try {
-    await userSettings.sendTestMessage(message)
+    await userSettings.sendTestMessage(t('settings.telegram_test_default'))
     testMessageSent.value = true
   } catch {
     telegramError.value = userSettings.error.value || t('auth.error_unknown')
@@ -300,17 +293,6 @@ async function handleSendTestMessage() {
       <h3 class="telegram-test__title">{{ $t('settings.telegram_test_title') }}</h3>
       <p class="text-muted text-sm">{{ $t('settings.telegram_test_hint') }}</p>
 
-      <UFormField :label="$t('settings.telegram_test_message')">
-        <UTextarea
-          id="telegram-test-message"
-          v-model="testMessage"
-          :rows="3"
-          maxlength="4096"
-          :placeholder="$t('settings.telegram_test_default')"
-          class="w-full"
-        />
-      </UFormField>
-
       <UAlert
         v-if="testMessageSent"
         color="success"
@@ -319,8 +301,6 @@ async function handleSendTestMessage() {
       />
 
       <UButton
-        color="neutral"
-        variant="outline"
         :loading="userSettings.loading.value"
         @click="handleSendTestMessage"
       >
