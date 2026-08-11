@@ -102,7 +102,6 @@ async function handleBotCreated() {
     <div class="container create-container">
       <div class="page-header">
         <div>
-          <span class="section-label">{{ $t('bots.create_title') }}</span>
           <h1 class="section-title">{{ $t('bots.create_subtitle') }}</h1>
         </div>
         <UButton color="neutral" variant="outline" to="/bots">

@@ -57,7 +57,6 @@ const capabilities = [
     <section class="bots-public-hero page-section">
       <div class="bots-public-hero__bg" aria-hidden="true" />
       <div class="container bots-public-hero__inner">
-        <span class="section-label">{{ $t('bots.public_badge') }}</span>
         <h1 class="bots-public-hero__title">{{ $t('bots.public_title') }}</h1>
         <p class="bots-public-hero__copy">{{ $t('bots.public_subtitle') }}</p>
 
@@ -75,7 +74,6 @@ const capabilities = [
     <section class="page-section">
       <div class="container">
         <div class="section-header">
-          <span class="section-label">{{ $t('bots.public_about_label') }}</span>
           <h2 class="section-title">{{ $t('bots.public_about_title') }}</h2>
           <p class="section-subtitle">{{ $t('bots.public_about_desc') }}</p>
         </div>
@@ -92,7 +90,6 @@ const capabilities = [
     <section class="page-section bots-public-strategies">
       <div class="container">
         <div class="section-header">
-          <span class="section-label">{{ $t('home.strategies_title') }}</span>
           <h2 class="section-title">{{ $t('bots.public_strategies_title') }}</h2>
         </div>
 
@@ -118,7 +115,6 @@ const capabilities = [
     <section class="page-section">
       <div class="container">
         <div class="section-header">
-          <span class="section-label">{{ $t('exchanges.title') }}</span>
           <h2 class="section-title">{{ $t('bots.public_exchanges_title') }}</h2>
           <p class="section-subtitle">{{ $t('bots.public_exchanges_desc') }}</p>
         </div>
@@ -151,7 +147,6 @@ const capabilities = [
     <section class="page-section">
       <div class="container">
         <div class="section-header">
-          <span class="section-label">{{ $t('bots.public_soon_label') }}</span>
           <h2 class="section-title">{{ $t('bots.public_soon_title') }}</h2>
         </div>
 

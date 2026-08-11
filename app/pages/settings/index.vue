@@ -80,7 +80,6 @@ async function handlePasswordReset() {
     <div class="container settings-container">
       <div class="page-header">
         <div>
-          <span class="section-label">{{ $t('settings.title') }}</span>
           <h1 class="section-title">{{ $t('settings.subtitle') }}</h1>
         </div>
       </div>

@@ -109,7 +109,6 @@ onMounted(() => {
     <div class="container history-container">
       <div class="page-header">
         <div>
-          <span class="section-label">{{ $t('bots.event_history_title') }}</span>
           <h1 class="section-title">{{ $t('bots.event_history_subtitle') }}</h1>
         </div>
         <UButton color="neutral" variant="outline" to="/bots">

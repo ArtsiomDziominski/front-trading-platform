@@ -16,7 +16,6 @@ useSeoMeta({
   <main class="page-section">
     <div class="container">
       <div class="section-header">
-        <span class="section-label">{{ $t('exchanges.title') }}</span>
         <h1 class="section-title">{{ $t('exchanges.subtitle') }}</h1>
       </div>
 
