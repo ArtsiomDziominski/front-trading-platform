@@ -315,22 +315,22 @@ a,
   border: 1px solid rgb(229 255 195 / 35%);
 }
 
-/* Nuxt UI outline buttons on cream canvas */
+/* Nuxt UI buttons: readable on cream canvas and dark cards */
 a.ring-inset.text-default,
 button.ring-inset.text-default,
 a.inline-flex.text-default.bg-default,
 button.inline-flex.text-default.bg-default {
-  color: var(--color-text) !important;
-  background-color: rgb(1 51 48 / 6%) !important;
-  --tw-ring-color: var(--color-border) !important;
+  color: var(--mm-green-dark) !important;
+  background-color: #fff !important;
+  --tw-ring-color: rgb(1 51 48 / 22%) !important;
 }
 
 a.ring-inset.text-default:hover,
 button.ring-inset.text-default:hover,
 a.inline-flex.text-default.bg-default:hover,
 button.inline-flex.text-default.bg-default:hover {
-  background-color: rgb(1 51 48 / 10%) !important;
-  --tw-ring-color: rgb(1 51 48 / 18%) !important;
+  background-color: rgb(255 255 255 / 90%) !important;
+  --tw-ring-color: rgb(1 51 48 / 34%) !important;
 }
 
 @media (max-width: 640px) {

@@ -194,11 +194,12 @@ onUnmounted(() => {
           <h1 class="section-title">{{ $t('bots.subtitle') }}</h1>
         </div>
         <div class="page-header__actions">
-          <UButton to="/bots/create" size="sm">
+          <UButton class="bots-btn bots-btn--cta" to="/bots/create" size="sm">
             + {{ $t('bots.create_bot') }}
           </UButton>
           <UDropdownMenu :items="pageActionItems" :content="{ align: 'end' }">
             <UButton
+              class="bots-btn bots-btn--outline"
               color="neutral"
               variant="outline"
               size="sm"
@@ -209,6 +210,7 @@ onUnmounted(() => {
           </UDropdownMenu>
           <UTooltip :text="$t('bots.help_open')" :delay-duration="200">
             <UButton
+              class="bots-btn bots-btn--outline"
               color="neutral"
               variant="outline"
               size="sm"
@@ -233,6 +235,8 @@ onUnmounted(() => {
             <UButton
               v-for="option in filterOptions"
               :key="option.key"
+              class="bots-btn"
+              :class="filter === option.key ? 'bots-btn--active' : 'bots-btn--outline'"
               role="tab"
               :aria-selected="filter === option.key"
               :label="$t(option.labelKey)"
@@ -245,7 +249,7 @@ onUnmounted(() => {
           <USelect
             v-else
             v-model="filter"
-            class="bots-toolbar__select"
+            class="bots-toolbar__select bots-btn bots-btn--outline"
             size="sm"
             icon="i-lucide-filter"
             :items="filterSelectItems"
@@ -260,6 +264,7 @@ onUnmounted(() => {
             :aria-label="$t('bots.bulk_actions_label')"
           >
             <UButton
+              class="bots-btn bots-btn--outline"
               color="neutral"
               variant="outline"
               size="sm"
@@ -373,13 +378,35 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.page-header__actions :deep(a.ring-inset),
-.page-header__actions :deep(button.ring-inset),
-.page-header__actions :deep(a.text-default.bg-default),
-.page-header__actions :deep(button.text-default.bg-default) {
+.bots-btn--cta {
+  color: var(--color-on-surface) !important;
+  background: var(--color-surface) !important;
+  --tw-ring-color: transparent !important;
+}
+
+.bots-btn--cta:hover {
+  background: #024843 !important;
+}
+
+.bots-btn--outline {
   color: var(--color-text) !important;
-  background-color: var(--color-surface-muted) !important;
-  --tw-ring-color: var(--color-border) !important;
+  background: #fff !important;
+  --tw-ring-color: rgb(1 51 48 / 22%) !important;
+}
+
+.bots-btn--outline:hover {
+  background: rgb(255 255 255 / 88%) !important;
+  --tw-ring-color: rgb(1 51 48 / 34%) !important;
+}
+
+.bots-btn--active {
+  color: var(--mm-green-dark) !important;
+  background: var(--color-accent) !important;
+  --tw-ring-color: rgb(1 51 48 / 28%) !important;
+}
+
+.bots-btn--active:hover {
+  background: #d4ff6a !important;
 }
 
 .bots-toolbar {
@@ -404,6 +431,12 @@ onUnmounted(() => {
 .bots-toolbar__select {
   width: 100%;
   min-width: 0;
+}
+
+.bots-toolbar__select :deep(button) {
+  color: var(--color-text) !important;
+  background: #fff !important;
+  --tw-ring-color: rgb(1 51 48 / 22%) !important;
 }
 
 .bots-toolbar__bulk {

@@ -18,12 +18,12 @@ export default defineAppConfig({
           color: 'neutral',
           variant: 'outline',
           class:
-            'ring-[var(--color-border)] text-[var(--color-text)] bg-[rgb(1_51_48/6%)] hover:bg-[rgb(1_51_48/10%)] hover:ring-[rgb(1_51_48/18%)]',
+            'ring-[rgb(1_51_48/22%)] text-[var(--mm-green-dark)] bg-white hover:bg-[rgb(255_255_255/90%)] hover:ring-[rgb(1_51_48/34%)]',
         },
         {
           color: 'primary',
           variant: 'solid',
-          class: 'bg-[var(--color-accent)] text-[var(--color-text)] hover:bg-[#d4ff6a]',
+          class: 'bg-[var(--color-accent)] text-[var(--mm-green-dark)] hover:bg-[#d4ff6a]',
         },
       ],
     },
