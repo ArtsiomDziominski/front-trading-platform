@@ -267,6 +267,7 @@
     "action_stop": "Stop",
     "action_close": "Close",
     "action_redeploy": "Redeploy grid",
+    "action_redeploy_short": "Redeploy",
     "action_remove": "Remove",
     "action_stop_hint": "Cancels exchange orders and sets status to Stopped. Does not close positions.",
     "action_close_hint": "Cancels orders and closes positions on the exchange. Bot becomes Closed.",

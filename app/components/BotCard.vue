@@ -87,77 +87,93 @@
       :animate="{ opacity: 1 }"
       :transition="{ duration: 0.4, delay: staggerDelay + 0.3 }"
     >
-      <UTooltip
-        v-if="canStop"
-        :text="$t('bots.action_stop_hint')"
-        :delay-duration="200"
-        :content="{ side: 'top', sideOffset: 8 }"
-      >
-        <AppButton
-          variant="secondary"
-          size="sm"
-          class="bot-card__action"
-          :disabled="isBusy"
-          :loading="isBotActionLoading(bot.id, 'stop')"
-          @click="handleStop"
+      <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
+        <UTooltip
+          v-if="canStop"
+          :text="$t('bots.action_stop_hint')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
         >
-          {{ $t('bots.action_stop') }}
-        </AppButton>
-      </UTooltip>
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.action_stop')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'stop')"
+            @click="handleStop"
+          >
+            <UIcon name="i-lucide-pause" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
 
-      <UTooltip
-        v-if="canRedeploy"
-        :text="$t('bots.action_redeploy_hint')"
-        :delay-duration="200"
-        :content="{ side: 'top', sideOffset: 8 }"
-      >
-        <AppButton
-          variant="secondary"
-          size="sm"
-          class="bot-card__action"
-          :disabled="isBusy"
-          :loading="isBotActionLoading(bot.id, 'redeploy')"
-          @click="openConfirm('redeploy')"
+        <UTooltip
+          v-if="canRedeploy"
+          :text="$t('bots.action_redeploy_hint')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
         >
-          {{ $t('bots.action_redeploy') }}
-        </AppButton>
-      </UTooltip>
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.action_redeploy')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'redeploy')"
+            @click="openConfirm('redeploy')"
+          >
+            <UIcon name="i-lucide-refresh-cw" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
 
-      <UTooltip
-        v-if="canClose"
-        :text="$t('bots.action_close_hint')"
-        :delay-duration="200"
-        :content="{ side: 'top', sideOffset: 8 }"
-      >
-        <AppButton
-          variant="secondary"
-          size="sm"
-          class="bot-card__action"
-          :disabled="isBusy"
-          :loading="isBotActionLoading(bot.id, 'close')"
-          @click="openConfirm('close')"
+        <UTooltip
+          v-if="canClose"
+          :text="$t('bots.action_close_hint')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
         >
-          {{ $t('bots.action_close') }}
-        </AppButton>
-      </UTooltip>
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.action_close')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'close')"
+            @click="openConfirm('close')"
+          >
+            <UIcon name="i-lucide-square" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
 
-      <UTooltip
-        v-if="canRemove"
-        :text="$t('bots.action_remove_hint')"
-        :delay-duration="200"
-        :content="{ side: 'top', sideOffset: 8 }"
-      >
-        <AppButton
-          variant="secondary"
-          size="sm"
-          class="bot-card__action"
-          :disabled="isBusy"
-          :loading="isBotActionLoading(bot.id, 'remove')"
-          @click="openConfirm('remove')"
+        <span
+          v-if="canRemove && (canStop || canRedeploy || canClose)"
+          class="bot-card__action-sep"
+          aria-hidden="true"
+        />
+
+        <UTooltip
+          v-if="canRemove"
+          :text="$t('bots.action_remove_hint')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
         >
-          {{ $t('bots.action_remove') }}
-        </AppButton>
-      </UTooltip>
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action bot-card__action--danger"
+            :aria-label="$t('bots.action_remove')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'remove')"
+            @click="openConfirm('remove')"
+          >
+            <UIcon name="i-lucide-trash-2" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
+      </div>
     </motion.div>
 
     <p v-if="actionError" class="bot-card__action-error" role="alert">
@@ -527,15 +543,61 @@ async function handleStop() {
   position: relative;
   z-index: 1;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-top: 24px;
   padding-top: 22px;
   border-top: 1px solid var(--bento-border);
 }
 
+.bot-card__action-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--bento-border);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 4%) 0%, transparent 100%),
+    var(--bento-surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+.bot-card__action-sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 18px;
+  margin: 4px 2px;
+  background: var(--bento-border);
+}
+
 .bot-card__action {
   justify-content: center;
+  min-width: 36px;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.bot-card__action-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.bot-card__action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.bot-card__action--danger {
+  color: var(--bento-danger) !important;
+  background: rgb(251 113 133 / 12%) !important;
+  --tw-ring-color: rgb(251 113 133 / 28%) !important;
+}
+
+.bot-card__action--danger:hover:not(:disabled) {
+  background: rgb(251 113 133 / 20%) !important;
+  --tw-ring-color: rgb(251 113 133 / 42%) !important;
 }
 
 .bot-card__action-error {
@@ -577,21 +639,18 @@ async function handleStop() {
   }
 
   .bot-card__actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
     margin-top: 18px;
     padding-top: 18px;
   }
 
-  .bot-card__actions :deep([data-slot='trigger']),
-  .bot-card__actions > :deep(*) {
-    display: flex;
+  .bot-card__action-group {
     width: 100%;
+    justify-content: flex-end;
   }
 
   .bot-card__action {
-    width: 100%;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 </style>
