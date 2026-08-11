@@ -2,7 +2,8 @@
   "nav": {
     "home": "Home",
     "bots": "Bots",
-    "exchanges": "Exchanges"
+    "exchanges": "Exchanges",
+    "more": "More"
   },
   "home": {
     "hero_badge": "Trading Bot Platform",

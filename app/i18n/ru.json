@@ -2,7 +2,8 @@
   "nav": {
     "home": "Главная",
     "bots": "Боты",
-    "exchanges": "Биржи"
+    "exchanges": "Биржи",
+    "more": "Ещё"
   },
   "home": {
     "hero_badge": "Trading Bot Platform",
