@@ -8,10 +8,6 @@
       delay: staggerDelay,
       ease: [0.22, 1, 0.36, 1],
     }"
-    :while-hover="{
-      y: -6,
-      transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
-    }"
   >
     <div class="bot-card__glow" aria-hidden="true" />
 
@@ -389,7 +385,6 @@ async function handleStop() {
   box-shadow: var(--shadow-elevated);
   color: var(--bento-text);
   cursor: default;
-  will-change: transform;
 }
 
 .bot-card__glow {
