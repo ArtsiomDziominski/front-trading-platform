@@ -1,26 +1,23 @@
-export type TelegramNotificationType =
+export type TelegramNotificationId =
   | 'bot_created'
   | 'bot_stopped'
   | 'bot_closed'
   | 'bot_grid_redeployed'
   | 'bot_removed'
   | 'bot_config_updated'
+  | 'profit_alert'
 
-export interface TelegramNotificationPrefs {
-  bot_created: boolean
-  bot_stopped: boolean
-  bot_closed: boolean
-  bot_grid_redeployed: boolean
-  bot_removed: boolean
-  bot_config_updated: boolean
-}
+/** @deprecated Use TelegramNotificationId */
+export type TelegramNotificationType = TelegramNotificationId
+
+export type TelegramNotificationPrefs = Record<TelegramNotificationId, boolean>
 
 export type TelegramNotificationPrefsUpdate = {
-  [K in keyof TelegramNotificationPrefs]?: boolean | null
+  [K in TelegramNotificationId]?: boolean | null
 }
 
 export interface TelegramNotificationItem {
-  id: TelegramNotificationType
+  id: TelegramNotificationId
   label: string
   enabled: boolean
 }
@@ -30,11 +27,17 @@ export interface UserSettings {
   telegram_notifications_enabled: boolean
   telegram_notification_prefs: TelegramNotificationPrefs
   telegram_notifications: TelegramNotificationItem[]
+  /** ROE % threshold; null = off */
+  telegram_profit_alert_percent: number | null
+  /** Unrealized PnL USDT threshold; null = off */
+  telegram_profit_alert_usd: number | null
 }
 
 export interface UserSettingsUpdate {
   telegram_notifications_enabled?: boolean | null
   telegram_notification_prefs?: TelegramNotificationPrefsUpdate | null
+  telegram_profit_alert_percent?: number | null
+  telegram_profit_alert_usd?: number | null
 }
 
 export interface TelegramLinkCode {
