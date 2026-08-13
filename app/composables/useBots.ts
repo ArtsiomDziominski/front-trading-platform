@@ -1,12 +1,25 @@
 import { parseApiError } from '~/utils/parseApiError'
+import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
 import type { BotCreate, BotCreationLogOut, BotEventOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
 
+function normalizeBotConfig(config: Record<string, unknown>): Record<string, unknown> {
+  const takeProfit = parseTakeProfit(config)
+  const fields = buildTakeProfitPayload(takeProfit.mode, takeProfit.value)
+
+  return {
+    ...config,
+    take_profit_percent: fields.take_profit_percent,
+    take_profit_amount: fields.take_profit_amount,
+  }
+}
+
 function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, ApiKeyOut['exchange']>): BotListItem {
   return {
     ...bot,
+    config: normalizeBotConfig(bot.config ?? {}),
     exchange: exchangeByKeyId.get(bot.api_key_id),
   }
 }
@@ -159,6 +172,15 @@ export const useBots = () => {
   function removeBot(botId: number) {
     return runBotAction(botId, 'remove', () =>
       auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}`, { method: 'DELETE' }),
+    )
+  }
+
+  function updateBotConfig(botId: number, config: Record<string, unknown>) {
+    return runBotAction(botId, 'update-config', () =>
+      auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}`, {
+        method: 'PATCH',
+        body: { config },
+      }),
     )
   }
 
@@ -474,6 +496,7 @@ export const useBots = () => {
     closeBot,
     redeployBotGrid,
     removeBot,
+    updateBotConfig,
     isBotActionLoading,
     getBotActionError,
     clearBotActionError,

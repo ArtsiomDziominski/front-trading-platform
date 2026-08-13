@@ -1,4 +1,5 @@
 import type { BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
 const VOLUME_MODES: VolumeMode[] = ['linear', 'exponential', 'fixed']
@@ -32,6 +33,9 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
     ? undefined
     : asString(startPriceRaw).trim()
 
+  const takeProfit = parseTakeProfit(config)
+  const takeProfitFields = buildTakeProfitPayload(takeProfit.mode, takeProfit.value)
+
   return {
     symbol,
     direction: direction as GridDirection,
@@ -40,6 +44,8 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
     grid_step_percent: asString(config.grid_step_percent).trim(),
     volume_mode: volumeMode as VolumeMode,
     auto_restart: Boolean(config.auto_restart),
+    take_profit_percent: takeProfitFields.take_profit_percent,
+    take_profit_amount: takeProfitFields.take_profit_amount,
     ...(startPrice ? { start_price: startPrice } : {}),
   }
 }

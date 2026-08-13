@@ -17,6 +17,12 @@ export type GridDirection = 'LONG' | 'SHORT'
 
 export type VolumeMode = 'linear' | 'exponential' | 'fixed'
 
+export enum TakeProfitMode {
+  Off = 'off',
+  Percent = 'percent',
+  Amount = 'amount',
+}
+
 export interface GridFuturesConfig {
   symbol: string
   direction: GridDirection
@@ -26,6 +32,10 @@ export interface GridFuturesConfig {
   volume_mode: VolumeMode
   start_price?: string | number | null
   auto_restart?: boolean
+  /** Price shift from average entry, 0…100; null/0 = off. */
+  take_profit_percent?: string | number | null
+  /** Target unrealized PnL in USDT; null/0 = off. */
+  take_profit_amount?: string | number | null
 }
 
 export interface BotCreate {

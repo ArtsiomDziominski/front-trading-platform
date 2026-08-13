@@ -15,6 +15,9 @@
       <div class="bot-card__identity">
         <span class="bot-card__symbol">{{ bot.symbol }}</span>
         <span class="bot-card__id">#{{ bot.id }}</span>
+        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
+          {{ takeProfitLabel }}
+        </span>
       </div>
 
       <motion.span
@@ -85,6 +88,26 @@
     >
       <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
         <UTooltip
+          v-if="canEditTakeProfit"
+          :text="$t('bots.take_profit_edit')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
+        >
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.take_profit_edit')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'update-config')"
+            @click="editOpen = true"
+          >
+            <UIcon name="i-lucide-target" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
+
+        <UTooltip
           v-if="canStop"
           :text="$t('bots.action_stop_hint')"
           :delay-duration="1000"
@@ -145,7 +168,7 @@
         </UTooltip>
 
         <span
-          v-if="canRemove && (canStop || canRedeploy || canClose)"
+          v-if="canRemove && (canEditTakeProfit || canStop || canRedeploy || canClose)"
           class="bot-card__action-sep"
           aria-hidden="true"
         />
@@ -176,6 +199,10 @@
       {{ actionError }}
     </p>
 
+    <p v-else-if="engineError" class="bot-card__action-error" role="alert">
+      {{ engineError }}
+    </p>
+
     <ConfirmModal
       v-model="confirmOpen"
       :title="confirmCopy.title"
@@ -187,14 +214,21 @@
       :confirm-variant="confirmCopy.variant"
       @confirm="confirmAction"
     />
+
+    <BotTakeProfitEditModal
+      v-if="canEditTakeProfit"
+      v-model:open="editOpen"
+      :bot="bot"
+    />
   </motion.article>
 </template>
 
 <script setup lang="ts">
 import { motion } from 'motion-v'
 import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
-import type { BotListItem } from '#shared/types/bot'
+import { TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
+import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
 
 const props = withDefaults(defineProps<{
   bot: BotListItem
@@ -284,20 +318,33 @@ const pnlCellClass = computed(() => {
   return value < 0 ? 'bot-card__cell--pnl-down' : 'bot-card__cell--pnl-up'
 })
 
+const takeProfitLabel = computed(() => formatTakeProfitBadge(props.bot.config, t))
+const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== TakeProfitMode.Off)
+
 const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
 const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
 const canRedeploy = computed(() =>
   props.bot.lifecycle_status === 'ACTIVE' && props.bot.bot_type === 'GRID_FUTURES',
 )
+const canEditTakeProfit = computed(() =>
+  props.bot.bot_type === 'GRID_FUTURES' && props.bot.lifecycle_status !== 'CLOSED',
+)
 const canRemove = computed(() => !props.bot.deleted_at)
-const hasActions = computed(() => canStop.value || canClose.value || canRedeploy.value || canRemove.value)
+const hasActions = computed(() =>
+  canEditTakeProfit.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
+)
 const isBusy = computed(() => isBotActionLoading(props.bot.id))
 const actionError = computed(() => getBotActionError(props.bot.id))
+const engineError = computed(() => {
+  if (props.bot.engine_state !== 'ERROR') return null
+  return props.bot.engine_error?.trim() || null
+})
 
 type CardAction = 'close' | 'redeploy' | 'remove'
 const confirmOpen = ref(false)
 const confirmLoading = ref(false)
 const pendingAction = ref<CardAction | null>(null)
+const editOpen = ref(false)
 
 const confirmCopy = computed(() => {
   const symbol = props.bot.symbol
@@ -426,6 +473,17 @@ async function handleStop() {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.02em;
+}
+
+.bot-card__tp {
+  color: var(--bento-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.bot-card__tp--on {
+  color: var(--bento-accent);
 }
 
 .bot-card__status {

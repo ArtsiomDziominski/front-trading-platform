@@ -4,7 +4,7 @@ import {
   botEventTypeTone,
   extractBotEventMessage,
   formatBotEventPayloadWithoutMessage,
-  translateBotEventType,
+  translateBotEventTitle,
 } from '~/utils/botEventType'
 import { parseBotEventMessage } from '~/utils/parseBotEventMessage'
 
@@ -54,8 +54,8 @@ function formatDate(value: string): string {
   }).format(date)
 }
 
-function eventTypeLabel(eventType: string): string {
-  return translateBotEventType(t, te, eventType)
+function eventTypeLabel(eventType: string, payload: BotEventOut['payload']): string {
+  return translateBotEventTitle(t, te, eventType, payload)
 }
 
 function eventTypeClass(eventType: string): string {
@@ -187,7 +187,7 @@ onMounted(() => {
         <li v-for="{ event, message, payloadText } in eventRows" :key="event.id" class="event-item">
           <div class="event-item__head">
             <span class="event-item__type" :class="eventTypeClass(event.event_type)">
-              {{ eventTypeLabel(event.event_type) }}
+              {{ eventTypeLabel(event.event_type, event.payload) }}
             </span>
             <time class="event-item__time">{{ formatDate(event.created_at) }}</time>
           </div>
