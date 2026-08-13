@@ -23,6 +23,9 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   bot_config_updated: 'bots.event_type_bot_config_updated',
   grid_redeployed: 'bots.event_type_bot_grid_redeployed',
   config_updated: 'bots.event_type_bot_config_updated',
+  take_profit_filled: 'bots.event_type_take_profit_filled',
+  close_completed: 'bots.event_type_close_completed',
+  grid_recreated: 'bots.event_type_grid_recreated',
   created: 'bots.event_type_created',
   removed_from_tracking: 'bots.event_type_removed_from_tracking',
   active: 'bots.status_active',
@@ -62,11 +65,36 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     dca_spot: 'bots.type_dca_spot',
     custom: 'bots.type_custom',
   },
+  reason: {
+    take_profit: 'bots.event_reason_take_profit',
+  },
   event_type: EVENT_TYPE_I18N_KEYS,
 }
 
 export function normalizeBotEventType(value: string): string {
   return value.trim().toLowerCase().replace(/-/g, '_')
+}
+
+export function translateBotEventTitle(
+  t: TranslateFn,
+  te: HasKeyFn,
+  eventType: string,
+  payload?: Record<string, unknown> | null,
+): string {
+  const normalized = normalizeBotEventType(eventType)
+
+  if (normalized === 'close_completed') {
+    const reason = typeof payload?.reason === 'string'
+      ? normalizeBotEventType(payload.reason)
+      : ''
+
+    if (reason === 'take_profit') {
+      const key = 'bots.event_type_close_completed_take_profit'
+      if (te(key)) return t(key)
+    }
+  }
+
+  return translateBotEventType(t, te, eventType)
 }
 
 export function translateBotEventType(t: TranslateFn, te: HasKeyFn, eventType: string): string {
@@ -91,10 +119,14 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type.includes('created') || type === 'active' || type === 'running' || type === 'created_ok') {
     return 'created'
   }
-  if (type.includes('redeploy') || type === 'restarting') return 'redeployed'
+  if (type.includes('redeploy') || type === 'restarting' || type === 'grid_recreated') {
+    return 'redeployed'
+  }
   if (type.includes('config')) return 'config'
   if (type.includes('stopped') || type === 'init') return 'stopped'
-  if (type.includes('closed')) return 'closed'
+  if (type.includes('take_profit') || type.includes('closed') || type === 'close_completed') {
+    return 'closed'
+  }
   if (type.includes('removed')) return 'removed'
   if (type.includes('error') || type === 'exchange_error' || type === 'validation_failed') {
     return 'error'

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import type { BotCreate, BotType, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import { TakeProfitMode, type BotCreate, type BotType, type GridDirection, type GridFuturesConfig, type VolumeMode } from '#shared/types/bot'
+import { parseApiError } from '~/utils/parseApiError'
+import {
+  buildTakeProfitPayload,
+  isTakeProfitApiError,
+  parseTakeProfit,
+  validateTakeProfit,
+} from '~/utils/takeProfit'
 
 defineProps<{
   apiKeys: ApiKeyOut[]
@@ -21,6 +28,8 @@ const gridStepPercent = defineModel<string>('gridStepPercent', { required: true 
 const volumeMode = defineModel<VolumeMode>('volumeMode', { required: true })
 const startPrice = defineModel<string>('startPrice', { required: true })
 const autoRestart = defineModel<boolean>('autoRestart', { required: true })
+const takeProfitMode = defineModel<TakeProfitMode>('takeProfitMode', { required: true })
+const takeProfitValue = defineModel<string>('takeProfitValue', { required: true })
 
 const { t } = useI18n()
 const router = useRouter()
@@ -28,6 +37,7 @@ const { creating, createError, createBot } = useBots()
 
 const formRef = ref<HTMLElement | null>(null)
 const formError = ref('')
+const takeProfitError = ref('')
 const engineWarning = ref('')
 const createdBotId = ref<number | null>(null)
 
@@ -40,6 +50,7 @@ const apiKeyIdModel = computed({
 
 function buildGridConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
+  const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
@@ -49,6 +60,8 @@ function buildGridConfig(): GridFuturesConfig {
     grid_step_percent: gridStepPercent.value.trim(),
     volume_mode: volumeMode.value,
     auto_restart: autoRestart.value,
+    take_profit_percent: takeProfit.take_profit_percent,
+    take_profit_amount: takeProfit.take_profit_amount,
     ...(startPriceValue ? { start_price: startPriceValue } : {}),
   }
 }
@@ -64,6 +77,7 @@ function apiKeyLabel(key: ApiKeyOut): string {
 
 function validate(): boolean {
   formError.value = ''
+  takeProfitError.value = ''
   engineWarning.value = ''
 
   if (!apiKeyId.value) {
@@ -92,8 +106,18 @@ function validate(): boolean {
     return false
   }
 
+  const tpError = validateTakeProfit(takeProfitMode.value, takeProfitValue.value, t)
+  if (tpError) {
+    takeProfitError.value = tpError
+    return false
+  }
+
   return true
 }
+
+watch(takeProfitMode, (mode) => {
+  if (mode === TakeProfitMode.Off) takeProfitError.value = ''
+})
 
 function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   const keyExists = keys.some((key) => key.id === payload.api_key_id)
@@ -112,7 +136,12 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   startPrice.value = config.start_price != null ? String(config.start_price) : ''
   autoRestart.value = Boolean(config.auto_restart)
 
+  const takeProfit = parseTakeProfit(config)
+  takeProfitMode.value = takeProfit.mode
+  takeProfitValue.value = takeProfit.value
+
   formError.value = ''
+  takeProfitError.value = ''
   engineWarning.value = ''
   createdBotId.value = null
   createError.value = null
@@ -122,6 +151,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 
 async function handleSubmit() {
   formError.value = ''
+  takeProfitError.value = ''
   engineWarning.value = ''
   createdBotId.value = null
   createError.value = null
@@ -146,7 +176,12 @@ async function handleSubmit() {
     }
 
     await router.push('/bots')
-  } catch {
+  } catch (error) {
+    if (isTakeProfitApiError(error)) {
+      takeProfitError.value = parseApiError(error, t('bots.error_take_profit_xor'))
+      return
+    }
+
     formError.value = createError.value || t('bots.create_error')
   }
 }
@@ -263,6 +298,12 @@ defineExpose({ applyPayload, scrollIntoView })
         </div>
 
         <UCheckbox v-model="autoRestart" :label="$t('bots.field_auto_restart')" />
+
+        <BotTakeProfitFields
+          v-model:mode="takeProfitMode"
+          v-model:value="takeProfitValue"
+          :error="takeProfitError"
+        />
 
         <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />
         <UAlert v-if="engineWarning" color="warning" variant="subtle" :title="engineWarning" />
