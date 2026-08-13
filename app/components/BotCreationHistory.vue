@@ -99,6 +99,8 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   volume_mode: 'bots.field_volume_mode',
   start_price: 'bots.field_start_price',
   auto_restart: 'bots.field_auto_restart',
+  take_profit_percent: 'bots.take_profit_value_percent',
+  take_profit_amount: 'bots.take_profit_value_amount',
 }
 
 const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
@@ -152,7 +154,10 @@ function settingValue(setting: CreationHistorySetting): string {
     case 'auto_restart':
       return setting.value ? t('common.yes') : t('common.no')
     case 'grid_step_percent':
+    case 'take_profit_percent':
       return `${setting.value}%`
+    case 'take_profit_amount':
+      return `${setting.value} USDT`
     default:
       return String(setting.value)
   }

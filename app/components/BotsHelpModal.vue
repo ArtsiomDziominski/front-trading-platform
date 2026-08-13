@@ -5,6 +5,7 @@ const actionItems = [
   { titleKey: 'bots.action_stop', textKey: 'bots.help_action_stop' },
   { titleKey: 'bots.action_close', textKey: 'bots.help_action_close' },
   { titleKey: 'bots.action_redeploy', textKey: 'bots.help_action_redeploy' },
+  { titleKey: 'bots.take_profit_edit', textKey: 'bots.help_action_take_profit' },
   { titleKey: 'bots.action_remove', textKey: 'bots.help_action_remove' },
 ] as const
 

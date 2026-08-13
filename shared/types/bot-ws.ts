@@ -7,6 +7,8 @@ export type BotWsEventType =
   | 'bot_closed'
   | 'bot_removed'
   | 'bot_error'
+  | 'bot_grid_redeployed'
+  | 'bot_config_updated'
 
 export interface BotWsMessage {
   event: BotWsEventType
