@@ -68,6 +68,8 @@ flowchart TD
 
 ## История (`GET /bots/history`)
 
+Экран `/history`, см. [`history.md`](./history.md).
+
 | `event_type` | Когда |
 |--------------|--------|
 | `take_profit_filled` | TP исполнился |

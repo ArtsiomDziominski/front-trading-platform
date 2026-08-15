@@ -3,7 +3,8 @@ import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotCreationLogOut, BotEventOut, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
+import type { BotCreate, BotCreationLogOut, BotEventOut, BotHistoryFilters, BotHistoryQuery, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, HistoryClearResult, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
+import { compactBotHistoryQuery } from '~/utils/botHistory'
 
 function normalizeBotConfig(config: Record<string, unknown>): Record<string, unknown> {
   const takeProfit = parseTakeProfit(config)
@@ -425,9 +426,16 @@ export const useBots = () => {
     })
   }
 
-  async function fetchBotHistory(botId?: number) {
+  async function fetchBotHistory(query: BotHistoryQuery = {}) {
     return auth.authFetch<BotEventOut[]>(`${baseUrl}/bots/history`, {
-      query: botId != null ? { bot_id: botId } : undefined,
+      query: compactBotHistoryQuery(query),
+    })
+  }
+
+  async function clearBotHistory(filters: BotHistoryFilters = {}) {
+    return auth.authFetch<HistoryClearResult>(`${baseUrl}/bots/history`, {
+      method: 'DELETE',
+      query: compactBotHistoryQuery(filters),
     })
   }
 
@@ -487,6 +495,7 @@ export const useBots = () => {
     fetchApiKeys,
     fetchCreationHistory,
     fetchBotHistory,
+    clearBotHistory,
     createBot,
     liquidationChecking,
     liquidationError,

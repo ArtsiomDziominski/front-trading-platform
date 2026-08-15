@@ -203,6 +203,11 @@
       {{ engineError }}
     </p>
 
+    <BotCardHistory
+      ref="historyPanel"
+      :bot-id="bot.id"
+    />
+
     <ConfirmModal
       v-model="confirmOpen"
       :title="confirmCopy.title"
@@ -248,6 +253,7 @@ const {
   clearBotActionError,
 } = useBots()
 
+const historyPanel = useTemplateRef<{ reloadIfOpen: () => void }>('historyPanel')
 const staggerDelay = computed(() => Math.min(props.index * 0.07, 0.42))
 
 function formatPnl(value: number): string {
@@ -404,6 +410,7 @@ async function confirmAction() {
     } else if (pendingAction.value === 'remove') {
       await removeBot(props.bot.id)
     }
+    historyPanel.value?.reloadIfOpen()
     confirmOpen.value = false
     pendingAction.value = null
   } catch {
@@ -415,7 +422,12 @@ async function confirmAction() {
 
 async function handleStop() {
   clearBotActionError(props.bot.id)
-  await stopBot(props.bot.id)
+  try {
+    await stopBot(props.bot.id)
+    historyPanel.value?.reloadIfOpen()
+  } catch {
+    // error shown under card
+  }
 }
 </script>
 

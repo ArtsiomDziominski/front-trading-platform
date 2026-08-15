@@ -31,6 +31,7 @@ const menuItems = computed(() => [
   [
     { label: t('settings.title'), to: '/settings' },
     { label: t('nav.bots'), to: '/bots' },
+    { label: t('nav.history'), to: '/history' },
   ],
   [
     {

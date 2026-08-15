@@ -126,10 +126,42 @@ export interface BotCreationLogOut {
   exchange_ok: boolean
 }
 
+export type BotEventSource = 'user' | 'auto'
+
+export type BotEventType =
+  | 'created'
+  | 'stopped'
+  | 'close_completed'
+  | 'grid_redeployed'
+  | 'grid_recreated'
+  | 'take_profit_filled'
+  | 'order_filled'
+  | 'config_updated'
+  | 'removed_from_tracking'
+  | 'error'
+
 export interface BotEventOut {
   id: number
   bot_id: number
   event_type: string
   payload: Record<string, unknown> | null
   created_at: string
+  exchange: ExchangeType
+  symbol: string
+}
+
+export interface HistoryClearResult {
+  deleted: number
+}
+
+export interface BotHistoryFilters {
+  bot_id?: number
+  created_from?: string
+  created_to?: string
+  exchange?: ExchangeType
+}
+
+export interface BotHistoryQuery extends BotHistoryFilters {
+  skip?: number
+  limit?: number
 }
