@@ -21,15 +21,16 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   bot_error: 'bots.event_type_bot_error',
   bot_grid_redeployed: 'bots.event_type_bot_grid_redeployed',
   bot_config_updated: 'bots.event_type_bot_config_updated',
-  grid_redeployed: 'bots.event_type_bot_grid_redeployed',
+  grid_redeployed: 'bots.event_type_grid_redeployed',
   config_updated: 'bots.event_type_bot_config_updated',
   take_profit_filled: 'bots.event_type_take_profit_filled',
   close_completed: 'bots.event_type_close_completed',
   grid_recreated: 'bots.event_type_grid_recreated',
   created: 'bots.event_type_created',
+  stopped: 'bots.event_type_stopped',
+  order_filled: 'bots.event_type_order_filled_grid',
   removed_from_tracking: 'bots.event_type_removed_from_tracking',
   active: 'bots.status_active',
-  stopped: 'bots.status_stopped',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
   init: 'bots.engine_state_init',
@@ -75,6 +76,14 @@ export function normalizeBotEventType(value: string): string {
   return value.trim().toLowerCase().replace(/-/g, '_')
 }
 
+export function isTakeProfitClose(payload: Record<string, unknown> | null): boolean {
+  return payload?.reason === 'take_profit' || payload?.source === 'auto'
+}
+
+export function isUserAction(payload: Record<string, unknown> | null): boolean {
+  return payload?.source !== 'auto'
+}
+
 export function translateBotEventTitle(
   t: TranslateFn,
   te: HasKeyFn,
@@ -84,14 +93,25 @@ export function translateBotEventTitle(
   const normalized = normalizeBotEventType(eventType)
 
   if (normalized === 'close_completed') {
-    const reason = typeof payload?.reason === 'string'
-      ? normalizeBotEventType(payload.reason)
-      : ''
+    const key = isTakeProfitClose(payload ?? null)
+      ? 'bots.event_type_close_completed_take_profit'
+      : 'bots.event_type_close_completed'
+    if (te(key)) return t(key)
+  }
 
-    if (reason === 'take_profit') {
-      const key = 'bots.event_type_close_completed_take_profit'
-      if (te(key)) return t(key)
-    }
+  if (normalized === 'order_filled') {
+    const kind = typeof payload?.kind === 'string'
+      ? normalizeBotEventType(payload.kind)
+      : ''
+    const key = kind === 'entry'
+      ? 'bots.event_type_order_filled_entry'
+      : 'bots.event_type_order_filled_grid'
+    if (te(key)) return t(key)
+  }
+
+  if (normalized === 'error') {
+    const key = 'bots.event_type_bot_error'
+    if (te(key)) return t(key)
   }
 
   return translateBotEventType(t, te, eventType)
@@ -116,11 +136,11 @@ export function translateBotEventType(t: TranslateFn, te: HasKeyFn, eventType: s
 export function botEventTypeTone(eventType: string): BotEventTone {
   const type = normalizeBotEventType(eventType)
 
-  if (type.includes('created') || type === 'active' || type === 'running' || type === 'created_ok') {
-    return 'created'
-  }
   if (type.includes('redeploy') || type === 'restarting' || type === 'grid_recreated') {
     return 'redeployed'
+  }
+  if (type === 'order_filled' || type === 'active' || type === 'running' || type === 'created_ok' || type.includes('created')) {
+    return 'created'
   }
   if (type.includes('config')) return 'config'
   if (type.includes('stopped') || type === 'init') return 'stopped'

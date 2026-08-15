@@ -61,7 +61,7 @@ const pageActionItems = computed(() => [
     {
       label: t('bots.event_history_open'),
       icon: 'i-lucide-history',
-      to: '/bots/history',
+      to: '/history',
     },
     {
       label: t('bots.manage_api_keys'),

@@ -20,10 +20,10 @@ const bottomNavItems = computed(() => [
     isActive: route.path.startsWith('/bots'),
   },
   {
-    to: '/exchanges',
-    label: t('nav.exchanges'),
-    icon: 'i-lucide-landmark',
-    isActive: route.path.startsWith('/exchanges'),
+    to: '/history',
+    label: t('nav.history'),
+    icon: 'i-lucide-history',
+    isActive: route.path.startsWith('/history'),
   },
 ])
 
@@ -97,6 +97,9 @@ onMounted(() => {
             </NuxtLink>
             <NuxtLink :to="botsNavTo">
               {{ $t('nav.bots') }}
+            </NuxtLink>
+            <NuxtLink to="/history">
+              {{ $t('nav.history') }}
             </NuxtLink>
             <NuxtLink to="/exchanges">
               {{ $t('nav.exchanges') }}
