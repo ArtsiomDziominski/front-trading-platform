@@ -453,7 +453,7 @@ async function handleStop() {
   height: 55%;
   transform: translateX(-50%);
   border-radius: 999px;
-  background: radial-gradient(circle, rgb(186 242 74 / 14%) 0%, transparent 70%);
+  background: radial-gradient(circle, rgb(139 92 246 / 22%) 0%, transparent 70%);
   pointer-events: none;
 }
 

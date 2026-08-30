@@ -11,23 +11,23 @@ const bottomNavItems = computed(() => [
     to: '/',
     label: t('nav.home'),
     icon: 'i-lucide-house',
-    isActive: route.path === '/',
+    isActive: route.path === '/' || route.path === '/en',
   },
   {
     to: botsNavTo.value,
     label: t('nav.bots'),
     icon: 'i-lucide-bot',
-    isActive: route.path.startsWith('/bots'),
+    isActive: route.path.startsWith('/bots') || route.path.includes('/bots'),
   },
   {
     to: '/history',
     label: t('nav.history'),
     icon: 'i-lucide-history',
-    isActive: route.path.startsWith('/history'),
+    isActive: route.path.includes('/history'),
   },
 ])
 
-const isMoreActive = computed(() => route.path.startsWith('/settings'))
+const isMoreActive = computed(() => route.path.includes('/settings'))
 
 const moreMenuItems = computed(() => {
   if (auth.loggedIn.value) {
@@ -171,8 +171,8 @@ onMounted(() => {
   top: 0;
   z-index: 100;
   padding-top: env(safe-area-inset-top);
-  border-bottom: 1px solid var(--color-border);
-  background: rgb(229 255 195 / 82%);
+  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  background: rgb(0 0 0 / 72%);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
@@ -187,9 +187,10 @@ onMounted(() => {
 
 .brand {
   flex-shrink: 0;
-  color: var(--color-text);
-  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  color: #fff;
+  font-family: Inter, "DM Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 1.05rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
   text-decoration: none;
 }
@@ -206,7 +207,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--color-text-muted);
+  color: rgb(255 255 255 / 55%);
   font-size: 0.92rem;
   font-weight: 600;
 }
@@ -223,8 +224,8 @@ onMounted(() => {
 
 .nav a:hover,
 .nav a.router-link-active {
-  color: var(--color-text);
-  background: rgb(1 51 48 / 8%);
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
 }
 
 .site-header__actions {
@@ -257,8 +258,8 @@ onMounted(() => {
     grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-border);
-    background: rgb(229 255 195 / 92%);
+    border-top: 1px solid rgb(255 255 255 / 10%);
+    background: rgb(0 0 0 / 92%);
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
   }
@@ -275,7 +276,7 @@ onMounted(() => {
     border: 0;
     border-radius: 14px;
     background: transparent;
-    color: var(--color-text-muted);
+    color: rgb(255 255 255 / 55%);
     font: inherit;
     font-size: 0.75rem;
     font-weight: 700;
@@ -297,8 +298,8 @@ onMounted(() => {
   }
 
   .bottom-nav__item--active {
-    color: var(--color-text);
-    background: rgb(1 51 48 / 10%);
+    color: #fff;
+    background: rgb(255 255 255 / 10%);
   }
 
   .app-shell__content {

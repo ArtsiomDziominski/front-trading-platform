@@ -397,9 +397,9 @@ onUnmounted(() => {
 }
 
 .bots-toolbar__select :deep(button) {
-  color: var(--color-text) !important;
-  background: #fff !important;
-  --tw-ring-color: rgb(1 51 48 / 22%) !important;
+  color: #fff !important;
+  background: rgb(255 255 255 / 6%) !important;
+  --tw-ring-color: rgb(255 255 255 / 18%) !important;
 }
 
 .bots-toolbar__bulk {
@@ -445,8 +445,8 @@ onUnmounted(() => {
   height: 72px;
   margin: 0 auto 18px;
   border-radius: 999px;
-  border: 1px solid rgb(229 255 195 / 18%);
-  background: rgb(229 255 195 / 8%);
+  border: 1px solid rgb(139 92 246 / 25%);
+  background: rgb(139 92 246 / 12%);
   color: var(--color-accent);
 }
 

@@ -1,12 +1,12 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'lime',
-      neutral: 'stone',
+      primary: 'violet',
+      neutral: 'zinc',
     },
     card: {
       slots: {
-        root: 'rounded-[28px] ring-0',
+        root: 'rounded-[24px] ring-0',
       },
     },
     button: {
@@ -18,12 +18,12 @@ export default defineAppConfig({
           color: 'neutral',
           variant: 'outline',
           class:
-            'ring-[rgb(1_51_48/28%)] text-[var(--mm-green-dark)] bg-white hover:bg-[#f3f7ea] hover:ring-[rgb(1_51_48/40%)]',
+            'ring-[rgb(255_255_255/30%)] text-white bg-transparent hover:bg-[rgb(255_255_255/8%)] hover:ring-[rgb(255_255_255/45%)]',
         },
         {
           color: 'primary',
           variant: 'solid',
-          class: 'bg-[var(--color-accent)] text-[var(--mm-green-dark)] hover:bg-[#d4ff6a]',
+          class: 'bg-white text-black hover:bg-[rgb(255_255_255/88%)]',
         },
       ],
     },

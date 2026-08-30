@@ -101,7 +101,7 @@ watch(botProfileLink, async (link) => {
       margin: 2,
       errorCorrectionLevel: 'M',
       color: {
-        dark: '#013330',
+        dark: '#000000',
         light: '#ffffff',
       },
     })

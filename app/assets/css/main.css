@@ -3,46 +3,53 @@
 @import "lenis/dist/lenis.css";
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* MetaMask-like marketing tokens (homepage language) */
-  --mm-green-dark: #013330;
-  --mm-green: #baf24a;
-  --mm-green-light: #e5ffc3;
-  --mm-blue-light: #cee9fd;
+  /* Scale dark theme tokens */
+  --scale-black: #000000;
+  --scale-surface: #0c0c12;
+  --scale-surface-alt: #12121a;
+  --scale-violet: #8b5cf6;
+  --scale-violet-soft: #c4b5fd;
+  --scale-blue: #60a5fa;
 
-  --color-bg: var(--mm-green-light);
-  --color-surface: var(--mm-green-dark);
-  --color-surface-alt: #024843;
-  --color-surface-muted: rgb(1 51 48 / 8%);
-  --color-border: rgb(1 51 48 / 12%);
-  --color-text: var(--mm-green-dark);
-  --color-text-muted: rgb(1 51 48 / 62%);
-  --color-on-surface: var(--mm-green-light);
-  --color-on-surface-muted: rgb(229 255 195 / 72%);
-  --color-accent: var(--mm-green);
-  --color-accent-dim: rgb(186 242 74 / 18%);
+  --mm-green-dark: #0c0c12;
+  --mm-green: #c4b5fd;
+  --mm-green-light: #ffffff;
+  --mm-blue-light: #60a5fa;
+
+  --color-bg: #000000;
+  --color-surface: #0c0c12;
+  --color-surface-alt: #12121a;
+  --color-surface-muted: rgb(255 255 255 / 5%);
+  --color-border: rgb(255 255 255 / 10%);
+  --color-text: #ffffff;
+  --color-text-muted: rgb(255 255 255 / 55%);
+  --color-on-surface: #ffffff;
+  --color-on-surface-muted: rgb(255 255 255 / 55%);
+  --color-accent: #c4b5fd;
+  --color-accent-dim: rgb(139 92 246 / 18%);
   --color-danger: #fb7185;
   --color-warning: #f5a623;
 
-  --shadow-sm: 0 8px 24px rgb(1 51 48 / 10%);
-  --shadow-md: 0 16px 40px rgb(1 51 48 / 14%);
-  --shadow-lg: 0 24px 56px rgb(1 51 48 / 18%);
-  --shadow-inset-sm: inset 0 1px 0 rgb(255 255 255 / 8%);
-  --shadow-inset-md: inset 0 1px 0 rgb(255 255 255 / 10%);
+  --shadow-sm: 0 8px 24px rgb(0 0 0 / 35%);
+  --shadow-md: 0 16px 40px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 24px 56px rgb(0 0 0 / 55%);
+  --shadow-inset-sm: inset 0 1px 0 rgb(255 255 255 / 6%);
+  --shadow-inset-md: inset 0 1px 0 rgb(255 255 255 / 8%);
   --shadow-elevated:
-    0 1px 0 rgb(255 255 255 / 8%) inset,
-    0 18px 40px rgb(1 51 48 / 16%);
+    0 1px 0 rgb(255 255 255 / 6%) inset,
+    0 18px 40px rgb(0 0 0 / 45%);
 
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 20px;
   --radius-xl: 24px;
-  --radius-bento: 28px;
+  --radius-bento: 24px;
 
   --bento-bg: var(--color-surface);
-  --bento-surface: rgb(229 255 195 / 8%);
-  --bento-border: rgb(229 255 195 / 12%);
+  --bento-surface: rgb(255 255 255 / 4%);
+  --bento-border: rgb(255 255 255 / 10%);
   --bento-text: var(--color-on-surface);
   --bento-muted: var(--color-on-surface-muted);
   --bento-accent: var(--color-accent);
@@ -50,7 +57,7 @@
   --bento-radius: var(--radius-bento);
   --bento-cell-radius: var(--radius-md);
 
-  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, "DM Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -67,8 +74,8 @@ body {
   margin: 0;
   overflow-x: clip;
   background:
-    radial-gradient(ellipse 70% 50% at 50% -10%, rgb(186 242 74 / 28%), transparent 55%),
-    radial-gradient(ellipse 40% 35% at 100% 0%, rgb(206 233 253 / 45%), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% -10%, rgb(124 58 237 / 18%), transparent 55%),
+    radial-gradient(ellipse 45% 35% at 0% 0%, rgb(37 99 235 / 12%), transparent 50%),
     var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
@@ -97,6 +104,8 @@ a,
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
+  background: transparent;
+  color: var(--color-text);
 }
 
 .container {
@@ -112,9 +121,9 @@ a,
 
 .section-title {
   margin: 0 0 8px;
-  font-family: "Dela Gothic One", "DM Sans", sans-serif;
+  font-family: Inter, "DM Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: clamp(1.8rem, 4.5vw, 2.8rem);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
@@ -128,27 +137,26 @@ a,
 
 .eyebrow {
   margin: 0 0 10px;
-  color: var(--color-text);
+  color: var(--color-accent);
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Dark teal cards on cream canvas (homepage format) */
 .bento,
 .neumo {
-  border: 1px solid rgb(229 255 195 / 12%);
+  border: 1px solid rgb(255 255 255 / 10%);
   border-radius: var(--radius-bento);
   background:
-    linear-gradient(160deg, #024843 0%, var(--color-surface) 100%);
+    linear-gradient(160deg, rgb(24 24 36 / 95%) 0%, var(--color-surface) 100%);
   color: var(--color-on-surface);
   box-shadow: var(--shadow-elevated);
 }
 
 .bento-sm,
 .neumo-sm {
-  border: 1px solid rgb(229 255 195 / 10%);
+  border: 1px solid rgb(255 255 255 / 8%);
   border-radius: var(--radius-lg);
   background: var(--color-surface-alt);
   color: var(--color-on-surface);
@@ -157,17 +165,17 @@ a,
 
 .bento-inset,
 .neumo-inset {
-  border: 1px solid rgb(229 255 195 / 10%);
+  border: 1px solid rgb(255 255 255 / 8%);
   border-radius: var(--radius-md);
-  background: rgb(229 255 195 / 6%);
+  background: rgb(255 255 255 / 4%);
   box-shadow: var(--shadow-inset-sm);
 }
 
 .bento-sm-inset,
 .neumo-sm-inset {
-  border: 1px solid rgb(229 255 195 / 8%);
+  border: 1px solid rgb(255 255 255 / 6%);
   border-radius: var(--radius-sm);
-  background: rgb(229 255 195 / 5%);
+  background: rgb(255 255 255 / 3%);
   box-shadow: var(--shadow-inset-sm);
 }
 
@@ -190,24 +198,25 @@ a,
 .step-card {
   --color-text: var(--color-on-surface);
   --color-text-muted: var(--color-on-surface-muted);
-  --color-border: rgb(229 255 195 / 12%);
-  --color-surface-muted: rgb(229 255 195 / 8%);
-  border: 1px solid rgb(229 255 195 / 12%) !important;
+  --color-border: rgb(255 255 255 / 10%);
+  --color-surface-muted: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 10%) !important;
   border-radius: var(--radius-bento) !important;
   background:
-    linear-gradient(160deg, #024843 0%, var(--color-surface) 100%) !important;
+    linear-gradient(160deg, rgb(22 22 34 / 96%) 0%, #0a0a12 100%) !important;
   color: var(--color-on-surface) !important;
-  box-shadow: var(--shadow-elevated) !important;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 3%),
+    0 24px 60px rgb(0 0 0 / 45%) !important;
 }
 
-/* Dark cards: readable labels, inputs, separators (auth/settings) */
 .auth-card,
 .settings-card,
 .create-form-card {
   --ui-text: var(--color-on-surface);
   --ui-text-muted: var(--color-on-surface-muted);
-  --ui-text-dimmed: rgb(229 255 195 / 55%);
-  --ui-border: rgb(229 255 195 / 14%);
+  --ui-text-dimmed: rgb(255 255 255 / 40%);
+  --ui-border: rgb(255 255 255 / 12%);
 }
 
 .auth-card :is(label, [data-slot="label"], .text-default, .text-muted, .text-dimmed),
@@ -235,14 +244,15 @@ a,
 .auth-card :is(input, textarea, select),
 .settings-card :is(input, textarea, select),
 .create-form-card :is(input, textarea, select) {
-  color: var(--mm-green-dark) !important;
-  background: #fff !important;
+  color: #fff !important;
+  background: rgb(255 255 255 / 6%) !important;
+  border-color: rgb(255 255 255 / 12%) !important;
 }
 
 .auth-card :is(input, textarea)::placeholder,
 .settings-card :is(input, textarea)::placeholder,
 .create-form-card :is(input, textarea)::placeholder {
-  color: rgb(1 51 48 / 45%) !important;
+  color: rgb(255 255 255 / 35%) !important;
 }
 
 .auth-card [data-slot="separator"] :is(span, .text-muted),
@@ -268,7 +278,7 @@ a,
 .creation-history :is(a, button).app-button--primary,
 .bots-public-cta__card :is(a, button).app-button--primary,
 .ex-card :is(a, button).app-button--primary {
-  color: #013330 !important;
+  color: #000 !important;
 }
 
 .empty-state :is(a, button).app-button--secondary,
@@ -281,9 +291,9 @@ a,
 .creation-history :is(a, button).app-button--secondary,
 .bots-public-cta__card :is(a, button).app-button--secondary,
 .ex-card :is(a, button).app-button--secondary {
-  color: #013330 !important;
-  background: #e5ffc3 !important;
-  --tw-ring-color: rgb(229 255 195 / 70%) !important;
+  color: #fff !important;
+  background: transparent !important;
+  --tw-ring-color: rgb(255 255 255 / 30%) !important;
 }
 
 .empty-state :is(a, button).app-button--secondary:hover,
@@ -296,8 +306,8 @@ a,
 .creation-history :is(a, button).app-button--secondary:hover,
 .bots-public-cta__card :is(a, button).app-button--secondary:hover,
 .ex-card :is(a, button).app-button--secondary:hover {
-  background: #f2ffe0 !important;
-  --tw-ring-color: rgb(229 255 195 / 85%) !important;
+  background: rgb(255 255 255 / 8%) !important;
+  --tw-ring-color: rgb(255 255 255 / 45%) !important;
 }
 
 @media (max-width: 640px) {

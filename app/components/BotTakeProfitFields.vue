@@ -162,7 +162,7 @@ onUnmounted(hideUnitHint)
     border: 0;
     background: transparent;
     box-shadow: none;
-    color: #013330;
+    color: var(--color-accent);
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -171,7 +171,7 @@ onUnmounted(hideUnitHint)
   }
 
   &__unit:hover {
-    color: #0a5c56;
+    color: #ddd6fe;
   }
 
   &__input {
