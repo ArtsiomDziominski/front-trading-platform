@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineOptions({ inheritAttrs: false })
 
-type AppButtonVariant = 'primary' | 'secondary'
+type AppButtonVariant = 'primary' | 'secondary' | 'inverse' | 'ghost'
 
 const props = withDefaults(defineProps<{
   /**
-   * primary — accent fill (CTA)
-   * secondary — soft outline (readable on any surface)
+   * primary / inverse — white fill CTA for dark theme
+   * secondary / ghost — transparent outline on dark surfaces
    */
   variant?: AppButtonVariant
 }>(), {
@@ -15,15 +15,28 @@ const props = withDefaults(defineProps<{
 
 const attrs = useAttrs()
 
-const uiColor = computed(() => (props.variant === 'primary' ? 'primary' : 'neutral'))
-const uiVariant = computed(() => (props.variant === 'primary' ? 'solid' : 'outline'))
+const resolvedVariant = computed(() => {
+  if (props.variant === 'inverse') return 'primary'
+  if (props.variant === 'ghost') return 'secondary'
+  return props.variant
+})
+
+const uiColor = computed(() => {
+  if (resolvedVariant.value === 'primary') return 'primary'
+  return 'neutral'
+})
+
+const uiVariant = computed(() => {
+  if (resolvedVariant.value === 'primary') return 'solid'
+  return 'outline'
+})
 </script>
 
 <template>
   <UButton
     v-bind="attrs"
     class="app-button"
-    :class="props.variant === 'primary' ? 'app-button--primary' : 'app-button--secondary'"
+    :class="`app-button--${resolvedVariant}`"
     :color="uiColor"
     :variant="uiVariant"
   >
@@ -33,23 +46,23 @@ const uiVariant = computed(() => (props.variant === 'primary' ? 'solid' : 'outli
 
 <style scoped>
 .app-button.app-button--primary {
-  color: #013330 !important;
-  background: #baf24a !important;
+  color: #000 !important;
+  background: #fff !important;
   --tw-ring-color: transparent !important;
 }
 
 .app-button.app-button--primary:hover {
-  background: #d4ff6a !important;
+  background: rgb(255 255 255 / 88%) !important;
 }
 
 .app-button.app-button--secondary {
-  color: #013330 !important;
-  background: #fff !important;
-  --tw-ring-color: rgb(1 51 48 / 28%) !important;
+  color: #fff !important;
+  background: transparent !important;
+  --tw-ring-color: rgb(255 255 255 / 30%) !important;
 }
 
 .app-button.app-button--secondary:hover {
-  background: #f3f7ea !important;
-  --tw-ring-color: rgb(1 51 48 / 40%) !important;
+  background: rgb(255 255 255 / 8%) !important;
+  --tw-ring-color: rgb(255 255 255 / 45%) !important;
 }
 </style>

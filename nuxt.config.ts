@@ -8,9 +8,9 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/eslint', '@nuxtjs/i18n', '@nuxt/ui'],
   colorMode: {
-    preference: 'light',
-    fallback: 'light',
-    storageKey: 'trading-platform-color-mode-v2',
+    preference: 'dark',
+    fallback: 'dark',
+    storageKey: 'trading-platform-color-mode-v3',
   },
   css: ['~/assets/css/main.css'],
   future: {
@@ -44,7 +44,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,500&family=Dela+Gothic+One&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,500&family=Dela+Gothic+One&family=Inter:wght@400;500;600;700&display=swap',
         },
       ],
       meta: [
@@ -52,7 +52,7 @@ export default defineNuxtConfig({
           name: 'description',
           content: 'Платформа для создания торговых ботов. Binance, Bybit, OKX.',
         },
-        { name: 'theme-color', content: '#013330' },
+        { name: 'theme-color', content: '#000000' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
