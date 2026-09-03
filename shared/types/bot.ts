@@ -23,6 +23,11 @@ export enum TakeProfitMode {
   Amount = 'amount',
 }
 
+export enum StopLossMode {
+  Off = 'off',
+  Percent = 'percent',
+}
+
 export interface GridFuturesConfig {
   symbol: string
   direction: GridDirection
@@ -36,6 +41,8 @@ export interface GridFuturesConfig {
   take_profit_percent?: string | number | null
   /** Target unrealized PnL in USDT; null/0 = off. */
   take_profit_amount?: string | number | null
+  /** Price shift from last filled grid level, 0…100; null/0 = off. */
+  stop_loss_percent?: string | number | null
 }
 
 export interface BotCreate {
@@ -135,6 +142,7 @@ export type BotEventType =
   | 'grid_redeployed'
   | 'grid_recreated'
   | 'take_profit_filled'
+  | 'stop_loss_filled'
   | 'order_filled'
   | 'config_updated'
   | 'removed_from_tracking'

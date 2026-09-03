@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { BotType, GridDirection, GridFuturesConfig, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import type { BotType, GridDirection, GridFuturesConfig, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import { buildStopLossPayload } from '~/utils/stopLoss'
 import { buildTakeProfitPayload } from '~/utils/takeProfit'
 
 const botType = defineModel<BotType>('botType', { required: true })
@@ -12,6 +13,8 @@ const volumeMode = defineModel<VolumeMode>('volumeMode', { required: true })
 const startPrice = defineModel<string>('startPrice', { required: true })
 const takeProfitMode = defineModel<TakeProfitMode>('takeProfitMode', { required: true })
 const takeProfitValue = defineModel<string>('takeProfitValue', { required: true })
+const stopLossMode = defineModel<StopLossMode>('stopLossMode', { required: true })
+const stopLossValue = defineModel<string>('stopLossValue', { required: true })
 const leverage = defineModel<number>('leverage', { required: true })
 const currentPrice = defineModel<string>('currentPrice', { required: true })
 const totalBalance = defineModel<string>('totalBalance', { required: true })
@@ -34,6 +37,7 @@ function formatPrice(value: number): string {
 function buildLiquidationConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
+  const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
@@ -44,6 +48,7 @@ function buildLiquidationConfig(): GridFuturesConfig {
     volume_mode: volumeMode.value,
     take_profit_percent: takeProfit.take_profit_percent,
     take_profit_amount: takeProfit.take_profit_amount,
+    stop_loss_percent: stopLoss.stop_loss_percent,
     ...(startPriceValue ? { start_price: startPriceValue } : {}),
   }
 }
@@ -138,7 +143,7 @@ async function handleCheckLiquidation() {
 }
 
 watch(
-  [botType, symbol, direction, initialAmount, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, leverage, currentPrice, totalBalance],
+  [botType, symbol, direction, initialAmount, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
   clearLiquidationResult,
 )
 

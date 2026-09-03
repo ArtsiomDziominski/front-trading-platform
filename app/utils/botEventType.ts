@@ -24,6 +24,7 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   grid_redeployed: 'bots.event_type_grid_redeployed',
   config_updated: 'bots.event_type_bot_config_updated',
   take_profit_filled: 'bots.event_type_take_profit_filled',
+  stop_loss_filled: 'bots.event_type_stop_loss_filled',
   close_completed: 'bots.event_type_close_completed',
   grid_recreated: 'bots.event_type_grid_recreated',
   created: 'bots.event_type_created',
@@ -68,6 +69,7 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
   },
   reason: {
     take_profit: 'bots.event_reason_take_profit',
+    stop_loss: 'bots.event_reason_stop_loss',
   },
   event_type: EVENT_TYPE_I18N_KEYS,
 }
@@ -76,7 +78,12 @@ export function normalizeBotEventType(value: string): string {
   return value.trim().toLowerCase().replace(/-/g, '_')
 }
 
+export function isStopLossClose(payload: Record<string, unknown> | null): boolean {
+  return payload?.reason === 'stop_loss'
+}
+
 export function isTakeProfitClose(payload: Record<string, unknown> | null): boolean {
+  if (isStopLossClose(payload)) return false
   return payload?.reason === 'take_profit' || payload?.source === 'auto'
 }
 
@@ -93,9 +100,19 @@ export function translateBotEventTitle(
   const normalized = normalizeBotEventType(eventType)
 
   if (normalized === 'close_completed') {
-    const key = isTakeProfitClose(payload ?? null)
-      ? 'bots.event_type_close_completed_take_profit'
-      : 'bots.event_type_close_completed'
+    const closePayload = payload ?? null
+    const key = isStopLossClose(closePayload)
+      ? 'bots.event_type_close_completed_stop_loss'
+      : isTakeProfitClose(closePayload)
+        ? 'bots.event_type_close_completed_take_profit'
+        : 'bots.event_type_close_completed'
+    if (te(key)) return t(key)
+  }
+
+  if (normalized === 'removed_from_tracking' || normalized === 'bot_removed') {
+    const key = isStopLossClose(payload ?? null)
+      ? 'bots.event_type_removed_from_tracking_stop_loss'
+      : 'bots.event_type_removed_from_tracking'
     if (te(key)) return t(key)
   }
 
@@ -144,7 +161,12 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   }
   if (type.includes('config')) return 'config'
   if (type.includes('stopped') || type === 'init') return 'stopped'
-  if (type.includes('take_profit') || type.includes('closed') || type === 'close_completed') {
+  if (
+    type.includes('take_profit')
+    || type.includes('stop_loss')
+    || type.includes('closed')
+    || type === 'close_completed'
+  ) {
     return 'closed'
   }
   if (type.includes('removed')) return 'removed'

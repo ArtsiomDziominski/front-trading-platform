@@ -14,9 +14,19 @@
     <header class="bot-card__header">
       <div class="bot-card__identity">
         <span class="bot-card__symbol">{{ bot.symbol }}</span>
-        <span class="bot-card__id">#{{ bot.id }}</span>
+        <NuxtLink
+          v-if="!isDetailPage"
+          :to="`/bots/${bot.id}`"
+          class="bot-card__id bot-card__id--link"
+        >
+          #{{ bot.id }}
+        </NuxtLink>
+        <span v-else class="bot-card__id">#{{ bot.id }}</span>
         <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
           {{ takeProfitLabel }}
+        </span>
+        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
+          {{ stopLossLabel }}
         </span>
       </div>
 
@@ -88,7 +98,7 @@
     >
       <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
         <UTooltip
-          v-if="canEditTakeProfit"
+          v-if="canEditGridConfig"
           :text="$t('bots.take_profit_edit')"
           :delay-duration="1000"
           :content="{ side: 'top', sideOffset: 8 }"
@@ -101,9 +111,29 @@
             :aria-label="$t('bots.take_profit_edit')"
             :disabled="isBusy"
             :loading="isBotActionLoading(bot.id, 'update-config')"
-            @click="editOpen = true"
+            @click="takeProfitEditOpen = true"
           >
             <UIcon name="i-lucide-target" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
+
+        <UTooltip
+          v-if="canEditGridConfig"
+          :text="$t('bots.stop_loss_edit')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
+        >
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.stop_loss_edit')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'update-config')"
+            @click="stopLossEditOpen = true"
+          >
+            <UIcon name="i-lucide-shield" class="bot-card__action-icon" />
           </AppButton>
         </UTooltip>
 
@@ -168,7 +198,7 @@
         </UTooltip>
 
         <span
-          v-if="canRemove && (canEditTakeProfit || canStop || canRedeploy || canClose)"
+          v-if="canRemove && (canEditGridConfig || canStop || canRedeploy || canClose)"
           class="bot-card__action-sep"
           aria-hidden="true"
         />
@@ -221,8 +251,14 @@
     />
 
     <BotTakeProfitEditModal
-      v-if="canEditTakeProfit"
-      v-model:open="editOpen"
+      v-if="canEditGridConfig"
+      v-model:open="takeProfitEditOpen"
+      :bot="bot"
+    />
+
+    <BotStopLossEditModal
+      v-if="canEditGridConfig"
+      v-model:open="stopLossEditOpen"
       :bot="bot"
     />
   </motion.article>
@@ -231,8 +267,9 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
 import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
-import { TakeProfitMode, type BotListItem } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
+import { formatStopLossBadge, parseStopLoss } from '~/utils/stopLoss'
 import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
 
 const props = withDefaults(defineProps<{
@@ -243,6 +280,8 @@ const props = withDefaults(defineProps<{
 })
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const {
   stopBot,
   closeBot,
@@ -255,6 +294,7 @@ const {
 
 const historyPanel = useTemplateRef<{ reloadIfOpen: () => void }>('historyPanel')
 const staggerDelay = computed(() => Math.min(props.index * 0.07, 0.42))
+const isDetailPage = computed(() => route.path === `/bots/${props.bot.id}`)
 
 function formatPnl(value: number): string {
   const sign = value >= 0 ? '+' : ''
@@ -326,18 +366,20 @@ const pnlCellClass = computed(() => {
 
 const takeProfitLabel = computed(() => formatTakeProfitBadge(props.bot.config, t))
 const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== TakeProfitMode.Off)
+const stopLossLabel = computed(() => formatStopLossBadge(props.bot.config, t))
+const hasStopLoss = computed(() => parseStopLoss(props.bot.config).mode !== StopLossMode.Off)
 
 const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
 const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
 const canRedeploy = computed(() =>
   props.bot.lifecycle_status === 'ACTIVE' && props.bot.bot_type === 'GRID_FUTURES',
 )
-const canEditTakeProfit = computed(() =>
+const canEditGridConfig = computed(() =>
   props.bot.bot_type === 'GRID_FUTURES' && props.bot.lifecycle_status !== 'CLOSED',
 )
 const canRemove = computed(() => !props.bot.deleted_at)
 const hasActions = computed(() =>
-  canEditTakeProfit.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
+  canEditGridConfig.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
 )
 const isBusy = computed(() => isBotActionLoading(props.bot.id))
 const actionError = computed(() => getBotActionError(props.bot.id))
@@ -350,7 +392,8 @@ type CardAction = 'close' | 'redeploy' | 'remove'
 const confirmOpen = ref(false)
 const confirmLoading = ref(false)
 const pendingAction = ref<CardAction | null>(null)
-const editOpen = ref(false)
+const takeProfitEditOpen = ref(false)
+const stopLossEditOpen = ref(false)
 
 const confirmCopy = computed(() => {
   const symbol = props.bot.symbol
@@ -409,6 +452,9 @@ async function confirmAction() {
       await redeployBotGrid(props.bot.id)
     } else if (pendingAction.value === 'remove') {
       await removeBot(props.bot.id)
+      if (isDetailPage.value) {
+        await router.replace('/bots')
+      }
     }
     historyPanel.value?.reloadIfOpen()
     confirmOpen.value = false
@@ -485,6 +531,15 @@ async function handleStop() {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.02em;
+}
+
+.bot-card__id--link {
+  width: fit-content;
+  text-decoration: none;
+}
+
+.bot-card__id--link:hover {
+  color: var(--bento-accent);
 }
 
 .bot-card__tp {
