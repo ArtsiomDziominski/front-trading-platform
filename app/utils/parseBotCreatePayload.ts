@@ -1,4 +1,5 @@
 import type { BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
@@ -35,6 +36,8 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
 
   const takeProfit = parseTakeProfit(config)
   const takeProfitFields = buildTakeProfitPayload(takeProfit.mode, takeProfit.value)
+  const stopLoss = parseStopLoss(config)
+  const stopLossFields = buildStopLossPayload(stopLoss.mode, stopLoss.value)
 
   return {
     symbol,
@@ -46,6 +49,7 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
     auto_restart: Boolean(config.auto_restart),
     take_profit_percent: takeProfitFields.take_profit_percent,
     take_profit_amount: takeProfitFields.take_profit_amount,
+    stop_loss_percent: stopLossFields.stop_loss_percent,
     ...(startPrice ? { start_price: startPrice } : {}),
   }
 }

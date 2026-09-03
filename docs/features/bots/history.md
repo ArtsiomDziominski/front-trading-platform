@@ -4,7 +4,8 @@
 Карточка бота на `/bots` открывает ту же ленту с `bot_id`.
 
 Журнал событий **живых ботов**: старт, стоп, закрытие, пересбор сетки, исполнение ордера.  
-Один бот — много строк. Всегда только события текущего пользователя.
+Один бот — много строк. Всегда только события текущего пользователя.  
+После stop-loss бот скрывается из списка, но лента `?bot_id=` остаётся доступна.
 
 Это **не** журнал попыток создания (`GET /bots/creation-history` на `/bots/create`).  
 Это **не** WebSocket: WS обновляет список ботов, история в канал не пушится. После стопа / close / redeploy лента на карточке запрашивается заново.
@@ -50,15 +51,18 @@ Query у GET и DELETE одинаковые, кроме пагинации (`ski
 |--------------|---------|
 | `created` | Бот запущен |
 | `stopped` | Бот остановлен |
-| `close_completed` + `reason: take_profit` или `source: auto` | Бот закрыт по take-profit |
+| `close_completed` + `reason: take_profit` или `source: auto` (и не `stop_loss`) | Бот закрыт по take-profit |
+| `close_completed` + `reason: stop_loss` | Бот закрыт по stop-loss |
 | `close_completed` иначе | Бот закрыт |
 | `grid_redeployed` | Сетка перевыставлена вручную |
-| `grid_recreated` | Сетка перевыставлена автоматически |
+| `grid_recreated` | Сетка перевыставлена автоматически (после take-profit при `auto_restart`; после stop-loss не бывает) |
 | `take_profit_filled` | Take-profit исполнен |
+| `stop_loss_filled` | Stop-loss исполнен |
 | `order_filled` + `kind: entry` | Вход исполнен |
 | `order_filled` иначе | Ордер сетки исполнен |
 | `config_updated` | Конфиг обновлён |
-| `removed_from_tracking` | Убран из отслеживания |
+| `removed_from_tracking` + `reason: stop_loss` | Убран из отслеживания по stop-loss |
+| `removed_from_tracking` иначе | Убран из отслеживания |
 | `error` | Ошибка бота |
 | неизвестный | сырой `event_type` |
 
@@ -78,4 +82,5 @@ Query у GET и DELETE одинаковые, кроме пагинации (`ski
 | Типы | `shared/types/bot.ts` (`BotEventOut`, `HistoryClearResult`) |
 
 Take-profit как ордер на бирже: [`take-profit.md`](./take-profit.md).  
+Stop-loss как ордер на бирже: [`stop-loss.md`](./stop-loss.md). После SL бот скрывается из списка (`bot_removed`), история `?bot_id=` остаётся.  
 Попытки `POST /bots`: экран создания, `GET /bots/creation-history`.

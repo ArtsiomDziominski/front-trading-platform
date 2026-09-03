@@ -1,4 +1,5 @@
 import { parseApiError } from '~/utils/parseApiError'
+import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
@@ -8,12 +9,15 @@ import { compactBotHistoryQuery } from '~/utils/botHistory'
 
 function normalizeBotConfig(config: Record<string, unknown>): Record<string, unknown> {
   const takeProfit = parseTakeProfit(config)
-  const fields = buildTakeProfitPayload(takeProfit.mode, takeProfit.value)
+  const takeProfitFields = buildTakeProfitPayload(takeProfit.mode, takeProfit.value)
+  const stopLoss = parseStopLoss(config)
+  const stopLossFields = buildStopLossPayload(stopLoss.mode, stopLoss.value)
 
   return {
     ...config,
-    take_profit_percent: fields.take_profit_percent,
-    take_profit_amount: fields.take_profit_amount,
+    take_profit_percent: takeProfitFields.take_profit_percent,
+    take_profit_amount: takeProfitFields.take_profit_amount,
+    stop_loss_percent: stopLossFields.stop_loss_percent,
   }
 }
 
@@ -39,6 +43,9 @@ let reconnectAttempt = 0
 
 export const useBots = () => {
   const config = useRuntimeConfig()
+  const route = useRoute()
+  const router = useRouter()
+  const toast = useToast()
   const baseUrl = config.public.apiBaseUrl
   const auth = useAuth()
   const nuxtApp = useNuxtApp()
@@ -76,8 +83,40 @@ export const useBots = () => {
   }
 
   function shouldRemoveBot(message: BotWsMessage): boolean {
-    if (message.event === 'bot_removed') return true
-    return Boolean(message.bot?.deleted_at)
+    return message.event === 'bot_removed'
+  }
+
+  const localRemoveIds = useState<number[]>('user_bots_local_remove_ids', () => [])
+
+  function markLocalRemove(botId: number) {
+    if (localRemoveIds.value.includes(botId)) return
+    localRemoveIds.value = [...localRemoveIds.value, botId]
+  }
+
+  function consumeLocalRemove(botId: number) {
+    if (!localRemoveIds.value.includes(botId)) return false
+    localRemoveIds.value = localRemoveIds.value.filter((id) => id !== botId)
+    return true
+  }
+
+  function isBotDetailRoute(botId: number) {
+    const rawId = route.params.id
+    const paramId = Array.isArray(rawId) ? rawId[0] : rawId
+    return route.path === `/bots/${botId}` && Number(paramId) === botId
+  }
+
+  function handleRemovedBotView(botId: number) {
+    if (!import.meta.client) return
+    if (consumeLocalRemove(botId)) return
+    if (!isBotDetailRoute(botId)) return
+
+    const i18n = nuxtApp.$i18n
+    const title = i18n && typeof i18n.t === 'function'
+      ? i18n.t('bots.stop_loss_removed_toast')
+      : 'Bot closed by stop-loss and removed from tracking'
+
+    toast.add({ title, color: 'warning' })
+    router.replace('/bots')
   }
 
   function applyBotFromOut(updated: BotOut) {
@@ -171,9 +210,13 @@ export const useBots = () => {
   }
 
   function removeBot(botId: number) {
+    markLocalRemove(botId)
     return runBotAction(botId, 'remove', () =>
       auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}`, { method: 'DELETE' }),
-    )
+    ).catch((e) => {
+      consumeLocalRemove(botId)
+      throw e
+    })
   }
 
   function updateBotConfig(botId: number, config: Record<string, unknown>) {
@@ -206,6 +249,7 @@ export const useBots = () => {
 
     if (shouldRemoveBot(message)) {
       bots.value = bots.value.filter((b) => b.id !== botId)
+      handleRemovedBotView(botId)
       return
     }
 
@@ -411,7 +455,12 @@ export const useBots = () => {
     return runBulkAction(
       'remove-all',
       () => auth.authFetch<BotsRemoveAllResponse>(`${baseUrl}/bots/remove-all`, { method: 'POST' }),
-      (response) => response.removed,
+      (response) => {
+        for (const bot of response.removed) {
+          markLocalRemove(bot.id)
+        }
+        return response.removed
+      },
     )
   }
 

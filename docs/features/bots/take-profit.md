@@ -59,7 +59,8 @@ flowchart TD
 | `event` | UI |
 |---------|-----|
 | `bot_updated` | PnL / `config` |
-| `bot_closed` | статус **CLOSED** — в т.ч. после take-profit |
+| `bot_closed` | статус **CLOSED**, строку оставить (take-profit / кнопка «Закрыть») |
+| `bot_removed` | удалить из store — это stop-loss или ручной DELETE, **не** take-profit |
 | `bot_grid_redeployed` | при `auto_restart` после TP сетка пересоздаётся, бот **ACTIVE** |
 | `bot_config_updated` | после PATCH конфига |
 | `bot_error` | `bot.engine_error` |
@@ -89,4 +90,7 @@ flowchart TD
 | API | `app/composables/useBots.ts` (`createBot`, `updateBotConfig`) |
 | Типы | `shared/types/bot.ts` (`GridFuturesConfig`) |
 
-Telegram-алерт — отдельный экран, см. [`../user/telegram-settings.md`](../user/telegram-settings.md).
+Take-profit и stop-loss независимы: оба можно включить сразу. XOR `%` / `USDT` есть только у TP.
+
+Telegram-алерт — отдельный экран, см. [`../user/telegram-settings.md`](../user/telegram-settings.md).  
+Stop-loss сетки — отдельный блок и поле `stop_loss_percent`, см. [`stop-loss.md`](./stop-loss.md).

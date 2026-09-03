@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { TakeProfitMode, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -40,6 +40,8 @@ const startPrice = ref('')
 const autoRestart = ref(false)
 const takeProfitMode = ref<TakeProfitMode>(TakeProfitMode.Off)
 const takeProfitValue = ref('')
+const stopLossMode = ref<StopLossMode>(StopLossMode.Off)
+const stopLossValue = ref('')
 const botType = ref<BotType>('GRID_FUTURES')
 const leverage = ref(10)
 const currentPrice = ref('')
@@ -140,6 +142,8 @@ async function handleBotCreated() {
             v-model:auto-restart="autoRestart"
             v-model:take-profit-mode="takeProfitMode"
             v-model:take-profit-value="takeProfitValue"
+            v-model:stop-loss-mode="stopLossMode"
+            v-model:stop-loss-value="stopLossValue"
             :api-keys="apiKeys"
             :show-clone-notice="clonedFromId != null"
             @created="handleBotCreated"
@@ -168,6 +172,8 @@ async function handleBotCreated() {
             v-model:start-price="startPrice"
             v-model:take-profit-mode="takeProfitMode"
             v-model:take-profit-value="takeProfitValue"
+            v-model:stop-loss-mode="stopLossMode"
+            v-model:stop-loss-value="stopLossValue"
             v-model:leverage="leverage"
             v-model:current-price="currentPrice"
             v-model:total-balance="totalBalance"

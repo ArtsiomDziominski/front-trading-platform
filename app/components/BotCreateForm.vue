@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { TakeProfitMode, type BotCreate, type BotType, type GridDirection, type GridFuturesConfig, type VolumeMode } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type BotCreate, type BotType, type GridDirection, type GridFuturesConfig, type VolumeMode } from '#shared/types/bot'
 import { parseApiError } from '~/utils/parseApiError'
+import {
+  buildStopLossPayload,
+  isStopLossApiError,
+  parseStopLoss,
+  validateStopLoss,
+} from '~/utils/stopLoss'
 import {
   buildTakeProfitPayload,
   isTakeProfitApiError,
@@ -30,6 +36,8 @@ const startPrice = defineModel<string>('startPrice', { required: true })
 const autoRestart = defineModel<boolean>('autoRestart', { required: true })
 const takeProfitMode = defineModel<TakeProfitMode>('takeProfitMode', { required: true })
 const takeProfitValue = defineModel<string>('takeProfitValue', { required: true })
+const stopLossMode = defineModel<StopLossMode>('stopLossMode', { required: true })
+const stopLossValue = defineModel<string>('stopLossValue', { required: true })
 
 const { t } = useI18n()
 const router = useRouter()
@@ -38,6 +46,7 @@ const { creating, createError, createBot } = useBots()
 const formRef = ref<HTMLElement | null>(null)
 const formError = ref('')
 const takeProfitError = ref('')
+const stopLossError = ref('')
 const engineWarning = ref('')
 const createdBotId = ref<number | null>(null)
 
@@ -51,6 +60,7 @@ const apiKeyIdModel = computed({
 function buildGridConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
+  const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
@@ -62,6 +72,7 @@ function buildGridConfig(): GridFuturesConfig {
     auto_restart: autoRestart.value,
     take_profit_percent: takeProfit.take_profit_percent,
     take_profit_amount: takeProfit.take_profit_amount,
+    stop_loss_percent: stopLoss.stop_loss_percent,
     ...(startPriceValue ? { start_price: startPriceValue } : {}),
   }
 }
@@ -78,6 +89,7 @@ function apiKeyLabel(key: ApiKeyOut): string {
 function validate(): boolean {
   formError.value = ''
   takeProfitError.value = ''
+  stopLossError.value = ''
   engineWarning.value = ''
 
   if (!apiKeyId.value) {
@@ -112,11 +124,21 @@ function validate(): boolean {
     return false
   }
 
+  const slError = validateStopLoss(stopLossMode.value, stopLossValue.value, t)
+  if (slError) {
+    stopLossError.value = slError
+    return false
+  }
+
   return true
 }
 
 watch(takeProfitMode, (mode) => {
   if (mode === TakeProfitMode.Off) takeProfitError.value = ''
+})
+
+watch(stopLossMode, (mode) => {
+  if (mode === StopLossMode.Off) stopLossError.value = ''
 })
 
 function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
@@ -140,8 +162,13 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   takeProfitMode.value = takeProfit.mode
   takeProfitValue.value = takeProfit.value
 
+  const stopLoss = parseStopLoss(config)
+  stopLossMode.value = stopLoss.mode
+  stopLossValue.value = stopLoss.value
+
   formError.value = ''
   takeProfitError.value = ''
+  stopLossError.value = ''
   engineWarning.value = ''
   createdBotId.value = null
   createError.value = null
@@ -152,6 +179,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 async function handleSubmit() {
   formError.value = ''
   takeProfitError.value = ''
+  stopLossError.value = ''
   engineWarning.value = ''
   createdBotId.value = null
   createError.value = null
@@ -177,6 +205,11 @@ async function handleSubmit() {
 
     await router.push('/bots')
   } catch (error) {
+    if (isStopLossApiError(error)) {
+      stopLossError.value = parseApiError(error, t('bots.error_stop_loss_percent_max'))
+      return
+    }
+
     if (isTakeProfitApiError(error)) {
       takeProfitError.value = parseApiError(error, t('bots.error_take_profit_xor'))
       return
@@ -303,6 +336,12 @@ defineExpose({ applyPayload, scrollIntoView })
           v-model:mode="takeProfitMode"
           v-model:value="takeProfitValue"
           :error="takeProfitError"
+        />
+
+        <BotStopLossFields
+          v-model:mode="stopLossMode"
+          v-model:value="stopLossValue"
+          :error="stopLossError"
         />
 
         <UAlert v-if="formError" color="error" variant="subtle" :title="formError" />

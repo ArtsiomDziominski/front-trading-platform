@@ -11,6 +11,7 @@ export type CreationSettingKey =
   | 'auto_restart'
   | 'take_profit_percent'
   | 'take_profit_amount'
+  | 'stop_loss_percent'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -30,6 +31,7 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'auto_restart',
   'take_profit_percent',
   'take_profit_amount',
+  'stop_loss_percent',
 ]
 
 function readConfig(payload: Record<string, unknown>): Record<string, unknown> {
@@ -85,6 +87,11 @@ export function extractCreationHistorySettings(
   const takeProfitAmount = readNumber(config.take_profit_amount)
   if (takeProfitAmount != null && takeProfitAmount > 0) {
     set('take_profit_amount', takeProfitAmount)
+  }
+
+  const stopLossPercent = readNumber(config.stop_loss_percent)
+  if (stopLossPercent != null && stopLossPercent > 0) {
+    set('stop_loss_percent', stopLossPercent)
   }
 
   return SETTING_ORDER.flatMap((key) => {

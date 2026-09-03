@@ -65,7 +65,9 @@ Store обновляется из ответа без лишнего GET.
 - Инпуты дизейблятся, если нет привязки / мастер выкл. / чекбокс `profit_alert` выкл.
 - Фронт **не** шлёт алерт сам — только настройки; живой PnL из `GET /bots` / WS.
 
-Не путать с take-profit сетки: пороги алерта живут в `/user/settings` (OR, только сообщение в чат, % = ROE). Автозакрытие позиции — поля `take_profit_*` в конфиге бота, см. [`../bots/take-profit.md`](../bots/take-profit.md).
+Не путать с take-profit и stop-loss сетки: пороги алерта прибыли живут в `/user/settings` (OR, только сообщение в чат, % = ROE). Автозакрытие позиции — поля `take_profit_*` и `stop_loss_percent` в конфиге бота, см. [`../bots/take-profit.md`](../bots/take-profit.md) и [`../bots/stop-loss.md`](../bots/stop-loss.md).
+
+После stop-loss бот убирается из списка (`bot_removed`). Если Telegram привязан, придёт сообщение по уведомлению `bot_removed` — это не алерт прибыли и не take-profit.
 
 ### Тест
 
