@@ -52,7 +52,7 @@ async function handleSubmit() {
   try {
     await auth.login(loginEmail, loginPassword)
     await browserCredentials.storeLogin(loginEmail, loginPassword)
-    await router.push('/')
+    await router.push('/bots')
   } catch {
     formError.value = auth.error.value || t('auth.error_unknown')
   }
@@ -70,7 +70,7 @@ async function handleGoogleLogin() {
 }
 
 function handleTelegramSuccess() {
-  router.push('/')
+  router.push('/bots')
 }
 
 function handleTelegramError(message: string) {
