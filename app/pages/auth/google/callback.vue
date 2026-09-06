@@ -31,7 +31,7 @@ onMounted(async () => {
 
   try {
     await auth.completeGoogleLogin(code, redirectUri)
-    await router.replace('/')
+    await router.replace('/bots')
   } catch {
     status.value = 'error'
     message.value = auth.error.value || t('auth.error_unknown')
