@@ -22,12 +22,14 @@
           #{{ bot.id }}
         </NuxtLink>
         <span v-else class="bot-card__id">#{{ bot.id }}</span>
-        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
-          {{ takeProfitLabel }}
-        </span>
-        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
-          {{ stopLossLabel }}
-        </span>
+        <template v-if="bot.bot_type === 'GRID_FUTURES'">
+          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
+            {{ takeProfitLabel }}
+          </span>
+          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
+            {{ stopLossLabel }}
+          </span>
+        </template>
       </div>
 
       <motion.span
@@ -88,6 +90,8 @@
         <span class="bot-card__pnl" :class="pnlClass">{{ pnlLabel }}</span>
       </motion.div>
     </div>
+
+    <BotCandleChart v-if="bot.recent_candles?.length" :candles="bot.recent_candles" />
 
     <motion.div
       v-if="hasActions"
@@ -347,6 +351,7 @@ const typeLabel = computed(() => {
     GRID_SPOT: t('bots.type_grid_spot'),
     DCA_FUTURES: t('bots.type_dca_futures'),
     DCA_SPOT: t('bots.type_dca_spot'),
+    ANTI_MARTINGALE_FUTURES: t('bots.type_anti_martingale_futures'),
     CUSTOM: t('bots.type_custom'),
   }
   return labels[props.bot.bot_type] ?? props.bot.bot_type

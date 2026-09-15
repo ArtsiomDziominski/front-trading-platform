@@ -1,4 +1,4 @@
-import type { BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 
@@ -8,6 +8,45 @@ const VOLUME_MODES: VolumeMode[] = ['linear', 'exponential', 'fixed']
 function asString(value: unknown): string {
   if (value == null) return ''
   return String(value)
+}
+
+function parseAntiMartingaleConfig(raw: unknown): AntiMartingaleFuturesConfig | null {
+  if (!raw || typeof raw !== 'object') return null
+
+  const config = raw as Record<string, unknown>
+  const symbol = asString(config.symbol).trim().toUpperCase()
+  if (symbol.length < 3) return null
+
+  if (!Array.isArray(config.orders) || !config.orders.length) return null
+
+  const orders: AntiMartingaleOrderLevel[] = []
+  for (const item of config.orders) {
+    if (!item || typeof item !== 'object') return null
+    const row = item as Record<string, unknown>
+    const triggerPercent = asString(row.trigger_percent).trim()
+    const sizePercent = asString(row.size_percent).trim()
+    if (!triggerPercent || !sizePercent) return null
+    orders.push({ trigger_percent: triggerPercent, size_percent: sizePercent })
+  }
+
+  const result: AntiMartingaleFuturesConfig = { symbol, orders }
+
+  const breakoutLookbackHours = Number(config.breakout_lookback_hours)
+  if (Number.isFinite(breakoutLookbackHours)) result.breakout_lookback_hours = breakoutLookbackHours
+
+  const emaFastPeriod = Number(config.ema_fast_period)
+  if (Number.isFinite(emaFastPeriod)) result.ema_fast_period = emaFastPeriod
+
+  const emaSlowPeriod = Number(config.ema_slow_period)
+  if (Number.isFinite(emaSlowPeriod)) result.ema_slow_period = emaSlowPeriod
+
+  const trailingStopPercent = asString(config.trailing_stop_percent).trim()
+  if (trailingStopPercent) result.trailing_stop_percent = trailingStopPercent
+
+  const leverage = Number(config.leverage)
+  if (Number.isFinite(leverage)) result.leverage = leverage
+
+  return result
 }
 
 function parseConfig(raw: unknown): GridFuturesConfig | null {
@@ -58,10 +97,13 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
   const apiKeyId = payload.api_key_id
   if (typeof apiKeyId !== 'number') return null
 
-  const config = parseConfig(payload.config)
+  const botType = payload.bot_type
+
+  const config = botType === 'ANTI_MARTINGALE_FUTURES'
+    ? parseAntiMartingaleConfig(payload.config)
+    : parseConfig(payload.config)
   if (!config) return null
 
-  const botType = payload.bot_type
   return {
     api_key_id: apiKeyId,
     ...(typeof botType === 'string' ? { bot_type: botType as BotCreate['bot_type'] } : {}),

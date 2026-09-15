@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { StopLossMode, TakeProfitMode, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -8,7 +8,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const { fetchApiKeys, fetchCreationHistory } = useBots()
+const { bots, fetchBots, fetchApiKeys, fetchCreationHistory } = useBots()
 
 useSeoMeta({
   title: () => t('bots.create_title'),
@@ -47,6 +47,19 @@ const leverage = ref(10)
 const currentPrice = ref('')
 const totalBalance = ref('')
 
+const amOrders = ref<AntiMartingaleOrderLevel[]>([
+  { trigger_percent: '0', size_percent: '33.75' },
+  { trigger_percent: '1.5', size_percent: '33.75' },
+  { trigger_percent: '3.0', size_percent: '42.5' },
+  { trigger_percent: '5.0', size_percent: '50' },
+  { trigger_percent: '7.5', size_percent: '67.5' },
+])
+const amBreakoutLookbackHours = ref('')
+const amEmaFastPeriod = ref('')
+const amEmaSlowPeriod = ref('')
+const amTrailingStopPercent = ref('')
+const amLeverage = ref('')
+
 async function loadCreationHistory() {
   historyLoading.value = true
   historyError.value = null
@@ -71,7 +84,7 @@ async function loadPageData() {
         apiKeyId.value = onlyKey.id
       }
     }
-    await loadCreationHistory()
+    await Promise.all([loadCreationHistory(), fetchBots()])
   } catch {
     formError.value = t('bots.create_error')
   } finally {
@@ -124,7 +137,7 @@ async function handleBotCreated() {
         </AppButton>
       </UCard>
 
-      <div v-else class="create-layout">
+      <div v-else class="create-layout" :class="{ 'create-layout--single': botType !== 'GRID_FUTURES' }">
         <div class="create-main">
           <UAlert v-if="formError" color="error" variant="subtle" :title="formError" class="mb-4" />
 
@@ -144,7 +157,14 @@ async function handleBotCreated() {
             v-model:take-profit-value="takeProfitValue"
             v-model:stop-loss-mode="stopLossMode"
             v-model:stop-loss-value="stopLossValue"
+            v-model:am-orders="amOrders"
+            v-model:am-breakout-lookback-hours="amBreakoutLookbackHours"
+            v-model:am-ema-fast-period="amEmaFastPeriod"
+            v-model:am-ema-slow-period="amEmaSlowPeriod"
+            v-model:am-trailing-stop-percent="amTrailingStopPercent"
+            v-model:am-leverage="amLeverage"
             :api-keys="apiKeys"
+            :existing-bots="bots"
             :show-clone-notice="clonedFromId != null"
             @created="handleBotCreated"
           />
@@ -159,7 +179,7 @@ async function handleBotCreated() {
           />
         </div>
 
-        <div class="create-sidebar">
+        <div v-if="botType === 'GRID_FUTURES'" class="create-sidebar">
           <BotLiquidationCheck
             ref="liquidationCheckRef"
             v-model:bot-type="botType"
@@ -202,6 +222,11 @@ async function handleBotCreated() {
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   gap: 24px;
   align-items: start;
+}
+
+.create-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 720px;
 }
 
 .create-main {

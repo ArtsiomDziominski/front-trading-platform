@@ -102,6 +102,12 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   take_profit_percent: 'bots.take_profit_value_percent',
   take_profit_amount: 'bots.take_profit_value_amount',
   stop_loss_percent: 'bots.stop_loss_value_percent',
+  orders_summary: 'bots.field_orders_summary',
+  breakout_lookback_hours: 'bots.field_breakout_lookback_hours',
+  ema_fast_period: 'bots.field_ema_fast_period',
+  ema_slow_period: 'bots.field_ema_slow_period',
+  trailing_stop_percent: 'bots.field_trailing_stop_percent',
+  leverage: 'bots.field_leverage',
 }
 
 const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
@@ -109,6 +115,7 @@ const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
   GRID_SPOT: 'bots.type_grid_spot',
   DCA_FUTURES: 'bots.type_dca_futures',
   DCA_SPOT: 'bots.type_dca_spot',
+  ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
   CUSTOM: 'bots.type_custom',
 }
 
@@ -157,6 +164,7 @@ function settingValue(setting: CreationHistorySetting): string {
     case 'grid_step_percent':
     case 'take_profit_percent':
     case 'stop_loss_percent':
+    case 'trailing_stop_percent':
       return `${setting.value}%`
     case 'take_profit_amount':
       return `${setting.value} USDT`

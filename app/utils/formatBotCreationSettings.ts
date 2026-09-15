@@ -12,6 +12,12 @@ export type CreationSettingKey =
   | 'take_profit_percent'
   | 'take_profit_amount'
   | 'stop_loss_percent'
+  | 'orders_summary'
+  | 'breakout_lookback_hours'
+  | 'ema_fast_period'
+  | 'ema_slow_period'
+  | 'trailing_stop_percent'
+  | 'leverage'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -32,6 +38,12 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'take_profit_percent',
   'take_profit_amount',
   'stop_loss_percent',
+  'orders_summary',
+  'breakout_lookback_hours',
+  'ema_fast_period',
+  'ema_slow_period',
+  'trailing_stop_percent',
+  'leverage',
 ]
 
 function readConfig(payload: Record<string, unknown>): Record<string, unknown> {
@@ -51,6 +63,21 @@ function readNumber(value: unknown): number | null {
   if (!text) return null
   const parsed = Number(text)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function readOrdersSummary(value: unknown): string | null {
+  if (!Array.isArray(value) || !value.length) return null
+
+  const parts = value.map((item) => {
+    if (!item || typeof item !== 'object') return null
+    const row = item as Record<string, unknown>
+    const trigger = readString(row.trigger_percent)
+    const size = readString(row.size_percent)
+    if (trigger == null || size == null) return null
+    return `${trigger}%→${size}%`
+  })
+
+  return parts.every((part) => part != null) ? parts.join(' · ') : null
 }
 
 export function extractCreationHistorySettings(
@@ -93,6 +120,13 @@ export function extractCreationHistorySettings(
   if (stopLossPercent != null && stopLossPercent > 0) {
     set('stop_loss_percent', stopLossPercent)
   }
+
+  set('orders_summary', readOrdersSummary(config.orders))
+  set('breakout_lookback_hours', readNumber(config.breakout_lookback_hours))
+  set('ema_fast_period', readNumber(config.ema_fast_period))
+  set('ema_slow_period', readNumber(config.ema_slow_period))
+  set('trailing_stop_percent', readString(config.trailing_stop_percent))
+  set('leverage', readNumber(config.leverage))
 
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)

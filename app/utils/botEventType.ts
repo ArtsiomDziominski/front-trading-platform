@@ -31,6 +31,12 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   stopped: 'bots.event_type_stopped',
   order_filled: 'bots.event_type_order_filled_grid',
   removed_from_tracking: 'bots.event_type_removed_from_tracking',
+  cycle_started: 'bots.event_type_cycle_started',
+  addon_placed: 'bots.event_type_addon_placed',
+  addon_rejected: 'bots.event_type_addon_rejected',
+  entry_rejected: 'bots.event_type_entry_rejected',
+  exit_order_filled: 'bots.event_type_exit_order_filled',
+  cycle_closed: 'bots.event_type_cycle_closed',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -65,6 +71,7 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     grid_spot: 'bots.type_grid_spot',
     dca_futures: 'bots.type_dca_futures',
     dca_spot: 'bots.type_dca_spot',
+    anti_martingale_futures: 'bots.type_anti_martingale_futures',
     custom: 'bots.type_custom',
   },
   reason: {
@@ -122,7 +129,9 @@ export function translateBotEventTitle(
       : ''
     const key = kind === 'entry'
       ? 'bots.event_type_order_filled_entry'
-      : 'bots.event_type_order_filled_grid'
+      : kind === 'addon'
+        ? 'bots.event_type_order_filled_addon'
+        : 'bots.event_type_order_filled_grid'
     if (te(key)) return t(key)
   }
 
@@ -156,7 +165,14 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type.includes('redeploy') || type === 'restarting' || type === 'grid_recreated') {
     return 'redeployed'
   }
-  if (type === 'order_filled' || type === 'active' || type === 'running' || type === 'created_ok' || type.includes('created')) {
+  if (
+    type === 'order_filled'
+    || type === 'active'
+    || type === 'running'
+    || type === 'created_ok'
+    || type === 'cycle_started'
+    || type.includes('created')
+  ) {
     return 'created'
   }
   if (type.includes('config')) return 'config'
@@ -166,11 +182,19 @@ export function botEventTypeTone(eventType: string): BotEventTone {
     || type.includes('stop_loss')
     || type.includes('closed')
     || type === 'close_completed'
+    || type === 'exit_order_filled'
+    || type === 'cycle_closed'
   ) {
     return 'closed'
   }
   if (type.includes('removed')) return 'removed'
-  if (type.includes('error') || type === 'exchange_error' || type === 'validation_failed') {
+  if (
+    type.includes('error')
+    || type === 'exchange_error'
+    || type === 'validation_failed'
+    || type === 'addon_rejected'
+    || type === 'entry_rejected'
+  ) {
     return 'error'
   }
   if (type.includes('updated')) return 'updated'

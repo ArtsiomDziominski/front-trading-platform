@@ -13,6 +13,6 @@ export interface ApiKeyCreate {
   exchange?: ExchangeType
   api_key: string
   api_secret: string
-  api_passphrase?: string
+  passphrase?: string
   label?: string
 }

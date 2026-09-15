@@ -5,6 +5,7 @@ export type BotType =
   | 'GRID_SPOT'
   | 'DCA_FUTURES'
   | 'DCA_SPOT'
+  | 'ANTI_MARTINGALE_FUTURES'
   | 'CUSTOM'
 
 export type BotLifecycleStatus = 'ACTIVE' | 'STOPPED' | 'CLOSED'
@@ -45,18 +46,52 @@ export interface GridFuturesConfig {
   stop_loss_percent?: string | number | null
 }
 
+export interface AntiMartingaleOrderLevel {
+  /** For orders[0] this is always "0" — the initial entry fires on the breakout signal. */
+  trigger_percent: string
+  /** % of the balance at the start of the cycle. */
+  size_percent: string
+}
+
+export interface AntiMartingaleFuturesConfig {
+  symbol: string
+  /** 1–10 levels; orders[0].trigger_percent is always "0". */
+  orders: AntiMartingaleOrderLevel[]
+  /** Breakout lookback window in hours. Server default: 99. */
+  breakout_lookback_hours?: number
+  /** Fast EMA period for the trend filter. Server default: 50. */
+  ema_fast_period?: number
+  /** Slow EMA period; must be greater than ema_fast_period. Server default: 200. */
+  ema_slow_period?: number
+  /** Trailing stop distance from the post-entry high, in percent. Server default: "4". */
+  trailing_stop_percent?: string
+  /** 1–125. Server default: 20. */
+  leverage?: number
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig
+
 export interface BotCreate {
   api_key_id: number
   bot_type?: BotType
-  config: GridFuturesConfig
+  config: BotConfig
 }
 
 export interface LiquidationCheckRequest {
   bot_type?: BotType
-  config: GridFuturesConfig
+  config: BotConfig
   current_price?: number
   total_balance: number
   leverage: number
+}
+
+/** Closed 15-minute candle for the anti-martingale breakout window. */
+export interface CandleOut {
+  timestamp: string
+  open: number
+  high: number
+  low: number
+  close: number
 }
 
 export interface LiquidationCheckOut {
@@ -89,6 +124,8 @@ export interface BotListOut extends BotOut {
   mark_price: number | null
   unrealized_pnl: number | null
   pnl_percent: number | null
+  /** null for grid bots; closed 15m candles for the breakout window for anti-martingale bots. */
+  recent_candles?: CandleOut[] | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -146,6 +183,12 @@ export type BotEventType =
   | 'order_filled'
   | 'config_updated'
   | 'removed_from_tracking'
+  | 'cycle_started'
+  | 'addon_placed'
+  | 'addon_rejected'
+  | 'entry_rejected'
+  | 'exit_order_filled'
+  | 'cycle_closed'
   | 'error'
 
 export interface BotEventOut {
