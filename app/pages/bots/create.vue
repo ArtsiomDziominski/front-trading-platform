@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
 import { OrderSizeMode, StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { parseApiError } from '~/utils/parseApiError'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -8,7 +9,8 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const { bots, fetchBots, fetchApiKeys, fetchCreationHistory } = useBots()
+const toast = useToast()
+const { bots, fetchBots, fetchApiKeys, fetchCreationHistory, setCreationLogFavorite } = useBots()
 
 useSeoMeta({
   title: () => t('bots.create_title'),
@@ -28,6 +30,7 @@ const liquidationCheckRef = ref<{ clearResult: () => void } | null>(null)
 const creationHistory = ref<BotCreationLogOut[]>([])
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
+const historyFavoritesOnly = ref(false)
 
 const apiKeyId = ref<number | ''>('')
 const symbol = ref('ETHUSDT')
@@ -66,7 +69,7 @@ async function loadCreationHistory() {
   historyError.value = null
 
   try {
-    creationHistory.value = await fetchCreationHistory(30)
+    creationHistory.value = await fetchCreationHistory(30, historyFavoritesOnly.value ? true : undefined)
   } catch {
     historyError.value = t('bots.creation_history_load_error')
     creationHistory.value = []
@@ -95,6 +98,26 @@ async function loadPageData() {
 
 onMounted(() => {
   loadPageData()
+})
+
+async function toggleHistoryFavorite(item: BotCreationLogOut) {
+  const next = !item.favorite
+  try {
+    const updated = await setCreationLogFavorite(item.id, next)
+    if (historyFavoritesOnly.value && !updated.favorite) {
+      creationHistory.value = creationHistory.value.filter((entry) => entry.id !== item.id)
+      return
+    }
+    creationHistory.value = creationHistory.value
+      .map((entry) => (entry.id === item.id ? { ...entry, favorite: updated.favorite } : entry))
+      .sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)))
+  } catch (e) {
+    toast.add({ title: parseApiError(e, t('bots.action_error')), color: 'error' })
+  }
+}
+
+watch(historyFavoritesOnly, () => {
+  loadCreationHistory()
 })
 
 function cloneFromHistory(item: BotCreationLogOut) {
@@ -172,10 +195,12 @@ async function handleBotCreated() {
           />
 
           <BotCreationHistory
+            v-model:favorites-only="historyFavoritesOnly"
             :items="creationHistory"
             :loading="historyLoading"
             :error="historyError"
             :selected-id="clonedFromId"
+            @toggle-favorite="toggleHistoryFavorite"
             @select="cloneFromHistory"
             @retry="loadCreationHistory"
           />
