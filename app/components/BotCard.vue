@@ -252,10 +252,14 @@
       {{ engineError }}
     </p>
 
-    <BotCardHistory
-      ref="historyPanel"
-      :bot-id="bot.id"
-    />
+    <AppButton
+      class="bot-card__history"
+      variant="secondary"
+      size="sm"
+      :to="`/history?bot_id=${bot.id}`"
+    >
+      {{ $t('bots.event_history_open') }}
+    </AppButton>
 
     <ConfirmModal
       v-model="confirmOpen"
@@ -313,7 +317,6 @@ const {
   clearBotActionError,
 } = useBots()
 
-const historyPanel = useTemplateRef<{ reloadIfOpen: () => void }>('historyPanel')
 const staggerDelay = computed(() => Math.min(props.index * 0.07, 0.42))
 const isDetailPage = computed(() => route.path === `/bots/${props.bot.id}`)
 
@@ -479,7 +482,6 @@ async function confirmAction() {
         await router.replace('/bots')
       }
     }
-    historyPanel.value?.reloadIfOpen()
     confirmOpen.value = false
     pendingAction.value = null
   } catch {
@@ -508,7 +510,6 @@ async function handleStop() {
   clearBotActionError(props.bot.id)
   try {
     await stopBot(props.bot.id)
-    historyPanel.value?.reloadIfOpen()
   } catch {
     // error shown under card
   }
@@ -806,6 +807,12 @@ async function handleStop() {
   margin: 14px 0 0;
   font-size: 0.78rem;
   color: var(--bento-danger);
+}
+
+.bot-card__history {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
 }
 
 @media (max-width: 640px) {

@@ -1,14 +1,14 @@
 # История ботов
 
 Страница: `/history` (редирект с `/bots/history`).  
-Карточка бота на `/bots` открывает ту же ленту с `bot_id`.
+Кнопка «История» на карточке `/bots` ведёт на `/history?bot_id=`.
 
 Журнал событий **живых ботов**: старт, стоп, закрытие, пересбор сетки, исполнение ордера.  
 Один бот — много строк. Всегда только события текущего пользователя.  
 После stop-loss бот скрывается из списка, но лента `?bot_id=` остаётся доступна.
 
 Это **не** журнал попыток создания (`GET /bots/creation-history` на `/bots/create`).  
-Это **не** WebSocket: WS обновляет список ботов, история в канал не пушится. После стопа / close / redeploy лента на карточке запрашивается заново.
+Это **не** WebSocket: WS обновляет список ботов, история в канал не пушится.
 
 ## Потоки
 
@@ -74,7 +74,7 @@ Query у GET и DELETE одинаковые, кроме пагинации (`ski
 |-------|------|
 | Страница | `app/pages/history.vue` |
 | Лента | `app/components/BotEventFeed.vue` |
-| Карточка | `app/components/BotCardHistory.vue` |
+| Карточка → история | `app/components/BotCard.vue` (кнопка на `/history?bot_id=`) |
 | API | `app/composables/useBots.ts` (`fetchBotHistory`, `clearBotHistory`) |
 | Состояние ленты | `app/composables/useBotEventHistory.ts` |
 | Подписи | `app/utils/botEventType.ts` |
