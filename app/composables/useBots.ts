@@ -27,13 +27,19 @@ function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, ApiKeyOut['exch
   return {
     ...bot,
     config: normalizeBotConfig(bot.config ?? {}),
+    favorite: bot.favorite ?? false,
     exchange: exchangeByKeyId.get(bot.api_key_id),
   }
 }
 
+/** Favorites first; stable, so the server order is kept inside each group. */
+function sortFavoritesFirst(list: BotListItem[]): BotListItem[] {
+  return [...list].sort((a, b) => Number(b.favorite) - Number(a.favorite))
+}
+
 function enrichBots(bots: BotListOut[], apiKeys: ApiKeyOut[]): BotListItem[] {
   const exchangeByKeyId = new Map(apiKeys.map((key) => [key.id, key.exchange]))
-  return bots.map((bot) => enrichBot(bot, exchangeByKeyId))
+  return sortFavoritesFirst(bots.map((bot) => enrichBot(bot, exchangeByKeyId)))
 }
 
 const WS_RECONNECT_BASE_MS = 2000
@@ -60,6 +66,7 @@ export const useBots = () => {
   const createError = useState<string | null>('user_bots_create_error', () => null)
   const apiKeysCache = useState<ApiKeyOut[]>('user_bots_api_keys', () => [])
   const lifecycleFilter = useState<BotLifecycleStatus[] | undefined>('user_bots_lifecycle_filter', () => undefined)
+  const favoriteFilter = useState<boolean | undefined>('user_bots_favorite_filter', () => undefined)
   const wsSubscribers = useState('user_bots_ws_subscribers', () => 0)
   const wsConnected = useState('user_bots_ws_connected', () => false)
 
@@ -80,8 +87,30 @@ export const useBots = () => {
   }
 
   function matchesFilter(bot: BotListOut): boolean {
+    if (favoriteFilter.value !== undefined && Boolean(bot.favorite) !== favoriteFilter.value) return false
     if (!lifecycleFilter.value?.length) return true
     return lifecycleFilter.value.includes(bot.lifecycle_status)
+  }
+
+  /** Insert or replace a bot in the list, honouring the active filters and favorites-first order. */
+  function placeBot(incoming: BotListOut) {
+    const existing = bots.value.find((b) => b.id === incoming.id)
+    // Partial payloads (PnL ticks) must not reset the star
+    const listOut: BotListOut = { ...incoming, favorite: incoming.favorite ?? existing?.favorite ?? false }
+
+    if (!matchesFilter(listOut)) {
+      bots.value = bots.value.filter((b) => b.id !== listOut.id)
+      return
+    }
+
+    const exchangeByKeyId = new Map(
+      apiKeysCache.value.map((key) => [key.id, key.exchange]),
+    )
+    const enriched = enrichBot(listOut, exchangeByKeyId)
+    const next = existing
+      ? bots.value.map((b) => (b.id === enriched.id ? enriched : b))
+      : [...bots.value, enriched]
+    bots.value = sortFavoritesFirst(next)
   }
 
   function shouldRemoveBot(message: BotWsMessage): boolean {
@@ -139,26 +168,7 @@ export const useBots = () => {
       pnl_percent: existing?.pnl_percent ?? null,
     }
 
-    const exchangeByKeyId = new Map(
-      apiKeysCache.value.map((key) => [key.id, key.exchange]),
-    )
-    const enriched = enrichBot(listOut, exchangeByKeyId)
-    const index = bots.value.findIndex((b) => b.id === enriched.id)
-
-    if (!matchesFilter(listOut)) {
-      if (index >= 0) {
-        bots.value = bots.value.filter((b) => b.id !== enriched.id)
-      }
-      return
-    }
-
-    if (index >= 0) {
-      const next = [...bots.value]
-      next[index] = enriched
-      bots.value = next
-    } else {
-      bots.value = [...bots.value, enriched]
-    }
+    placeBot(listOut)
   }
 
   function actionErrorFallback(): string {
@@ -230,6 +240,29 @@ export const useBots = () => {
     )
   }
 
+  async function toggleBotFavorite(botId: number, favorite: boolean) {
+    const find = () => bots.value.find((b) => b.id === botId)
+    const snapshot = find()
+    const setLocal = (value: boolean) => {
+      const bot = find()
+      if (bot) placeBot({ ...bot, favorite: value })
+    }
+
+    setLocal(favorite)
+    try {
+      const result = await auth.authFetch<BotOut>(`${baseUrl}/bots/${botId}/favorite`, {
+        method: 'PATCH',
+        body: { favorite },
+      })
+      setLocal(result.favorite ?? favorite)
+    } catch (e) {
+      // The optimistic step may have dropped the row under a favorites filter — put it back
+      if (snapshot) placeBot(snapshot)
+      toast.add({ title: parseApiError(e, actionErrorFallback()), color: 'error' })
+      throw e
+    }
+  }
+
   function isBotActionLoading(botId: number, actionKey?: string): boolean {
     const current = actionLoading.value[botId]
     if (!current) return false
@@ -257,26 +290,7 @@ export const useBots = () => {
 
     if (!message.bot) return
 
-    const exchangeByKeyId = new Map(
-      apiKeysCache.value.map((key) => [key.id, key.exchange]),
-    )
-    const enriched = enrichBot(message.bot, exchangeByKeyId)
-    const index = bots.value.findIndex((b) => b.id === enriched.id)
-
-    if (!matchesFilter(message.bot)) {
-      if (index >= 0) {
-        bots.value = bots.value.filter((b) => b.id !== enriched.id)
-      }
-      return
-    }
-
-    if (index >= 0) {
-      const next = [...bots.value]
-      next[index] = enriched
-      bots.value = next
-    } else {
-      bots.value = [...bots.value, enriched]
-    }
+    placeBot(message.bot)
   }
 
   function clearReconnectTimer() {
@@ -372,15 +386,17 @@ export const useBots = () => {
     return keys
   }
 
-  async function fetchBots(lifecycleStatus?: BotLifecycleStatus[]) {
+  async function fetchBots(lifecycleStatus?: BotLifecycleStatus[], favorite?: boolean) {
     lifecycleFilter.value = lifecycleStatus
+    favoriteFilter.value = favorite
     loading.value = true
     error.value = null
 
     try {
-      const query = lifecycleStatus?.length
-        ? { lifecycle_status: lifecycleStatus }
-        : undefined
+      const query = {
+        ...(lifecycleStatus?.length ? { lifecycle_status: lifecycleStatus } : {}),
+        ...(favorite !== undefined ? { favorite } : {}),
+      }
 
       const [list, apiKeys] = await Promise.all([
         auth.authFetch<BotListOut[]>(`${baseUrl}/bots`, { query }),
@@ -471,9 +487,16 @@ export const useBots = () => {
     bulkActionFailures.value = null
   }
 
-  async function fetchCreationHistory(limit = 20) {
+  async function fetchCreationHistory(limit = 20, favorite?: boolean) {
     return auth.authFetch<BotCreationLogOut[]>(`${baseUrl}/bots/creation-history`, {
-      query: { limit },
+      query: { limit, ...(favorite !== undefined ? { favorite } : {}) },
+    })
+  }
+
+  function setCreationLogFavorite(logId: number, favorite: boolean) {
+    return auth.authFetch<BotCreationLogOut>(`${baseUrl}/bots/creation-history/${logId}/favorite`, {
+      method: 'PATCH',
+      body: { favorite },
     })
   }
 
@@ -557,6 +580,8 @@ export const useBots = () => {
     redeployBotGrid,
     removeBot,
     updateBotConfig,
+    toggleBotFavorite,
+    setCreationLogFavorite,
     isBotActionLoading,
     getBotActionError,
     clearBotActionError,

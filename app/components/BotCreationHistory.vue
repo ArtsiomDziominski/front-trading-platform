@@ -7,6 +7,16 @@
       {{ $t('bots.creation_history_hint') }}
     </p>
 
+    <AppButton
+      size="sm"
+      icon="i-lucide-star"
+      class="creation-history__filter"
+      :variant="favoritesOnly ? 'primary' : 'secondary'"
+      :aria-pressed="favoritesOnly"
+      :label="$t('bots.creation_history_favorites_only')"
+      @click="$emit('update:favoritesOnly', !favoritesOnly)"
+    />
+
     <p v-if="loading" class="creation-history__state" role="status">
       {{ $t('common.loading') }}
     </p>
@@ -27,7 +37,19 @@
       >
         <div class="creation-history__item-body">
           <div class="creation-history__item-head">
-            <span class="creation-history__symbol">{{ item.symbol || '—' }}</span>
+            <span class="creation-history__symbol">
+              <button
+                type="button"
+                class="creation-history__favorite"
+                :class="{ 'creation-history__favorite--on': item.favorite }"
+                :aria-label="item.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
+                :aria-pressed="Boolean(item.favorite)"
+                @click="$emit('toggleFavorite', item)"
+              >
+                <UIcon name="i-lucide-star" class="creation-history__favorite-icon" />
+              </button>
+              {{ item.symbol || '—' }}
+            </span>
             <span class="creation-history__outcome" :class="`creation-history__outcome--${item.outcome.toLowerCase()}`">
               {{ outcomeLabel(item.outcome) }}
             </span>
@@ -64,7 +86,7 @@
     </ul>
 
     <p v-else class="creation-history__state">
-      {{ $t('bots.creation_history_empty') }}
+      {{ favoritesOnly ? $t('bots.creation_history_empty_favorites') : $t('bots.creation_history_empty') }}
     </p>
   </UCard>
 </template>
@@ -79,11 +101,14 @@ defineProps<{
   loading: boolean
   error: string | null
   selectedId: number | null
+  favoritesOnly: boolean
 }>()
 
 defineEmits<{
   select: [item: BotCreationLogOut]
   retry: []
+  toggleFavorite: [item: BotCreationLogOut]
+  'update:favoritesOnly': [value: boolean]
 }>()
 
 const { t, locale } = useI18n()
@@ -251,6 +276,34 @@ function settingValue(setting: CreationHistorySetting): string {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.creation-history__filter {
+  margin-bottom: 14px;
+}
+
+.creation-history__favorite {
+  display: inline-flex;
+  vertical-align: middle;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.creation-history__favorite:hover,
+.creation-history__favorite--on {
+  color: var(--color-accent);
+}
+
+.creation-history__favorite--on .creation-history__favorite-icon {
+  fill: currentColor;
+}
+
+.creation-history__favorite-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .creation-history__symbol {

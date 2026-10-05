@@ -124,6 +124,8 @@ export interface BotOut {
   engine_error: string | null
   config: Record<string, unknown>
   config_version: number
+  /** Missing in old caches — treat as false. */
+  favorite?: boolean
   created_at: string
   updated_at: string | null
   deleted_at?: string | null
@@ -181,6 +183,7 @@ export interface BotCreationLogOut {
   api_key_id: number | null
   created_at: string
   exchange_ok: boolean
+  favorite?: boolean
 }
 
 export type BotEventSource = 'user' | 'auto'

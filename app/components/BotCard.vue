@@ -13,7 +13,19 @@
 
     <header class="bot-card__header">
       <div class="bot-card__identity">
-        <span class="bot-card__symbol">{{ bot.symbol }}</span>
+        <div class="bot-card__title-row">
+          <button
+            type="button"
+            class="bot-card__favorite"
+            :class="{ 'bot-card__favorite--on': bot.favorite }"
+            :aria-label="bot.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
+            :aria-pressed="bot.favorite"
+            @click.stop.prevent="handleFavorite"
+          >
+            <UIcon name="i-lucide-star" class="bot-card__favorite-icon" />
+          </button>
+          <span class="bot-card__symbol">{{ bot.symbol }}</span>
+        </div>
         <NuxtLink
           v-if="!isDetailPage"
           :to="`/bots/${bot.id}`"
@@ -295,6 +307,7 @@ const {
   closeBot,
   redeployBotGrid,
   removeBot,
+  toggleBotFavorite,
   isBotActionLoading,
   getBotActionError,
   clearBotActionError,
@@ -476,6 +489,14 @@ async function confirmAction() {
   }
 }
 
+async function handleFavorite() {
+  try {
+    await toggleBotFavorite(props.bot.id, !props.bot.favorite)
+  } catch {
+    // error shown via toast
+  }
+}
+
 async function handleStop() {
   clearBotActionError(props.bot.id)
   try {
@@ -534,6 +555,42 @@ async function handleStop() {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
+}
+
+.bot-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bot-card__favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--bento-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.bot-card__favorite:hover {
+  color: var(--bento-accent);
+  transform: scale(1.1);
+}
+
+.bot-card__favorite--on {
+  color: var(--bento-accent);
+}
+
+.bot-card__favorite--on .bot-card__favorite-icon {
+  fill: currentColor;
+}
+
+.bot-card__favorite-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .bot-card__id {
