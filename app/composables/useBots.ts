@@ -1,3 +1,4 @@
+import { normalizeOrderSizeFields } from '~/utils/orderSize'
 import { parseApiError } from '~/utils/parseApiError'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
@@ -13,12 +14,13 @@ function normalizeBotConfig(config: Record<string, unknown>): Record<string, unk
   const stopLoss = parseStopLoss(config)
   const stopLossFields = buildStopLossPayload(stopLoss.mode, stopLoss.value)
 
-  return {
+  // PATCH /bots/{id} takes the whole config back, so it must carry exactly one size field
+  return normalizeOrderSizeFields({
     ...config,
     take_profit_percent: takeProfitFields.take_profit_percent,
     take_profit_amount: takeProfitFields.take_profit_amount,
     stop_loss_percent: stopLossFields.stop_loss_percent,
-  }
+  })
 }
 
 function enrichBot(bot: BotListOut, exchangeByKeyId: Map<number, ApiKeyOut['exchange']>): BotListItem {

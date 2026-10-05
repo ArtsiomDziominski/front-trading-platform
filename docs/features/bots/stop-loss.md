@@ -119,4 +119,5 @@ flowchart TD
 | Типы | `shared/types/bot.ts` (`GridFuturesConfig`) |
 
 Take-profit — отдельный блок, см. [`take-profit.md`](./take-profit.md).  
+Размер ордера (`initial_amount` / `initial_amount_usdt`) от stop-loss не зависит, см. [`order-size.md`](./order-size.md).  
 Telegram — отдельный экран, см. [`../user/telegram-settings.md`](../user/telegram-settings.md).

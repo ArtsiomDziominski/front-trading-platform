@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { OrderSizeMode, StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -32,7 +32,8 @@ const historyError = ref<string | null>(null)
 const apiKeyId = ref<number | ''>('')
 const symbol = ref('ETHUSDT')
 const direction = ref<GridDirection>('LONG')
-const initialAmount = ref('0.01')
+const orderSizeMode = ref<OrderSizeMode>(OrderSizeMode.Coin)
+const orderSizeValue = ref('0.01')
 const gridOrdersCount = ref(10)
 const gridStepPercent = ref('5')
 const volumeMode = ref<VolumeMode>('linear')
@@ -147,7 +148,8 @@ async function handleBotCreated() {
             v-model:bot-type="botType"
             v-model:symbol="symbol"
             v-model:direction="direction"
-            v-model:initial-amount="initialAmount"
+            v-model:order-size-mode="orderSizeMode"
+            v-model:order-size-value="orderSizeValue"
             v-model:grid-orders-count="gridOrdersCount"
             v-model:grid-step-percent="gridStepPercent"
             v-model:volume-mode="volumeMode"
@@ -185,7 +187,8 @@ async function handleBotCreated() {
             v-model:bot-type="botType"
             v-model:symbol="symbol"
             v-model:direction="direction"
-            v-model:initial-amount="initialAmount"
+            v-model:order-size-mode="orderSizeMode"
+            v-model:order-size-value="orderSizeValue"
             v-model:grid-orders-count="gridOrdersCount"
             v-model:grid-step-percent="gridStepPercent"
             v-model:volume-mode="volumeMode"

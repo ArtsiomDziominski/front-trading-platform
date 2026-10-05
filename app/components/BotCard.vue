@@ -29,6 +29,9 @@
           <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
             {{ stopLossLabel }}
           </span>
+          <span v-if="orderSizeLabel" class="bot-card__tp">
+            {{ orderSizeLabel }}
+          </span>
         </template>
       </div>
 
@@ -273,6 +276,7 @@ import { motion } from 'motion-v'
 import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
 import { StopLossMode, TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
+import { formatOrderSizeBadge } from '~/utils/orderSize'
 import { formatStopLossBadge, parseStopLoss } from '~/utils/stopLoss'
 import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
 
@@ -373,6 +377,7 @@ const takeProfitLabel = computed(() => formatTakeProfitBadge(props.bot.config, t
 const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== TakeProfitMode.Off)
 const stopLossLabel = computed(() => formatStopLossBadge(props.bot.config, t))
 const hasStopLoss = computed(() => parseStopLoss(props.bot.config).mode !== StopLossMode.Off)
+const orderSizeLabel = computed(() => formatOrderSizeBadge(props.bot.config, props.bot.symbol, t))
 
 const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
 const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')

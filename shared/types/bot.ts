@@ -29,10 +29,23 @@ export enum StopLossMode {
   Percent = 'percent',
 }
 
+export enum OrderSizeMode {
+  /** `initial_amount` — entry size in the base coin (ETH for ETHUSDT). */
+  Coin = 'coin',
+  /** `initial_amount_usdt` — entry notional in USDT (quantity × price, not margin). */
+  Usdt = 'usdt',
+}
+
 export interface GridFuturesConfig {
   symbol: string
   direction: GridDirection
-  initial_amount: string | number
+  /**
+   * Entry size in the base coin. Send exactly one of `initial_amount` / `initial_amount_usdt`:
+   * the unused one is `null` or omitted, never `0` or `""`.
+   */
+  initial_amount?: string | number | null
+  /** Entry notional in USDT. Bots created before this field existed do not have the key. */
+  initial_amount_usdt?: string | number | null
   grid_orders_count: number
   grid_step_percent: string | number
   volume_mode: VolumeMode

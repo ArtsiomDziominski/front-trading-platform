@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { StopLossMode, TakeProfitMode, type AntiMartingaleFuturesConfig, type AntiMartingaleOrderLevel, type BotCreate, type BotListItem, type BotType, type GridDirection, type GridFuturesConfig, type VolumeMode } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type AntiMartingaleFuturesConfig, type AntiMartingaleOrderLevel, type BotCreate, type BotListItem, type BotType, type GridDirection, type GridFuturesConfig, type OrderSizeMode, type VolumeMode } from '#shared/types/bot'
+import {
+  buildOrderSizePayload,
+  isOrderSizeApiError,
+  parseOrderSize,
+  parseOrderSizeApiError,
+  validateOrderSize,
+} from '~/utils/orderSize'
 import { parseApiError } from '~/utils/parseApiError'
 import {
   buildStopLossPayload,
@@ -29,7 +36,8 @@ const apiKeyId = defineModel<number | ''>('apiKeyId', { required: true })
 const botType = defineModel<BotType>('botType', { required: true })
 const symbol = defineModel<string>('symbol', { required: true })
 const direction = defineModel<GridDirection>('direction', { required: true })
-const initialAmount = defineModel<string>('initialAmount', { required: true })
+const orderSizeMode = defineModel<OrderSizeMode>('orderSizeMode', { required: true })
+const orderSizeValue = defineModel<string>('orderSizeValue', { required: true })
 const gridOrdersCount = defineModel<number>('gridOrdersCount', { required: true })
 const gridStepPercent = defineModel<string>('gridStepPercent', { required: true })
 const volumeMode = defineModel<VolumeMode>('volumeMode', { required: true })
@@ -52,7 +60,9 @@ const router = useRouter()
 const { creating, createError, createBot } = useBots()
 
 const formRef = ref<HTMLElement | null>(null)
+const orderSizeRef = ref<{ reveal: () => void } | null>(null)
 const formError = ref('')
+const orderSizeError = ref('')
 const takeProfitError = ref('')
 const stopLossError = ref('')
 const ordersError = ref('')
@@ -68,13 +78,15 @@ const apiKeyIdModel = computed({
 
 function buildGridConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
+  const orderSize = buildOrderSizePayload(orderSizeMode.value, orderSizeValue.value)
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
   const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
     direction: direction.value,
-    initial_amount: initialAmount.value.trim(),
+    initial_amount: orderSize.initial_amount,
+    initial_amount_usdt: orderSize.initial_amount_usdt,
     grid_orders_count: gridOrdersCount.value,
     grid_step_percent: gridStepPercent.value.trim(),
     volume_mode: volumeMode.value,
@@ -131,6 +143,12 @@ function isSymbolTakenByAntiMartingale(symbolValue: string): boolean {
   )
 }
 
+/** The size block sits far above the submit button, so bring it into view with the message. */
+function showOrderSizeError(message: string) {
+  orderSizeError.value = message
+  orderSizeRef.value?.reveal()
+}
+
 function validateAntiMartingale(symbolValue: string): boolean {
   if (isSymbolTakenByAntiMartingale(symbolValue)) {
     formError.value = t('bots.error_symbol_duplicate_am')
@@ -183,6 +201,7 @@ function validateAntiMartingale(symbolValue: string): boolean {
 
 function validate(): boolean {
   formError.value = ''
+  orderSizeError.value = ''
   takeProfitError.value = ''
   stopLossError.value = ''
   ordersError.value = ''
@@ -203,8 +222,9 @@ function validate(): boolean {
     return validateAntiMartingale(symbolValue)
   }
 
-  if (!initialAmount.value.trim()) {
-    formError.value = t('bots.error_amount_required')
+  const sizeError = validateOrderSize(orderSizeValue.value, t)
+  if (sizeError) {
+    showOrderSizeError(sizeError)
     return false
   }
 
@@ -243,7 +263,12 @@ watch(stopLossMode, (mode) => {
 
 watch(botType, () => {
   formError.value = ''
+  orderSizeError.value = ''
   ordersError.value = ''
+})
+
+watch([orderSizeMode, orderSizeValue], () => {
+  orderSizeError.value = ''
 })
 
 function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
@@ -267,7 +292,11 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
     const config = payload.config as GridFuturesConfig
     symbol.value = config.symbol
     direction.value = config.direction
-    initialAmount.value = String(config.initial_amount)
+
+    const orderSize = parseOrderSize(config)
+    orderSizeMode.value = orderSize.mode
+    orderSizeValue.value = orderSize.value
+
     gridOrdersCount.value = config.grid_orders_count
     gridStepPercent.value = String(config.grid_step_percent)
     volumeMode.value = config.volume_mode
@@ -284,6 +313,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   }
 
   formError.value = ''
+  orderSizeError.value = ''
   takeProfitError.value = ''
   stopLossError.value = ''
   ordersError.value = ''
@@ -296,6 +326,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 
 async function handleSubmit() {
   formError.value = ''
+  orderSizeError.value = ''
   takeProfitError.value = ''
   stopLossError.value = ''
   ordersError.value = ''
@@ -324,6 +355,12 @@ async function handleSubmit() {
 
     await router.push('/bots')
   } catch (error) {
+    // Before the SL / TP checks: they scan the whole `detail`, which may echo the sent config back
+    if (isOrderSizeApiError(error, orderSizeMode.value)) {
+      showOrderSizeError(parseOrderSizeApiError(error, t('bots.error_order_size_invalid')))
+      return
+    }
+
     if (isStopLossApiError(error)) {
       stopLossError.value = parseApiError(error, t('bots.error_stop_loss_percent_max'))
       return
@@ -417,17 +454,15 @@ defineExpose({ applyPayload, scrollIntoView })
             </UFormField>
           </div>
 
-          <div class="field-row">
-            <UFormField :label="$t('bots.field_initial_amount')" class="flex-1">
-              <UInput
-                id="bot-initial-amount"
-                v-model="initialAmount"
-                inputmode="decimal"
-                required
-                class="w-full"
-              />
-            </UFormField>
+          <BotOrderSizeFields
+            ref="orderSizeRef"
+            v-model:mode="orderSizeMode"
+            v-model:value="orderSizeValue"
+            :symbol="symbol"
+            :error="orderSizeError"
+          />
 
+          <div class="field-row">
             <UFormField :label="$t('bots.field_grid_step')" class="flex-1">
               <UInput
                 id="bot-grid-step"
@@ -437,9 +472,7 @@ defineExpose({ applyPayload, scrollIntoView })
                 class="w-full"
               />
             </UFormField>
-          </div>
 
-          <div class="field-row">
             <UFormField :label="$t('bots.field_grid_orders')" class="flex-1">
               <UInput
                 id="bot-grid-orders"
@@ -451,7 +484,9 @@ defineExpose({ applyPayload, scrollIntoView })
                 class="w-full"
               />
             </UFormField>
+          </div>
 
+          <div class="field-row">
             <UFormField :label="$t('bots.field_start_price')" class="flex-1">
               <UInput
                 id="bot-start-price"

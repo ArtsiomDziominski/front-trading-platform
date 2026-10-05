@@ -94,6 +94,7 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   symbol: 'bots.field_symbol',
   direction: 'bots.field_direction',
   initial_amount: 'bots.field_initial_amount',
+  initial_amount_usdt: 'bots.field_initial_amount_usdt',
   grid_orders_count: 'bots.field_grid_orders',
   grid_step_percent: 'bots.field_grid_step',
   volume_mode: 'bots.field_volume_mode',
@@ -167,6 +168,7 @@ function settingValue(setting: CreationHistorySetting): string {
     case 'trailing_stop_percent':
       return `${setting.value}%`
     case 'take_profit_amount':
+    case 'initial_amount_usdt':
       return `${setting.value} USDT`
     default:
       return String(setting.value)

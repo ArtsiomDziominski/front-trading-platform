@@ -1,4 +1,5 @@
 import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 
@@ -60,8 +61,11 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
   if (symbol.length < 3) return null
   if (!GRID_DIRECTIONS.includes(direction as GridDirection)) return null
   if (!VOLUME_MODES.includes(volumeMode as VolumeMode)) return null
-  if (!asString(config.initial_amount).trim()) return null
   if (!asString(config.grid_step_percent).trim()) return null
+
+  // Old entries only have `initial_amount`; newer ones carry either field with the other one `null`
+  const orderSize = parseOrderSize(config)
+  if (!orderSize.value) return null
 
   const gridOrdersCount = Number(config.grid_orders_count)
   if (!Number.isFinite(gridOrdersCount) || gridOrdersCount < 1 || gridOrdersCount > 500) {
@@ -81,7 +85,7 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
   return {
     symbol,
     direction: direction as GridDirection,
-    initial_amount: asString(config.initial_amount).trim(),
+    ...buildOrderSizePayload(orderSize.mode, orderSize.value),
     grid_orders_count: gridOrdersCount,
     grid_step_percent: asString(config.grid_step_percent).trim(),
     volume_mode: volumeMode as VolumeMode,

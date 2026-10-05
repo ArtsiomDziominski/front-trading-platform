@@ -4,6 +4,7 @@ export type CreationSettingKey =
   | 'symbol'
   | 'direction'
   | 'initial_amount'
+  | 'initial_amount_usdt'
   | 'grid_orders_count'
   | 'grid_step_percent'
   | 'volume_mode'
@@ -30,6 +31,7 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'symbol',
   'direction',
   'initial_amount',
+  'initial_amount_usdt',
   'grid_orders_count',
   'grid_step_percent',
   'volume_mode',
@@ -97,6 +99,7 @@ export function extractCreationHistorySettings(
   set('symbol', readString(config.symbol) ?? readString(fallbackSymbol))
   set('direction', readString(config.direction)?.toUpperCase() ?? null)
   set('initial_amount', readString(config.initial_amount))
+  set('initial_amount_usdt', readString(config.initial_amount_usdt))
   set('grid_orders_count', readNumber(config.grid_orders_count))
   set('grid_step_percent', readString(config.grid_step_percent))
   set('volume_mode', readString(config.volume_mode)?.toLowerCase() ?? null)

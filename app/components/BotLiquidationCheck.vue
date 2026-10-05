@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { BotType, GridDirection, GridFuturesConfig, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import type { BotType, GridDirection, GridFuturesConfig, OrderSizeMode, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import { buildOrderSizePayload, validateOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload } from '~/utils/stopLoss'
 import { buildTakeProfitPayload } from '~/utils/takeProfit'
 
 const botType = defineModel<BotType>('botType', { required: true })
 const symbol = defineModel<string>('symbol', { required: true })
 const direction = defineModel<GridDirection>('direction', { required: true })
-const initialAmount = defineModel<string>('initialAmount', { required: true })
+const orderSizeMode = defineModel<OrderSizeMode>('orderSizeMode', { required: true })
+const orderSizeValue = defineModel<string>('orderSizeValue', { required: true })
 const gridOrdersCount = defineModel<number>('gridOrdersCount', { required: true })
 const gridStepPercent = defineModel<string>('gridStepPercent', { required: true })
 const volumeMode = defineModel<VolumeMode>('volumeMode', { required: true })
@@ -36,13 +38,15 @@ function formatPrice(value: number): string {
 
 function buildLiquidationConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
+  const orderSize = buildOrderSizePayload(orderSizeMode.value, orderSizeValue.value)
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
   const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
     direction: direction.value,
-    initial_amount: initialAmount.value.trim(),
+    initial_amount: orderSize.initial_amount,
+    initial_amount_usdt: orderSize.initial_amount_usdt,
     grid_orders_count: gridOrdersCount.value,
     grid_step_percent: gridStepPercent.value.trim(),
     volume_mode: volumeMode.value,
@@ -76,8 +80,9 @@ function validateLiquidation(): boolean {
     return false
   }
 
-  if (!initialAmount.value.trim()) {
-    liquidationCheckError.value = t('bots.error_amount_required')
+  const sizeError = validateOrderSize(orderSizeValue.value, t)
+  if (sizeError) {
+    liquidationCheckError.value = sizeError
     return false
   }
 
@@ -143,7 +148,7 @@ async function handleCheckLiquidation() {
 }
 
 watch(
-  [botType, symbol, direction, initialAmount, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
+  [botType, symbol, direction, orderSizeMode, orderSizeValue, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
   clearLiquidationResult,
 )
 
@@ -191,14 +196,13 @@ defineExpose({ clearResult: clearLiquidationResult })
         />
       </UFormField>
 
-      <UFormField :label="$t('bots.field_initial_amount')">
-        <UInput
-          id="liquidation-initial-amount"
-          v-model="initialAmount"
-          inputmode="decimal"
-          class="w-full"
-        />
-      </UFormField>
+      <BotOrderSizeFields
+        v-model:mode="orderSizeMode"
+        v-model:value="orderSizeValue"
+        input-id="liquidation-order-size"
+        :symbol="symbol"
+        compact
+      />
 
       <UFormField :label="$t('bots.field_grid_orders')">
         <UInput
