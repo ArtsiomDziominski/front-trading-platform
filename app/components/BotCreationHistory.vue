@@ -41,12 +41,12 @@
               <button
                 type="button"
                 class="creation-history__favorite"
-                :class="{ 'creation-history__favorite--on': item.favorite }"
+                :class="{ 'creation-history__favorite--on': item.favorite, 'creation-history__favorite--pop': poppingId === item.id }"
                 :aria-label="item.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
                 :aria-pressed="Boolean(item.favorite)"
-                @click="$emit('toggleFavorite', item)"
+                @click="onFavoriteClick(item)"
               >
-                <UIcon name="i-lucide-star" class="creation-history__favorite-icon" />
+                <svg class="creation-history__favorite-icon" viewBox="0 0 24 24" :fill="item.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
               </button>
               {{ item.symbol || '—' }}
             </span>
@@ -104,14 +104,27 @@ defineProps<{
   favoritesOnly: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
+  toggleFavorite: [item: BotCreationLogOut]
   select: [item: BotCreationLogOut]
   retry: []
-  toggleFavorite: [item: BotCreationLogOut]
   'update:favoritesOnly': [value: boolean]
 }>()
 
 const { t, locale } = useI18n()
+
+const poppingId = ref<number | null>(null)
+
+async function onFavoriteClick(item: BotCreationLogOut) {
+  // Restart the animation on every click
+  poppingId.value = null
+  await nextTick()
+  poppingId.value = item.id
+  setTimeout(() => {
+    if (poppingId.value === item.id) poppingId.value = null
+  }, 500)
+  emit('toggleFavorite', item)
+}
 
 const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   bot_type: 'bots.field_bot_type',
@@ -297,8 +310,14 @@ function settingValue(setting: CreationHistorySetting): string {
   color: var(--color-accent);
 }
 
-.creation-history__favorite--on .creation-history__favorite-icon {
-  fill: currentColor;
+.creation-history__favorite--pop .creation-history__favorite-icon {
+  animation: favorite-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes favorite-pop {
+  0% { transform: scale(1) rotate(0); }
+  40% { transform: scale(1.5) rotate(-18deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 
 .creation-history__favorite-icon {

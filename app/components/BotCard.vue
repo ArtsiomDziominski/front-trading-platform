@@ -17,12 +17,12 @@
           <button
             type="button"
             class="bot-card__favorite"
-            :class="{ 'bot-card__favorite--on': bot.favorite }"
+            :class="{ 'bot-card__favorite--on': bot.favorite, 'bot-card__favorite--pop': favoritePop }"
             :aria-label="bot.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
             :aria-pressed="bot.favorite"
             @click.stop.prevent="handleFavorite"
           >
-            <UIcon name="i-lucide-star" class="bot-card__favorite-icon" />
+            <svg class="bot-card__favorite-icon" viewBox="0 0 24 24" :fill="bot.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
           </button>
           <span class="bot-card__symbol">{{ bot.symbol }}</span>
         </div>
@@ -489,7 +489,14 @@ async function confirmAction() {
   }
 }
 
+const favoritePop = ref(false)
+
 async function handleFavorite() {
+  favoritePop.value = false
+  await nextTick()
+  favoritePop.value = true
+  setTimeout(() => { favoritePop.value = false }, 500)
+
   try {
     await toggleBotFavorite(props.bot.id, !props.bot.favorite)
   } catch {
@@ -584,8 +591,14 @@ async function handleStop() {
   color: var(--bento-accent);
 }
 
-.bot-card__favorite--on .bot-card__favorite-icon {
-  fill: currentColor;
+.bot-card__favorite--pop .bot-card__favorite-icon {
+  animation: favorite-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes favorite-pop {
+  0% { transform: scale(1) rotate(0); }
+  40% { transform: scale(1.5) rotate(-18deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 
 .bot-card__favorite-icon {
