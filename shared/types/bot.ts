@@ -304,6 +304,7 @@ export type BotEventType =
   | 'cycle_closed'
   | 'grid_cycle_started'
   | 'grid_cycle_settled'
+  | 'grid_size_resolved'
   | 'error'
 
 export interface BotEventOut {

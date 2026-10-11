@@ -1,3 +1,6 @@
+import type { BotType } from '#shared/types/bot'
+import { BOT_TYPE_LABEL_KEYS } from '~/utils/botView'
+
 export type CreationSettingKey =
   | 'bot_type'
   | 'api_key_id'
@@ -169,4 +172,64 @@ export function extractCreationHistorySettings(
     const row = byKey.get(key)
     return row ? [row] : []
   })
+}
+
+export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
+  bot_type: 'bots.field_bot_type',
+  api_key_id: 'bots.field_api_key',
+  symbol: 'bots.field_symbol',
+  direction: 'bots.field_direction',
+  initial_amount: 'bots.field_initial_amount',
+  initial_amount_usdt: 'bots.field_initial_amount_usdt',
+  initial_amount_percent: 'bots.field_initial_amount_percent',
+  grid_orders_count: 'bots.field_grid_orders',
+  grid_step_percent: 'bots.field_grid_step',
+  volume_mode: 'bots.field_volume_mode',
+  start_price: 'bots.field_start_price',
+  auto_restart: 'bots.field_auto_restart',
+  take_profit_percent: 'bots.take_profit_value_percent',
+  take_profit_amount: 'bots.take_profit_value_amount',
+  stop_loss_percent: 'bots.stop_loss_value_percent',
+  orders_summary: 'bots.field_orders_summary',
+  breakout_lookback_hours: 'bots.field_breakout_lookback_hours',
+  ema_fast_period: 'bots.field_ema_fast_period',
+  ema_slow_period: 'bots.field_ema_slow_period',
+  trailing_stop_percent: 'bots.field_trailing_stop_percent',
+  leverage: 'bots.field_leverage',
+  mixed_deposit_usdt: 'bots.mixed_deposit',
+  mixed_orders_summary: 'bots.mixed_orders_summary',
+}
+
+type TranslateFn = (key: string, values?: Record<string, unknown>) => string
+
+/** Display value of one setting: translated enums, `%` and `USDT` units. */
+export function formatCreationSettingValue(setting: CreationHistorySetting, t: TranslateFn): string {
+  switch (setting.key) {
+    case 'bot_type': {
+      const key = BOT_TYPE_LABEL_KEYS[setting.value as BotType]
+      return key ? t(key) : String(setting.value)
+    }
+    case 'api_key_id':
+      return `#${setting.value}`
+    case 'direction':
+      return setting.value === 'SHORT' ? t('bots.direction_short') : t('bots.direction_long')
+    case 'volume_mode':
+      if (setting.value === 'exponential') return t('bots.volume_exponential')
+      if (setting.value === 'fixed') return t('bots.volume_fixed')
+      return t('bots.volume_linear')
+    case 'auto_restart':
+      return setting.value ? t('common.yes') : t('common.no')
+    case 'grid_step_percent':
+    case 'initial_amount_percent':
+    case 'take_profit_percent':
+    case 'stop_loss_percent':
+    case 'trailing_stop_percent':
+      return `${setting.value}%`
+    case 'take_profit_amount':
+    case 'initial_amount_usdt':
+    case 'mixed_deposit_usdt':
+      return `${setting.value} USDT`
+    default:
+      return String(setting.value)
+  }
 }

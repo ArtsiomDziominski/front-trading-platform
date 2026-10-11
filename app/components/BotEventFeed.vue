@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { BotEventOut } from '#shared/types/bot'
 import { EXCHANGE_IMAGES, exchangeDisplayName, type SupportedExchange } from '#shared/utils/exchange-images'
+import { botEventDetails, type BotEventDetail } from '~/utils/botEventDetails'
 import {
   botEventTypeTone,
   extractBotEventMessage,
@@ -40,24 +41,8 @@ function isSupportedExchange(value: string): value is SupportedExchange {
   return value in EXCHANGE_IMAGES
 }
 
-function payloadString(payload: Record<string, unknown> | null, key: string): string | null {
-  const value = payload?.[key]
-  if (typeof value === 'string' && value.trim()) return value
-  if (typeof value === 'number') return String(value)
-  return null
-}
-
-function fillDetails(payload: BotEventOut['payload']): string | null {
-  const type = payload?.kind === 'entry' || payload?.kind === 'grid' ? payload.kind : null
-  if (!type && !payload?.side && !payload?.quantity) return null
-
-  const parts = [
-    payloadString(payload, 'side'),
-    payloadString(payload, 'quantity'),
-    payloadString(payload, 'avg_price') ? `@ ${payloadString(payload, 'avg_price')}` : null,
-  ].filter(Boolean)
-
-  return parts.length ? parts.join(' · ') : null
+function detailClass(detail: BotEventDetail): string | undefined {
+  return detail.tone ? `event-item__detail--${detail.tone}` : undefined
 }
 
 function errorMessage(payload: BotEventOut['payload']) {
@@ -90,18 +75,23 @@ function errorMessage(payload: BotEventOut['payload']) {
 }
 
 const rows = computed(() =>
-  props.events.map((event) => ({
-    event,
-    fill: normalizeBotEventType(event.event_type) === 'order_filled' ? fillDetails(event.payload) : null,
-    message: normalizeBotEventType(event.event_type) === 'error' ? errorMessage(event.payload) : null,
-  })),
+  props.events.map((event) => {
+    const isError = normalizeBotEventType(event.event_type) === 'error'
+    const details = isError ? [] : botEventDetails(event, t, locale.value)
+    return {
+      event,
+      chips: details.filter((detail) => !detail.note),
+      notes: details.filter((detail) => detail.note),
+      message: isError ? errorMessage(event.payload) : null,
+    }
+  }),
 )
 </script>
 
 <template>
   <ul class="event-list">
     <li
-      v-for="{ event, fill, message } in rows"
+      v-for="{ event, chips, notes, message } in rows"
       :key="event.id"
       class="event-item"
     >
@@ -134,11 +124,30 @@ const rows = computed(() =>
         </span>
       </p>
 
-      <p
-        v-if="fill"
-        class="event-item__fill"
+      <ul
+        v-if="chips.length"
+        class="event-item__details"
       >
-        {{ fill }}
+        <li
+          v-for="(detail, index) in chips"
+          :key="index"
+          class="event-item__detail"
+          :class="detailClass(detail)"
+        >
+          <span
+            v-if="detail.label"
+            class="event-item__detail-label"
+          >{{ detail.label }}</span>
+          <span class="event-item__detail-value">{{ detail.value }}</span>
+        </li>
+      </ul>
+
+      <p
+        v-for="(note, index) in notes"
+        :key="`note-${index}`"
+        class="event-item__note"
+      >
+        {{ note.value }}
       </p>
 
       <div
@@ -276,11 +285,55 @@ const rows = computed(() =>
   object-fit: contain;
 }
 
-.event-item__fill {
+.event-item__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
   margin: 8px 0 0;
-  color: var(--color-on-surface);
+  padding: 0;
+  list-style: none;
   font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-item__detail {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.event-item__detail-label {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.event-item__detail-value {
+  color: var(--color-text);
   font-weight: 500;
+  word-break: break-word;
+}
+
+.event-item__detail--up .event-item__detail-value {
+  color: var(--color-up);
+}
+
+.event-item__detail--down .event-item__detail-value {
+  color: var(--color-down);
+}
+
+.event-item__detail--muted .event-item__detail-value {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.event-item__note {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .event-item__error {

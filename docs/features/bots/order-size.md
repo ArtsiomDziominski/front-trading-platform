@@ -1,6 +1,6 @@
 # Размер ордера сетки (GRID)
 
-Страницы: `/bots/create/futures/grid` (создание, в том числе панель проверки ликвидации), карточка бота на `/bots` и `/bots/:id` (отображение).
+Страницы: `/bots/create/futures/grid` (создание, в том числе панель проверки ликвидации), блок «Настройки» на `/bots/:id` (отображение).
 
 Размер живёт в **`bot.config`** (`GRID_FUTURES`, Binance и OKX), не в настройках пользователя. Задать его можно двумя способами: количеством монеты или суммой в USDT. `ANTI_MARTINGALE_FUTURES` не затронут — там размер в процентах от баланса.
 
@@ -65,7 +65,7 @@ flowchart TD
 
 Отдельной формы редактирования размера в интерфейсе нет. `PATCH /bots/{id}` не мержит поля, а модалки TP и SL берут текущий `bot.config` и отправляют его целиком. Поэтому конфиг в сторе приводится к одному заполненному полю размера, второе `null` (`normalizeBotConfig` в `useBots`): `0` или пустая строка в неиспользуемом поле на сервере не уйдут.
 
-После `PATCH` со слишком малой суммой бот получит `bot_error` (`engine_error` показывается на карточке).
+После `PATCH` со слишком малой суммой бот получит `bot_error` (карточка на `/bots` получает статус «Ошибка» с текстом `engine_error` в подсказке, страница бота показывает его сверху).
 
 ### Ликвидация
 
@@ -77,7 +77,7 @@ flowchart TD
 
 ## Список и WebSocket
 
-Новых событий нет. Карточка GRID-бота читает размер из `bot.config`: `initial_amount_usdt` задан → «Вход 100 USDT», иначе `initial_amount` → «Вход 0.01 ETH». Значения `null`, `0` и пустая строка считаются «не задано».
+Новых событий нет. Компактная карточка на `/bots` размер не показывает. Блок «Настройки» на `/bots/:id` читает его из `bot.config` тем же форматтером, что история создания: «Сумма входа (USDT)», «Размер входа (монета)» или процент от баланса. Значения `null`, `0` и пустая строка считаются «не задано».
 
 ## Код
 
@@ -86,7 +86,7 @@ flowchart TD
 | Блок формы | `app/components/BotOrderSizeFields.vue` |
 | Создание | `app/components/BotGridFuturesForm.vue` |
 | Проверка ликвидации | `app/components/BotLiquidationCheck.vue` |
-| Карточка | `app/components/BotCard.vue` |
+| Страница бота | `app/components/BotDetailSettings.vue` |
 | Парсинг / payload / валидация / ошибки API | `app/utils/orderSize.ts` |
 | Нормализация конфига для PATCH | `app/composables/useBots.ts` (`normalizeBotConfig`) |
 | Клон из истории | `app/utils/parseBotCreatePayload.ts`, `app/utils/formatBotCreationSettings.ts` |

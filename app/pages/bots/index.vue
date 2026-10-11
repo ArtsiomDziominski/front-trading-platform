@@ -33,9 +33,13 @@ const {
 } = useBots()
 
 let unsubscribeWs: (() => void) | undefined
+let disposed = false
+// Bots are fetched on the client only: until then an empty list does not mean "no bots"
+const listLoaded = ref(false)
 
 const filter = ref<BotFilterKey>('all')
 const favoritesOnly = ref(false)
+const attentionOnly = ref(false)
 const helpOpen = ref(false)
 const createOpen = ref(false)
 const confirmOpen = ref(false)
@@ -57,6 +61,33 @@ const filterSelectItems = computed(() =>
 )
 
 const isBulkBusy = computed(() => Boolean(bulkActionLoading.value))
+
+// All bots are loaded once; the tabs filter on the client so the summary always counts every bot
+const visibleBots = computed(() => {
+  const statuses = filter.value === 'all' ? null : FILTER_STATUSES[filter.value]
+  return bots.value.filter((bot) => {
+    if (statuses && !statuses.includes(bot.lifecycle_status)) return false
+    if (favoritesOnly.value && !bot.favorite) return false
+    if (attentionOnly.value && bot.engine_state !== 'ERROR') return false
+    return true
+  })
+})
+
+// "Needs attention" counts every bot, so it replaces the other filters instead of combining with them
+watch(attentionOnly, (on) => {
+  if (!on) return
+  filter.value = 'all'
+  favoritesOnly.value = false
+})
+watch([filter, favoritesOnly], ([nextFilter, nextFavorites]) => {
+  if (nextFilter !== 'all' || nextFavorites) attentionOnly.value = false
+})
+
+const emptyFilterText = computed(() => {
+  if (attentionOnly.value) return t('bots.no_attention_bots')
+  if (favoritesOnly.value) return t('bots.no_favorite_bots')
+  return t('bots.no_bots_filtered')
+})
 
 const pageActionItems = computed(() => [
   [
@@ -137,8 +168,7 @@ useSeoMeta({
 
 function loadBots() {
   clearBulkActionFeedback()
-  const statuses = filter.value === 'all' ? undefined : FILTER_STATUSES[filter.value]
-  return fetchBots(statuses, favoritesOnly.value ? true : undefined)
+  return fetchBots()
 }
 
 function openBulkConfirm(action: BulkActionKey) {
@@ -174,16 +204,20 @@ async function confirmBulkAction() {
   }
 }
 
-watch([filter, favoritesOnly], () => {
-  loadBots()
+watch([filter, favoritesOnly, attentionOnly], () => {
+  clearBulkActionFeedback()
 })
 
 onMounted(async () => {
   await loadBots()
+  listLoaded.value = true
+  // Left before the list arrived: subscribing now would leave the socket open with no one to close it
+  if (disposed) return
   unsubscribeWs = subscribeBotsUpdates()
 })
 
 onUnmounted(() => {
+  disposed = true
   unsubscribeWs?.()
 })
 </script>
@@ -220,6 +254,12 @@ onUnmounted(() => {
           </UTooltip>
         </div>
       </div>
+
+      <BotsSummary
+        v-if="bots.length"
+        v-model:attention-only="attentionOnly"
+        :bots="bots"
+      />
 
       <div class="bots-toolbar">
         <div class="bots-toolbar__filters">
@@ -308,7 +348,7 @@ onUnmounted(() => {
         </template>
       </UAlert>
 
-      <p v-if="loading" class="state-message" role="status">
+      <p v-if="(loading || !listLoaded) && !bots.length && !error" class="state-message" role="status">
         {{ $t('common.loading') }}
       </p>
 
@@ -319,21 +359,25 @@ onUnmounted(() => {
         </AppButton>
       </div>
 
-      <div v-else-if="bots.length" class="bots-grid">
+      <div v-else-if="visibleBots.length" class="bots-grid">
         <BotCard
-          v-for="(bot, index) in bots"
+          v-for="(bot, index) in visibleBots"
           :key="bot.id"
           :bot="bot"
           :index="index"
         />
       </div>
 
+      <p v-else-if="bots.length" class="filter-empty" role="status">
+        {{ emptyFilterText }}
+      </p>
+
       <UCard v-else class="empty-state text-center">
         <div class="empty-state__icon" aria-hidden="true">
           <UIcon name="i-lucide-bot-off" class="empty-state__glyph" />
         </div>
-        <p class="empty-state__text">{{ favoritesOnly ? $t('bots.no_favorite_bots') : $t('bots.no_bots') }}</p>
-        <div v-if="!favoritesOnly" class="empty-state__actions">
+        <p class="empty-state__text">{{ $t('bots.no_bots') }}</p>
+        <div class="empty-state__actions">
           <AppButton @click="createOpen = true">
             {{ $t('bots.create_first') }}
           </AppButton>
@@ -430,8 +474,17 @@ onUnmounted(() => {
 
 .bots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
-  gap: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 16px;
+}
+
+.filter-empty {
+  margin: 0;
+  padding: 32px;
+  border: 1px dashed rgb(255 255 255 / 18%);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 .state-message {
@@ -514,7 +567,7 @@ onUnmounted(() => {
 
   .bots-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 }
 </style>
