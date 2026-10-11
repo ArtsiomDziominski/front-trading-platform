@@ -37,6 +37,7 @@ let unsubscribeWs: (() => void) | undefined
 const filter = ref<BotFilterKey>('all')
 const favoritesOnly = ref(false)
 const helpOpen = ref(false)
+const createOpen = ref(false)
 const confirmOpen = ref(false)
 const confirmLoading = ref(false)
 const pendingBulkAction = ref<BulkActionKey | null>(null)
@@ -195,7 +196,7 @@ onUnmounted(() => {
           <h1 class="section-title">{{ $t('bots.subtitle') }}</h1>
         </div>
         <div class="page-header__actions">
-          <AppButton to="/bots/create" size="sm">
+          <AppButton size="sm" @click="createOpen = true">
             + {{ $t('bots.create_bot') }}
           </AppButton>
           <UDropdownMenu :items="pageActionItems" :content="{ align: 'end' }">
@@ -333,7 +334,7 @@ onUnmounted(() => {
         </div>
         <p class="empty-state__text">{{ favoritesOnly ? $t('bots.no_favorite_bots') : $t('bots.no_bots') }}</p>
         <div v-if="!favoritesOnly" class="empty-state__actions">
-          <AppButton to="/bots/create">
+          <AppButton @click="createOpen = true">
             {{ $t('bots.create_first') }}
           </AppButton>
           <AppButton variant="secondary" to="/settings#api-keys">
@@ -344,6 +345,7 @@ onUnmounted(() => {
     </div>
 
     <BotsHelpModal v-model="helpOpen" />
+    <BotCreateModal v-model:open="createOpen" />
 
     <ConfirmModal
       v-model="confirmOpen"
