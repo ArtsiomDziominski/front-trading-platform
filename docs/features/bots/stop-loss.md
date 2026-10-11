@@ -1,6 +1,6 @@
 # Stop-loss сетки (GRID)
 
-Страницы: `/bots/create` (создание), карточка на `/bots`, деталь `/bots/:id` (редактирование порога).
+Страницы: `/bots/create/futures/grid` (создание), карточка на `/bots`, деталь `/bots/:id` (редактирование порога).
 
 Поле живёт в **`bot.config`**, не в настройках пользователя. Это не take-profit и не Telegram-алерт прибыли (`telegram_profit_alert_*`): алерт прибыли пишет в чат по ROE/USDT, stop-loss ставит **reduce-only STOP_MARKET** на бирже (Binance / OKX). Если Telegram привязан, после SL придёт отдельное сообщение (уведомление `bot_removed`).
 
@@ -111,7 +111,7 @@ flowchart TD
 | Часть | Путь |
 |-------|------|
 | Поля формы | `app/components/BotStopLossFields.vue` |
-| Создание | `app/components/BotCreateForm.vue` |
+| Создание | `app/components/BotGridFuturesForm.vue` |
 | PATCH с карточки | `app/components/BotStopLossEditModal.vue` |
 | Деталь | `app/pages/bots/[id].vue` |
 | Парсинг / валидация | `app/utils/stopLoss.ts` |

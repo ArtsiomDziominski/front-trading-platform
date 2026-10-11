@@ -86,7 +86,7 @@
     </ul>
 
     <p v-else class="creation-history__state">
-      {{ favoritesOnly ? $t('bots.creation_history_empty_favorites') : $t('bots.creation_history_empty') }}
+      {{ favoritesOnly ? $t('bots.creation_history_empty_favorites') : $t('bots.creation_history_empty_type') }}
     </p>
   </UCard>
 </template>

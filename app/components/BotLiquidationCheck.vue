@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import type { BotType, GridDirection, GridFuturesConfig, GridSizingMode, OrderSizeMode, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import type { GridDirection, GridFuturesConfig, GridSizingMode, OrderSizeMode, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, defaultMixedGridForm, validateMixedGrid, type MixedGridForm } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, validateOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload } from '~/utils/stopLoss'
 import { buildTakeProfitPayload } from '~/utils/takeProfit'
 
-const botType = defineModel<BotType>('botType', { required: true })
 const symbol = defineModel<string>('symbol', { required: true })
 const direction = defineModel<GridDirection>('direction', { required: true })
 const orderSizeMode = defineModel<OrderSizeMode>('orderSizeMode', { required: true })
@@ -163,7 +162,7 @@ async function handleCheckLiquidation() {
 
   try {
     liquidationResult.value = await checkLiquidation({
-      bot_type: botType.value,
+      bot_type: 'GRID_FUTURES',
       config: buildLiquidationConfig(),
       leverage: leverage.value,
       total_balance: totalBalanceValue,
@@ -175,7 +174,7 @@ async function handleCheckLiquidation() {
 }
 
 watch(
-  [botType, symbol, direction, orderSizeMode, orderSizeValue, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
+  [symbol, direction, orderSizeMode, orderSizeValue, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
   clearLiquidationResult,
 )
 
@@ -188,17 +187,6 @@ defineExpose({ clearResult: clearLiquidationResult })
     <p class="liquidation-section__desc">{{ $t('bots.liquidation_section_desc') }}</p>
 
     <div class="liquidation-section">
-      <UFormField :label="$t('bots.field_bot_type')">
-        <USelect
-          id="liquidation-bot-type"
-          v-model="botType"
-          :items="[
-            { label: $t('bots.type_grid_futures'), value: 'GRID_FUTURES' },
-          ]"
-          class="w-full"
-        />
-      </UFormField>
-
       <p class="liquidation-section__group">{{ $t('bots.liquidation_config_group') }}</p>
 
       <UFormField :label="$t('bots.field_symbol')">
