@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { StopLossMode, TakeProfitMode, type AntiMartingaleFuturesConfig, type AntiMartingaleOrderLevel, type BotCreate, type BotListItem, type BotType, type GridDirection, type GridFuturesConfig, type OrderSizeMode, type VolumeMode } from '#shared/types/bot'
+import { StopLossMode, TakeProfitMode, type AntiMartingaleFuturesConfig, type AntiMartingaleOrderLevel, type BotCreate, type BotListItem, type BotType, type GridDirection, type GridFuturesConfig, type GridSizingMode, type OrderSizeMode, type VolumeMode } from '#shared/types/bot'
+import {
+  buildMixedGridPayload,
+  defaultMixedGridForm,
+  isMixedConfig,
+  parseMixedGrid,
+  validateMixedGrid,
+  type MixedGridForm,
+} from '~/utils/mixedGrid'
 import {
   buildOrderSizePayload,
   isOrderSizeApiError,
@@ -8,7 +16,7 @@ import {
   parseOrderSizeApiError,
   validateOrderSize,
 } from '~/utils/orderSize'
-import { parseApiError } from '~/utils/parseApiError'
+import { getApiErrorStatus, parseApiError } from '~/utils/parseApiError'
 import {
   buildStopLossPayload,
   isStopLossApiError,
@@ -53,6 +61,8 @@ const amEmaFastPeriod = defineModel<string>('amEmaFastPeriod', { required: true 
 const amEmaSlowPeriod = defineModel<string>('amEmaSlowPeriod', { required: true })
 const amTrailingStopPercent = defineModel<string>('amTrailingStopPercent', { required: true })
 const amLeverage = defineModel<string>('amLeverage', { required: true })
+const sizingMode = defineModel<GridSizingMode>('sizingMode', { required: true })
+const mixedGrid = defineModel<MixedGridForm>('mixedGrid', { required: true })
 const amAdvancedOpen = ref(false)
 
 const { t } = useI18n()
@@ -61,6 +71,8 @@ const { creating, createError, createBot } = useBots()
 
 const formRef = ref<HTMLElement | null>(null)
 const orderSizeRef = ref<{ reveal: () => void } | null>(null)
+const mixedGridRef = ref<{ reveal: () => void } | null>(null)
+const mixedGridError = ref('')
 const formError = ref('')
 const orderSizeError = ref('')
 const takeProfitError = ref('')
@@ -69,6 +81,12 @@ const ordersError = ref('')
 const engineWarning = ref('')
 const createdBotId = ref<number | null>(null)
 
+const sizingModeTitleId = useId()
+const sizingModeOptions = computed<{ value: GridSizingMode, label: string }[]>(() => [
+  { value: 'legacy', label: t('bots.sizing_mode_legacy') },
+  { value: 'mixed', label: t('bots.sizing_mode_mixed') },
+])
+
 const apiKeyIdModel = computed({
   get: (): number | undefined => (apiKeyId.value === '' ? undefined : apiKeyId.value),
   set: (value: number | undefined) => {
@@ -76,25 +94,47 @@ const apiKeyIdModel = computed({
   },
 })
 
+const isMixed = computed(() => sizingMode.value === 'mixed')
+
 function buildGridConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
-  const orderSize = buildOrderSizePayload(orderSizeMode.value, orderSizeValue.value)
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
   const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
-
-  return {
+  const common = {
     symbol: symbol.value.trim().toUpperCase(),
     direction: direction.value,
-    initial_amount: orderSize.initial_amount,
-    initial_amount_usdt: orderSize.initial_amount_usdt,
-    grid_orders_count: gridOrdersCount.value,
     grid_step_percent: gridStepPercent.value.trim(),
-    volume_mode: volumeMode.value,
     auto_restart: autoRestart.value,
     take_profit_percent: takeProfit.take_profit_percent,
     take_profit_amount: takeProfit.take_profit_amount,
     stop_loss_percent: stopLoss.stop_loss_percent,
     ...(startPriceValue ? { start_price: startPriceValue } : {}),
+  }
+
+  if (isMixed.value) {
+    // Every order sized on its own; order #1 is the market entry, so the grid has orders − 1 levels
+    return {
+      ...common,
+      initial_amount: null,
+      initial_amount_usdt: null,
+      initial_amount_percent: null,
+      grid_orders_count: Math.max(mixedGrid.value.orders.length - 1, 1),
+      volume_mode: 'fixed',
+      sizing_mode: 'mixed',
+      mixed_grid: buildMixedGridPayload(mixedGrid.value),
+    }
+  }
+
+  const orderSize = buildOrderSizePayload(orderSizeMode.value, orderSizeValue.value)
+  return {
+    ...common,
+    initial_amount: orderSize.initial_amount,
+    initial_amount_usdt: orderSize.initial_amount_usdt,
+    initial_amount_percent: orderSize.initial_amount_percent,
+    grid_orders_count: gridOrdersCount.value,
+    volume_mode: volumeMode.value,
+    sizing_mode: 'legacy',
+    mixed_grid: null,
   }
 }
 
@@ -147,6 +187,19 @@ function isSymbolTakenByAntiMartingale(symbolValue: string): boolean {
 function showOrderSizeError(message: string) {
   orderSizeError.value = message
   orderSizeRef.value?.reveal()
+}
+
+function showMixedGridError(message: string) {
+  mixedGridError.value = message
+  mixedGridRef.value?.reveal()
+}
+
+/** 400 from the exchange check (order numbers below the minimum) or 422 about `mixed_grid`. */
+function isMixedGridApiError(error: unknown): boolean {
+  const status = getApiErrorStatus(error)
+  const detail = JSON.stringify((error as { data?: { detail?: unknown } } | null)?.data?.detail ?? '')
+  if (status === 400) return detail.includes('ордер №')
+  return status === 422 && detail.includes('mixed_grid')
 }
 
 function validateAntiMartingale(symbolValue: string): boolean {
@@ -222,15 +275,23 @@ function validate(): boolean {
     return validateAntiMartingale(symbolValue)
   }
 
-  const sizeError = validateOrderSize(orderSizeValue.value, t)
-  if (sizeError) {
-    showOrderSizeError(sizeError)
-    return false
-  }
+  if (isMixed.value) {
+    const mixedError = validateMixedGrid(mixedGrid.value, t)
+    if (mixedError) {
+      showMixedGridError(mixedError)
+      return false
+    }
+  } else {
+    const sizeError = validateOrderSize(orderSizeValue.value, t, orderSizeMode.value)
+    if (sizeError) {
+      showOrderSizeError(sizeError)
+      return false
+    }
 
-  if (gridOrdersCount.value < 1 || gridOrdersCount.value > 500) {
-    formError.value = t('bots.error_grid_orders')
-    return false
+    if (gridOrdersCount.value < 1 || gridOrdersCount.value > 500) {
+      formError.value = t('bots.error_grid_orders')
+      return false
+    }
   }
 
   if (!gridStepPercent.value.trim()) {
@@ -271,6 +332,10 @@ watch([orderSizeMode, orderSizeValue], () => {
   orderSizeError.value = ''
 })
 
+watch([sizingMode, mixedGrid], () => {
+  mixedGridError.value = ''
+}, { deep: true })
+
 function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   const keyExists = keys.some((key) => key.id === payload.api_key_id)
   apiKeyId.value = keyExists ? payload.api_key_id : ''
@@ -293,9 +358,16 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
     symbol.value = config.symbol
     direction.value = config.direction
 
-    const orderSize = parseOrderSize(config)
-    orderSizeMode.value = orderSize.mode
-    orderSizeValue.value = orderSize.value
+    const mixed = isMixedConfig(config as unknown as Record<string, unknown>) ? parseMixedGrid(config.mixed_grid) : null
+    sizingMode.value = mixed ? 'mixed' : 'legacy'
+    if (mixed) {
+      mixedGrid.value = mixed
+    } else {
+      mixedGrid.value = defaultMixedGridForm()
+      const orderSize = parseOrderSize(config)
+      orderSizeMode.value = orderSize.mode
+      orderSizeValue.value = orderSize.value
+    }
 
     gridOrdersCount.value = config.grid_orders_count
     gridStepPercent.value = String(config.grid_step_percent)
@@ -314,6 +386,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 
   formError.value = ''
   orderSizeError.value = ''
+  mixedGridError.value = ''
   takeProfitError.value = ''
   stopLossError.value = ''
   ordersError.value = ''
@@ -327,6 +400,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 async function handleSubmit() {
   formError.value = ''
   orderSizeError.value = ''
+  mixedGridError.value = ''
   takeProfitError.value = ''
   stopLossError.value = ''
   ordersError.value = ''
@@ -356,7 +430,12 @@ async function handleSubmit() {
     await router.push('/bots')
   } catch (error) {
     // Before the SL / TP checks: they scan the whole `detail`, which may echo the sent config back
-    if (isOrderSizeApiError(error, orderSizeMode.value)) {
+    if (botType.value === 'GRID_FUTURES' && isMixed.value && isMixedGridApiError(error)) {
+      showMixedGridError(parseOrderSizeApiError(error, t('bots.mixed_error_api')))
+      return
+    }
+
+    if (!isMixed.value && isOrderSizeApiError(error, orderSizeMode.value)) {
       showOrderSizeError(parseOrderSizeApiError(error, t('bots.error_order_size_invalid')))
       return
     }
@@ -440,7 +519,7 @@ defineExpose({ applyPayload, scrollIntoView })
               />
             </UFormField>
 
-            <UFormField :label="$t('bots.field_volume_mode')" class="flex-1">
+            <UFormField v-if="!isMixed" :label="$t('bots.field_volume_mode')" class="flex-1">
               <USelect
                 id="bot-volume-mode"
                 v-model="volumeMode"
@@ -454,7 +533,24 @@ defineExpose({ applyPayload, scrollIntoView })
             </UFormField>
           </div>
 
+          <div class="sizing-mode">
+            <span :id="sizingModeTitleId" class="sizing-mode__title">{{ $t('bots.sizing_mode') }}</span>
+            <UFieldGroup size="sm" role="group" :aria-labelledby="sizingModeTitleId">
+              <AppButton
+                v-for="option in sizingModeOptions"
+                :key="option.value"
+                type="button"
+                :variant="sizingMode === option.value ? 'primary' : 'secondary'"
+                :aria-pressed="sizingMode === option.value"
+                @click="sizingMode = option.value"
+              >
+                {{ option.label }}
+              </AppButton>
+            </UFieldGroup>
+          </div>
+
           <BotOrderSizeFields
+            v-if="!isMixed"
             ref="orderSizeRef"
             v-model:mode="orderSizeMode"
             v-model:value="orderSizeValue"
@@ -463,7 +559,7 @@ defineExpose({ applyPayload, scrollIntoView })
           />
 
           <div class="field-row">
-            <UFormField :label="$t('bots.field_grid_step')" class="flex-1">
+            <UFormField :label="isMixed ? $t('bots.field_grid_step_default') : $t('bots.field_grid_step')" class="flex-1">
               <UInput
                 id="bot-grid-step"
                 v-model="gridStepPercent"
@@ -473,7 +569,7 @@ defineExpose({ applyPayload, scrollIntoView })
               />
             </UFormField>
 
-            <UFormField :label="$t('bots.field_grid_orders')" class="flex-1">
+            <UFormField v-if="!isMixed" :label="$t('bots.field_grid_orders')" class="flex-1">
               <UInput
                 id="bot-grid-orders"
                 v-model.number="gridOrdersCount"
@@ -496,6 +592,16 @@ defineExpose({ applyPayload, scrollIntoView })
               />
             </UFormField>
           </div>
+
+          <BotMixedGridFields
+            v-if="isMixed"
+            ref="mixedGridRef"
+            v-model:form="mixedGrid"
+            :direction="direction"
+            :grid-step="gridStepPercent"
+            :start-price="startPrice"
+            :error="mixedGridError"
+          />
 
           <UCheckbox v-model="autoRestart" :label="$t('bots.field_auto_restart')" />
 
@@ -629,6 +735,19 @@ defineExpose({ applyPayload, scrollIntoView })
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.sizing-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.sizing-mode__title {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .am-advanced-toggle {

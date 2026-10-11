@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { parseApiError } from '~/utils/parseApiError'
+import { isMixedCycleInProgress } from '~/utils/mixedGrid'
 import {
   buildTakeProfitPayload,
   isTakeProfitApiError,
@@ -28,6 +29,7 @@ const fieldError = ref('')
 
 const saving = computed(() => isBotActionLoading(props.bot.id, 'update-config'))
 const actionError = computed(() => getBotActionError(props.bot.id))
+const cycleInProgress = computed(() => isMixedCycleInProgress(props.bot))
 
 function hydrateFromBot() {
   const parsed = parseTakeProfit(props.bot.config)
@@ -81,6 +83,13 @@ async function handleSave() {
   >
     <template #body>
       <div class="take-profit-edit">
+        <UAlert
+          v-if="cycleInProgress"
+          color="info"
+          variant="subtle"
+          :title="$t('bots.mixed_edit_next_cycle')"
+        />
+
         <BotTakeProfitFields
           v-model:mode="mode"
           v-model:value="value"

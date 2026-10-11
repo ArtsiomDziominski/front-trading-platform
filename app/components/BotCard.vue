@@ -44,6 +44,12 @@
           <span v-if="orderSizeLabel" class="bot-card__tp">
             {{ orderSizeLabel }}
           </span>
+          <span v-if="mixedGridLabel" class="bot-card__tp bot-card__tp--on">
+            {{ mixedGridLabel }}
+          </span>
+          <span v-if="mixedDepositLabel" class="bot-card__tp" :title="$t('bots.mixed_deposit_hint')">
+            {{ mixedDepositLabel }}
+          </span>
         </template>
       </div>
 
@@ -116,6 +122,26 @@
       :transition="{ duration: 0.4, delay: staggerDelay + 0.3 }"
     >
       <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
+        <UTooltip
+          v-if="canEditMixedGrid"
+          :text="$t('bots.mixed_edit')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
+        >
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.mixed_edit')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'update-config')"
+            @click="mixedGridEditOpen = true"
+          >
+            <UIcon name="i-lucide-list-ordered" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
+
         <UTooltip
           v-if="canEditGridConfig"
           :text="$t('bots.take_profit_edit')"
@@ -284,6 +310,12 @@
       v-model:open="stopLossEditOpen"
       :bot="bot"
     />
+
+    <BotMixedGridEditModal
+      v-if="canEditMixedGrid"
+      v-model:open="mixedGridEditOpen"
+      :bot="bot"
+    />
   </motion.article>
 </template>
 
@@ -293,6 +325,7 @@ import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-ima
 import { StopLossMode, TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
 import { formatOrderSizeBadge } from '~/utils/orderSize'
+import { isMixedConfig } from '~/utils/mixedGrid'
 import { formatStopLossBadge, parseStopLoss } from '~/utils/stopLoss'
 import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
 
@@ -394,6 +427,18 @@ const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== 
 const stopLossLabel = computed(() => formatStopLossBadge(props.bot.config, t))
 const hasStopLoss = computed(() => parseStopLoss(props.bot.config).mode !== StopLossMode.Off)
 const orderSizeLabel = computed(() => formatOrderSizeBadge(props.bot.config, props.bot.symbol, t))
+const isMixedGrid = computed(() => props.bot.bot_type === 'GRID_FUTURES' && isMixedConfig(props.bot.config))
+const mixedGridLabel = computed(() => {
+  if (!isMixedGrid.value) return null
+  const orders = (props.bot.config.mixed_grid as { orders?: unknown[] } | undefined)?.orders
+  return t('bots.mixed_badge', { count: Array.isArray(orders) ? orders.length : 0 })
+})
+const mixedDepositLabel = computed(() => {
+  if (!isMixedGrid.value) return null
+  const deposit = props.bot.cycle_state?.deposit_usdt
+    ?? (props.bot.config.mixed_grid as { deposit_usdt?: unknown } | undefined)?.deposit_usdt
+  return deposit == null ? null : t('bots.mixed_deposit_badge', { value: deposit })
+})
 
 const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
 const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
@@ -403,6 +448,7 @@ const canRedeploy = computed(() =>
 const canEditGridConfig = computed(() =>
   props.bot.bot_type === 'GRID_FUTURES' && props.bot.lifecycle_status !== 'CLOSED',
 )
+const canEditMixedGrid = computed(() => canEditGridConfig.value && isMixedGrid.value)
 const canRemove = computed(() => !props.bot.deleted_at)
 const hasActions = computed(() =>
   canEditGridConfig.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
@@ -420,6 +466,7 @@ const confirmLoading = ref(false)
 const pendingAction = ref<CardAction | null>(null)
 const takeProfitEditOpen = ref(false)
 const stopLossEditOpen = ref(false)
+const mixedGridEditOpen = ref(false)
 
 const confirmCopy = computed(() => {
   const symbol = props.bot.symbol

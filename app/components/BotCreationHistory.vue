@@ -133,6 +133,7 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   direction: 'bots.field_direction',
   initial_amount: 'bots.field_initial_amount',
   initial_amount_usdt: 'bots.field_initial_amount_usdt',
+  initial_amount_percent: 'bots.field_initial_amount_percent',
   grid_orders_count: 'bots.field_grid_orders',
   grid_step_percent: 'bots.field_grid_step',
   volume_mode: 'bots.field_volume_mode',
@@ -147,6 +148,8 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   ema_slow_period: 'bots.field_ema_slow_period',
   trailing_stop_percent: 'bots.field_trailing_stop_percent',
   leverage: 'bots.field_leverage',
+  mixed_deposit_usdt: 'bots.mixed_deposit',
+  mixed_orders_summary: 'bots.mixed_orders_summary',
 }
 
 const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
@@ -201,12 +204,14 @@ function settingValue(setting: CreationHistorySetting): string {
     case 'auto_restart':
       return setting.value ? t('common.yes') : t('common.no')
     case 'grid_step_percent':
+    case 'initial_amount_percent':
     case 'take_profit_percent':
     case 'stop_loss_percent':
     case 'trailing_stop_percent':
       return `${setting.value}%`
     case 'take_profit_amount':
     case 'initial_amount_usdt':
+    case 'mixed_deposit_usdt':
       return `${setting.value} USDT`
     default:
       return String(setting.value)

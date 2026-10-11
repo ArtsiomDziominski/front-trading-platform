@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { StopLossMode, type BotListItem } from '#shared/types/bot'
 import { parseApiError } from '~/utils/parseApiError'
+import { isMixedCycleInProgress } from '~/utils/mixedGrid'
 import {
   buildStopLossPayload,
   isStopLossApiError,
@@ -28,6 +29,7 @@ const fieldError = ref('')
 
 const saving = computed(() => isBotActionLoading(props.bot.id, 'update-config'))
 const actionError = computed(() => getBotActionError(props.bot.id))
+const cycleInProgress = computed(() => isMixedCycleInProgress(props.bot))
 
 function hydrateFromBot() {
   const parsed = parseStopLoss(props.bot.config)
@@ -80,6 +82,13 @@ async function handleSave() {
   >
     <template #body>
       <div class="stop-loss-edit">
+        <UAlert
+          v-if="cycleInProgress"
+          color="info"
+          variant="subtle"
+          :title="$t('bots.mixed_edit_next_cycle')"
+        />
+
         <BotStopLossFields
           v-model:mode="mode"
           v-model:value="value"
