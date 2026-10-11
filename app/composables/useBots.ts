@@ -560,6 +560,7 @@ export const useBots = () => {
 
   return {
     bots,
+    apiKeys: apiKeysCache,
     loading,
     creating,
     error,

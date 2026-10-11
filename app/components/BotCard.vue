@@ -1,334 +1,18 @@
-<template>
-  <motion.article
-    class="bot-card"
-    :initial="{ opacity: 0, y: 28 }"
-    :animate="{ opacity: 1, y: 0 }"
-    :transition="{
-      duration: 0.55,
-      delay: staggerDelay,
-      ease: [0.22, 1, 0.36, 1],
-    }"
-  >
-    <div class="bot-card__glow" aria-hidden="true" />
-
-    <header class="bot-card__header">
-      <div class="bot-card__identity">
-        <div class="bot-card__title-row">
-          <button
-            type="button"
-            class="bot-card__favorite"
-            :class="{ 'bot-card__favorite--on': bot.favorite, 'bot-card__favorite--pop': favoritePop }"
-            :aria-label="bot.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
-            :aria-pressed="bot.favorite"
-            @click.stop.prevent="handleFavorite"
-          >
-            <svg class="bot-card__favorite-icon" viewBox="0 0 24 24" :fill="bot.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
-          </button>
-          <span class="bot-card__symbol">{{ bot.symbol }}</span>
-        </div>
-        <NuxtLink
-          v-if="!isDetailPage"
-          :to="`/bots/${bot.id}`"
-          class="bot-card__id bot-card__id--link"
-        >
-          #{{ bot.id }}
-        </NuxtLink>
-        <span v-else class="bot-card__id">#{{ bot.id }}</span>
-        <template v-if="bot.bot_type === 'GRID_FUTURES'">
-          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
-            {{ takeProfitLabel }}
-          </span>
-          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
-            {{ stopLossLabel }}
-          </span>
-          <span v-if="orderSizeLabel" class="bot-card__tp">
-            {{ orderSizeLabel }}
-          </span>
-          <span v-if="mixedGridLabel" class="bot-card__tp bot-card__tp--on">
-            {{ mixedGridLabel }}
-          </span>
-          <span v-if="mixedDepositLabel" class="bot-card__tp" :title="$t('bots.mixed_deposit_hint')">
-            {{ mixedDepositLabel }}
-          </span>
-        </template>
-      </div>
-
-      <motion.span
-        class="bot-card__status"
-        :class="statusClass"
-        :initial="{ opacity: 0, scale: 0.92 }"
-        :animate="{ opacity: 1, scale: 1 }"
-        :transition="{ duration: 0.4, delay: staggerDelay + 0.1 }"
-      >
-        <motion.span
-          v-if="isActive"
-          class="bot-card__status-dot"
-          :animate="{ opacity: [0.45, 1, 0.45], scale: [0.92, 1.08, 0.92] }"
-          :transition="{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }"
-          aria-hidden="true"
-        />
-        {{ statusLabel }}
-      </motion.span>
-    </header>
-
-    <div class="bot-card__bento">
-      <motion.div
-        class="bot-card__cell"
-        :initial="{ opacity: 0, y: 12 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.45, delay: staggerDelay + 0.15 }"
-      >
-        <span class="bot-card__label">{{ $t('bots.exchange') }}</span>
-        <img
-          v-if="bot.exchange && bot.exchange !== 'OTHER'"
-          :src="EXCHANGE_IMAGES[bot.exchange]"
-          :alt="exchangeDisplayName(bot.exchange)"
-          class="exchange-icon exchange-icon--compact"
-          loading="lazy"
-          decoding="async"
-        >
-        <span v-else class="bot-card__value">—</span>
-      </motion.div>
-
-      <motion.div
-        class="bot-card__cell"
-        :initial="{ opacity: 0, y: 12 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.45, delay: staggerDelay + 0.2 }"
-      >
-        <span class="bot-card__label">{{ $t('bots.type') }}</span>
-        <span class="bot-card__value">{{ typeLabel }}</span>
-      </motion.div>
-
-      <motion.div
-        class="bot-card__cell bot-card__cell--pnl"
-        :class="pnlCellClass"
-        :initial="{ opacity: 0, y: 12 }"
-        :animate="{ opacity: 1, y: 0 }"
-        :transition="{ duration: 0.45, delay: staggerDelay + 0.25 }"
-      >
-        <span class="bot-card__label">{{ $t('bots.pnl') }}</span>
-        <span class="bot-card__pnl" :class="pnlClass">{{ pnlLabel }}</span>
-      </motion.div>
-    </div>
-
-    <BotCandleChart v-if="bot.recent_candles?.length" :candles="bot.recent_candles" />
-
-    <motion.div
-      v-if="hasActions"
-      class="bot-card__actions"
-      :initial="{ opacity: 0 }"
-      :animate="{ opacity: 1 }"
-      :transition="{ duration: 0.4, delay: staggerDelay + 0.3 }"
-    >
-      <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
-        <UTooltip
-          v-if="canEditMixedGrid"
-          :text="$t('bots.mixed_edit')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.mixed_edit')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'update-config')"
-            @click="mixedGridEditOpen = true"
-          >
-            <UIcon name="i-lucide-list-ordered" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <UTooltip
-          v-if="canEditGridConfig"
-          :text="$t('bots.take_profit_edit')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.take_profit_edit')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'update-config')"
-            @click="takeProfitEditOpen = true"
-          >
-            <UIcon name="i-lucide-target" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <UTooltip
-          v-if="canEditGridConfig"
-          :text="$t('bots.stop_loss_edit')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.stop_loss_edit')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'update-config')"
-            @click="stopLossEditOpen = true"
-          >
-            <UIcon name="i-lucide-shield" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <UTooltip
-          v-if="canStop"
-          :text="$t('bots.action_stop_hint')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.action_stop')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'stop')"
-            @click="handleStop"
-          >
-            <UIcon name="i-lucide-pause" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <UTooltip
-          v-if="canRedeploy"
-          :text="$t('bots.action_redeploy_hint')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.action_redeploy')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'redeploy')"
-            @click="openConfirm('redeploy')"
-          >
-            <UIcon name="i-lucide-refresh-cw" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <UTooltip
-          v-if="canClose"
-          :text="$t('bots.action_close_hint')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action"
-            :aria-label="$t('bots.action_close')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'close')"
-            @click="openConfirm('close')"
-          >
-            <UIcon name="i-lucide-square" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-
-        <span
-          v-if="canRemove && (canEditGridConfig || canStop || canRedeploy || canClose)"
-          class="bot-card__action-sep"
-          aria-hidden="true"
-        />
-
-        <UTooltip
-          v-if="canRemove"
-          :text="$t('bots.action_remove_hint')"
-          :delay-duration="1000"
-          :content="{ side: 'top', sideOffset: 8 }"
-        >
-          <AppButton
-            variant="secondary"
-            size="sm"
-            square
-            class="bot-card__action bot-card__action--danger"
-            :aria-label="$t('bots.action_remove')"
-            :disabled="isBusy"
-            :loading="isBotActionLoading(bot.id, 'remove')"
-            @click="openConfirm('remove')"
-          >
-            <UIcon name="i-lucide-trash-2" class="bot-card__action-icon" />
-          </AppButton>
-        </UTooltip>
-      </div>
-    </motion.div>
-
-    <p v-if="actionError" class="bot-card__action-error" role="alert">
-      {{ actionError }}
-    </p>
-
-    <p v-else-if="engineError" class="bot-card__action-error" role="alert">
-      {{ engineError }}
-    </p>
-
-    <AppButton
-      class="bot-card__history"
-      variant="secondary"
-      size="sm"
-      :to="`/history?bot_id=${bot.id}`"
-    >
-      {{ $t('bots.event_history_open') }}
-    </AppButton>
-
-    <ConfirmModal
-      v-model="confirmOpen"
-      :title="confirmCopy.title"
-      :message="confirmCopy.message"
-      :confirm-label="confirmCopy.confirmLabel"
-      :cancel-label="$t('common.cancel')"
-      :loading-label="$t('common.loading')"
-      :loading="confirmLoading"
-      :confirm-variant="confirmCopy.variant"
-      @confirm="confirmAction"
-    />
-
-    <BotTakeProfitEditModal
-      v-if="canEditGridConfig"
-      v-model:open="takeProfitEditOpen"
-      :bot="bot"
-    />
-
-    <BotStopLossEditModal
-      v-if="canEditGridConfig"
-      v-model:open="stopLossEditOpen"
-      :bot="bot"
-    />
-
-    <BotMixedGridEditModal
-      v-if="canEditMixedGrid"
-      v-model:open="mixedGridEditOpen"
-      :bot="bot"
-    />
-  </motion.article>
-</template>
-
 <script setup lang="ts">
 import { motion } from 'motion-v'
-import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
-import { StopLossMode, TakeProfitMode, type BotListItem } from '#shared/types/bot'
-import { formatSignedPercent } from '~/utils/formatPercent'
-import { formatOrderSizeBadge } from '~/utils/orderSize'
-import { isMixedConfig } from '~/utils/mixedGrid'
-import { formatStopLossBadge, parseStopLoss } from '~/utils/stopLoss'
-import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
+import type { DropdownMenuItem } from '@nuxt/ui'
+import type { BotListItem } from '#shared/types/bot'
+import {
+  BOT_TYPE_LABEL_KEYS,
+  botDirection,
+  botStatusView,
+  isInPosition,
+  pnlTone,
+  supportedExchange,
+} from '~/utils/botView'
+import { formatUsdt } from '~/utils/formatNumber'
 
+/** Compact bot tile for the `/bots` list; every action sits in the «⋯» menu, the tile opens the bot page. */
 const props = withDefaults(defineProps<{
   bot: BotListItem
   index?: number
@@ -336,575 +20,473 @@ const props = withDefaults(defineProps<{
   index: 0,
 })
 
-const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
-const {
-  stopBot,
-  closeBot,
-  redeployBotGrid,
-  removeBot,
-  toggleBotFavorite,
-  isBotActionLoading,
-  getBotActionError,
-  clearBotActionError,
-} = useBots()
+const { t, locale } = useI18n()
+const actions = useBotActions(() => props.bot)
 
-const staggerDelay = computed(() => Math.min(props.index * 0.07, 0.42))
-const isDetailPage = computed(() => route.path === `/bots/${props.bot.id}`)
-
-function formatPnl(value: number): string {
-  const sign = value >= 0 ? '+' : ''
-  return `${sign}${value.toFixed(2)} USDT`
-}
-
-const pnlLabel = computed(() => {
-  const { unrealized_pnl, pnl_percent } = props.bot
-
-  if (unrealized_pnl == null && pnl_percent == null) {
-    return '—'
-  }
-
-  const parts: string[] = []
-  if (unrealized_pnl != null) {
-    parts.push(formatPnl(unrealized_pnl))
-  }
-  if (pnl_percent != null) {
-    parts.push(`(${formatSignedPercent(pnl_percent)})`)
-  }
-  return parts.join(' ')
-})
-
-const isActive = computed(() =>
-  props.bot.lifecycle_status === 'ACTIVE' && props.bot.engine_state !== 'ERROR',
-)
-
-const statusClass = computed(() => {
-  if (props.bot.engine_state === 'ERROR') {
-    return 'bot-card__status--error'
-  }
-  return `bot-card__status--${props.bot.lifecycle_status.toLowerCase()}`
-})
-
-const statusLabel = computed(() => {
-  const labels: Record<string, string> = {
-    ACTIVE: t('bots.status_active'),
-    STOPPED: t('bots.status_stopped'),
-    CLOSED: t('bots.status_closed'),
-  }
-  if (props.bot.engine_state === 'ERROR') {
-    return t('bots.status_error')
-  }
-  return labels[props.bot.lifecycle_status] ?? props.bot.lifecycle_status
-})
-
+const detailPath = computed(() => `/bots/${props.bot.id}`)
+const staggerDelay = computed(() => Math.min(props.index * 0.05, 0.3))
+const status = computed(() => botStatusView(props.bot))
+const direction = computed(() => botDirection(props.bot))
+const exchange = computed(() => supportedExchange(props.bot))
 const typeLabel = computed(() => {
-  const labels: Record<string, string> = {
-    GRID_FUTURES: t('bots.type_grid_futures'),
-    GRID_SPOT: t('bots.type_grid_spot'),
-    DCA_FUTURES: t('bots.type_dca_futures'),
-    DCA_SPOT: t('bots.type_dca_spot'),
-    ANTI_MARTINGALE_FUTURES: t('bots.type_anti_martingale_futures'),
-    CUSTOM: t('bots.type_custom'),
-  }
-  return labels[props.bot.bot_type] ?? props.bot.bot_type
+  const key = BOT_TYPE_LABEL_KEYS[props.bot.bot_type]
+  return key ? t(key) : props.bot.bot_type
 })
+const isDimmed = computed(() => props.bot.lifecycle_status !== 'ACTIVE')
+const hasError = computed(() => props.bot.engine_state === 'ERROR')
 
-const pnlClass = computed(() => {
-  const value = props.bot.unrealized_pnl ?? props.bot.pnl_percent
-  if (value == null || value === 0) return ''
-  return value < 0 ? 'bot-card__pnl--down' : 'bot-card__pnl--up'
-})
+// Flat bots report PnL 0, which reads as a result; show a dash instead
+const pnl = computed(() => (isInPosition(props.bot) ? props.bot.unrealized_pnl : null))
+const pnlLabel = computed(() => (pnl.value == null ? '—' : formatUsdt(pnl.value, locale.value, true)))
 
-const pnlCellClass = computed(() => {
-  const value = props.bot.unrealized_pnl ?? props.bot.pnl_percent
-  if (value == null || value === 0) return ''
-  return value < 0 ? 'bot-card__cell--pnl-down' : 'bot-card__cell--pnl-up'
-})
+type MenuItem = DropdownMenuItem & { value?: string }
 
-const takeProfitLabel = computed(() => formatTakeProfitBadge(props.bot.config, t))
-const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== TakeProfitMode.Off)
-const stopLossLabel = computed(() => formatStopLossBadge(props.bot.config, t))
-const hasStopLoss = computed(() => parseStopLoss(props.bot.config).mode !== StopLossMode.Off)
-const orderSizeLabel = computed(() => formatOrderSizeBadge(props.bot.config, props.bot.symbol, t))
-const isMixedGrid = computed(() => props.bot.bot_type === 'GRID_FUTURES' && isMixedConfig(props.bot.config))
-const mixedGridLabel = computed(() => {
-  if (!isMixedGrid.value) return null
-  const orders = (props.bot.config.mixed_grid as { orders?: unknown[] } | undefined)?.orders
-  return t('bots.mixed_badge', { count: Array.isArray(orders) ? orders.length : 0 })
-})
-const mixedDepositLabel = computed(() => {
-  if (!isMixedGrid.value) return null
-  const deposit = props.bot.cycle_state?.deposit_usdt
-    ?? (props.bot.config.mixed_grid as { deposit_usdt?: unknown } | undefined)?.deposit_usdt
-  return deposit == null ? null : t('bots.mixed_deposit_badge', { value: deposit })
-})
+const menuItems = computed<MenuItem[][]>(() => {
+  const bot = props.bot
+  const busy = actions.isBusy
+  const groups: MenuItem[][] = [[
+    { type: 'label', label: `${bot.symbol} · #${bot.id}` },
+    { label: t('bots.menu_open'), icon: 'i-lucide-arrow-up-right', to: detailPath.value },
+    { label: t('bots.event_history_open'), icon: 'i-lucide-history', to: `/history?bot_id=${bot.id}` },
+  ]]
 
-const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
-const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
-const canRedeploy = computed(() =>
-  props.bot.lifecycle_status === 'ACTIVE' && props.bot.bot_type === 'GRID_FUTURES',
-)
-const canEditGridConfig = computed(() =>
-  props.bot.bot_type === 'GRID_FUTURES' && props.bot.lifecycle_status !== 'CLOSED',
-)
-const canEditMixedGrid = computed(() => canEditGridConfig.value && isMixedGrid.value)
-const canRemove = computed(() => !props.bot.deleted_at)
-const hasActions = computed(() =>
-  canEditGridConfig.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
-)
-const isBusy = computed(() => isBotActionLoading(props.bot.id))
-const actionError = computed(() => getBotActionError(props.bot.id))
-const engineError = computed(() => {
-  if (props.bot.engine_state !== 'ERROR') return null
-  return props.bot.engine_error?.trim() || null
-})
-
-type CardAction = 'close' | 'redeploy' | 'remove'
-const confirmOpen = ref(false)
-const confirmLoading = ref(false)
-const pendingAction = ref<CardAction | null>(null)
-const takeProfitEditOpen = ref(false)
-const stopLossEditOpen = ref(false)
-const mixedGridEditOpen = ref(false)
-
-const confirmCopy = computed(() => {
-  const symbol = props.bot.symbol
-  switch (pendingAction.value) {
-    case 'close':
-      return {
-        title: t('bots.confirm_close_title', { symbol }),
-        message: t('bots.confirm_close', { symbol }),
-        confirmLabel: t('bots.action_close'),
-        variant: 'primary' as const,
-      }
-    case 'redeploy':
-      return {
-        title: t('bots.confirm_redeploy_title', { symbol }),
-        message: t('bots.confirm_redeploy', { symbol }),
-        confirmLabel: t('bots.action_redeploy'),
-        variant: 'primary' as const,
-      }
-    case 'remove':
-      return {
-        title: t('bots.confirm_remove_title', { symbol }),
-        message: t('bots.confirm_remove', { symbol }),
-        confirmLabel: t('bots.action_remove'),
-        variant: 'danger' as const,
-      }
-    default:
-      return {
-        title: '',
-        message: '',
-        confirmLabel: t('common.confirm'),
-        variant: 'primary' as const,
-      }
-  }
-})
-
-watch(() => props.bot.id, () => {
-  clearBotActionError(props.bot.id)
-})
-
-function openConfirm(action: CardAction) {
-  if (isBusy.value) return
-  pendingAction.value = action
-  confirmOpen.value = true
-}
-
-async function confirmAction() {
-  if (!pendingAction.value) return
-
-  confirmLoading.value = true
-  clearBotActionError(props.bot.id)
-
-  try {
-    if (pendingAction.value === 'close') {
-      await closeBot(props.bot.id)
-    } else if (pendingAction.value === 'redeploy') {
-      await redeployBotGrid(props.bot.id)
-    } else if (pendingAction.value === 'remove') {
-      await removeBot(props.bot.id)
-      if (isDetailPage.value) {
-        await router.replace('/bots')
-      }
+  if (actions.canEditGridConfig) {
+    const edits: MenuItem[] = []
+    if (actions.canEditMixedGrid) {
+      edits.push({
+        label: t('bots.mixed_edit'),
+        icon: 'i-lucide-list-ordered',
+        value: String(actions.mixedOrdersCount ?? ''),
+        disabled: busy,
+        onSelect: actions.openMixedGrid,
+      })
     }
-    confirmOpen.value = false
-    pendingAction.value = null
-  } catch {
-    // error shown under card
-  } finally {
-    confirmLoading.value = false
+    edits.push(
+      {
+        label: t('bots.take_profit_edit'),
+        icon: 'i-lucide-target',
+        value: actions.takeProfitValue,
+        disabled: busy,
+        onSelect: actions.openTakeProfit,
+      },
+      {
+        label: t('bots.stop_loss_edit'),
+        icon: 'i-lucide-shield',
+        value: actions.stopLossValue,
+        disabled: busy,
+        onSelect: actions.openStopLoss,
+      },
+    )
+    groups.push(edits)
   }
-}
 
-const favoritePop = ref(false)
-
-async function handleFavorite() {
-  favoritePop.value = false
-  await nextTick()
-  favoritePop.value = true
-  setTimeout(() => { favoritePop.value = false }, 500)
-
-  try {
-    await toggleBotFavorite(props.bot.id, !props.bot.favorite)
-  } catch {
-    // error shown via toast
+  const controls: MenuItem[] = []
+  if (actions.canStop) {
+    controls.push({
+      label: t('bots.action_stop'),
+      icon: 'i-lucide-pause',
+      disabled: busy,
+      loading: actions.isLoading('stop'),
+      onSelect: () => { void actions.stop() },
+    })
   }
-}
-
-async function handleStop() {
-  clearBotActionError(props.bot.id)
-  try {
-    await stopBot(props.bot.id)
-  } catch {
-    // error shown under card
+  if (actions.canRedeploy) {
+    controls.push({
+      label: t('bots.action_redeploy'),
+      icon: 'i-lucide-refresh-cw',
+      disabled: busy,
+      onSelect: () => actions.openConfirm('redeploy'),
+    })
   }
-}
+  if (actions.canClose) {
+    controls.push({
+      label: t('bots.action_close'),
+      icon: 'i-lucide-square',
+      disabled: busy,
+      onSelect: () => actions.openConfirm('close'),
+    })
+  }
+  if (controls.length) groups.push(controls)
+
+  if (actions.canRemove) {
+    groups.push([{
+      label: t('bots.action_remove'),
+      icon: 'i-lucide-trash-2',
+      color: 'error',
+      disabled: busy,
+      onSelect: () => actions.openConfirm('remove'),
+    }])
+  }
+
+  return groups
+})
 </script>
 
+<template>
+  <motion.article
+    class="bot-tile"
+    :class="{ 'bot-tile--error': hasError, 'bot-tile--dim': isDimmed }"
+    :initial="{ opacity: 0, y: 16 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{ duration: 0.4, delay: staggerDelay, ease: [0.22, 1, 0.36, 1] }"
+  >
+    <div class="bot-tile__head">
+      <button
+        type="button"
+        class="bot-tile__star"
+        :class="{ 'bot-tile__star--on': bot.favorite, 'bot-tile__star--pop': actions.favoritePop }"
+        :aria-label="bot.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
+        :aria-pressed="bot.favorite"
+        @click="actions.toggleFavorite"
+      >
+        <svg viewBox="0 0 24 24" :fill="bot.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
+      </button>
+
+      <NuxtLink :to="detailPath" class="bot-tile__symbol" :aria-label="`${bot.symbol} #${bot.id}`">{{ bot.symbol }}</NuxtLink>
+      <BotExchangeBadge v-if="exchange" :exchange="exchange" />
+
+      <span class="bot-tile__spacer" />
+
+      <span class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
+        {{ direction }}
+      </span>
+
+      <UDropdownMenu :items="menuItems" :content="{ align: 'end' }" :modal="false">
+        <button
+          type="button"
+          class="bot-tile__menu"
+          :aria-label="$t('bots.menu_label', { symbol: bot.symbol, id: bot.id })"
+        >
+          <UIcon v-if="actions.isBusy" name="i-lucide-loader-circle" class="bot-tile__menu-icon animate-spin" />
+          <UIcon v-else name="i-lucide-ellipsis" class="bot-tile__menu-icon" />
+        </button>
+
+        <template #item-trailing="{ item }">
+          <span v-if="item.value" class="bot-tile__menu-value">{{ item.value }}</span>
+        </template>
+      </UDropdownMenu>
+    </div>
+
+    <dl class="bot-tile__rows">
+      <div class="bot-tile__row">
+        <dt>{{ $t('bots.type') }}</dt>
+        <dd>{{ typeLabel }}</dd>
+      </div>
+      <div class="bot-tile__row">
+        <dt>{{ $t('bots.status') }}</dt>
+        <dd :class="`bot-tile__status--${status.tone}`">
+          <span v-if="status.live" class="bot-tile__dot" aria-hidden="true" />
+          {{ $t(status.labelKey) }}
+        </dd>
+      </div>
+      <div class="bot-tile__row">
+        <dt>{{ $t('bots.pnl_usdt') }}</dt>
+        <dd class="bot-tile__pnl" :class="`bot-tile__pnl--${pnlTone(pnl)}`">{{ pnlLabel }}</dd>
+      </div>
+    </dl>
+
+    <!-- Inline, not a tooltip: tooltips never open on touch. The full text is on the bot page -->
+    <p v-if="actions.engineError" class="bot-tile__engine-error" :title="actions.engineError">
+      {{ actions.engineError }}
+    </p>
+
+    <p v-if="actions.actionError" class="bot-tile__action-error" role="alert">
+      {{ actions.actionError }}
+    </p>
+
+    <BotActionModals
+      v-model:confirm-open="actions.confirmOpen"
+      v-model:take-profit-open="actions.takeProfitOpen"
+      v-model:stop-loss-open="actions.stopLossOpen"
+      v-model:mixed-grid-open="actions.mixedGridOpen"
+      :bot="bot"
+      :confirm-copy="actions.confirmCopy"
+      :confirm-loading="actions.confirmLoading"
+      :can-edit-grid-config="actions.canEditGridConfig"
+      :can-edit-mixed-grid="actions.canEditMixedGrid"
+      @confirm="actions.confirmAction"
+      @cancel="actions.cancelConfirm"
+    />
+  </motion.article>
+</template>
+
 <style scoped>
-.bot-card {
+.bot-tile {
   position: relative;
-  overflow: hidden;
-  padding: 26px;
-  border: 1px solid var(--bento-border);
-  border-radius: var(--bento-radius);
-  background:
-    linear-gradient(155deg, rgb(255 255 255 / 4%) 0%, transparent 42%),
-    linear-gradient(180deg, var(--color-surface-alt) 0%, var(--bento-bg) 100%);
-  box-shadow: var(--shadow-elevated);
-  color: var(--bento-text);
-  cursor: default;
-}
-
-.bot-card__glow {
-  position: absolute;
-  inset: -40% auto auto 50%;
-  width: 70%;
-  height: 55%;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: radial-gradient(circle, rgb(139 92 246 / 22%) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.bot-card__header {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.bot-card__identity {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: var(--radius-md);
+  background: #0d0d12;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.bot-card__symbol {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+.bot-tile:hover {
+  border-color: rgb(255 255 255 / 18%);
+  background: #12121a;
 }
 
-.bot-card__title-row {
+.bot-tile--error,
+.bot-tile--error:hover {
+  border-color: var(--color-down-dim);
+}
+
+/* Colour, not opacity: opacity would make the rows a stacking context above the tile link */
+.bot-tile--dim .bot-tile__symbol,
+.bot-tile--dim .bot-tile__row dd {
+  color: var(--color-text-muted);
+}
+
+.bot-tile__head {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
-.bot-card__favorite {
+.bot-tile__star {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  flex: none;
   padding: 2px;
   border: 0;
+  border-radius: 6px;
   background: none;
-  color: var(--bento-muted);
+  color: rgb(255 255 255 / 35%);
   cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.15s ease;
 }
 
-.bot-card__favorite:hover {
-  color: var(--bento-accent);
-  transform: scale(1.1);
+.bot-tile__star:hover {
+  color: var(--color-accent);
 }
 
-.bot-card__favorite--on {
-  color: var(--bento-accent);
+.bot-tile__star--on {
+  color: var(--color-accent);
 }
 
-.bot-card__favorite--pop .bot-card__favorite-icon {
-  animation: favorite-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+.bot-tile__star svg {
+  width: 15px;
+  height: 15px;
 }
 
-@keyframes favorite-pop {
-  0% { transform: scale(1) rotate(0); }
-  40% { transform: scale(1.5) rotate(-18deg); }
-  100% { transform: scale(1) rotate(0); }
+.bot-tile__star--pop svg {
+  animation: bot-tile-star-pop 0.45s ease;
 }
 
-.bot-card__favorite-icon {
+@keyframes bot-tile-star-pop {
+  40% {
+    transform: scale(1.5) rotate(-18deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+.bot-tile__symbol {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/* The whole tile is the link to the bot page; the star, menu and tooltip sit above it */
+.bot-tile__symbol::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.bot-tile__symbol:focus-visible {
+  outline: none;
+}
+
+.bot-tile__symbol:focus-visible::after {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.bot-tile__spacer {
+  flex: 1;
+}
+
+.bot-tile__direction {
+  flex: none;
+  padding: 2px 9px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.bot-tile__direction--long {
+  border-color: var(--color-up-dim);
+  color: var(--color-up);
+}
+
+.bot-tile__direction--short {
+  border-color: var(--color-down-dim);
+  color: var(--color-down);
+}
+
+.bot-tile__menu {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.bot-tile__menu:hover,
+.bot-tile__menu[data-state="open"] {
+  background: rgb(255 255 255 / 8%);
+  color: var(--color-text);
+}
+
+.bot-tile__menu-icon {
   width: 18px;
   height: 18px;
 }
 
-.bot-card__id {
-  color: var(--bento-muted);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+.bot-tile__menu-value {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
 }
 
-.bot-card__id--link {
-  width: fit-content;
-  text-decoration: none;
-}
-
-.bot-card__id--link:hover {
-  color: var(--bento-accent);
-}
-
-.bot-card__tp {
-  color: var(--bento-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.bot-card__tp--on {
-  color: var(--bento-accent);
-}
-
-.bot-card__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border: 1px solid var(--bento-border);
-  border-radius: 999px;
-  background: var(--bento-surface);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
-}
-
-.bot-card__status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.bot-card__status--active {
-  color: var(--bento-accent);
-  border-color: rgb(186 242 74 / 28%);
-  background: linear-gradient(135deg, rgb(186 242 74 / 18%) 0%, rgb(186 242 74 / 8%) 100%);
-}
-
-.bot-card__status--stopped,
-.bot-card__status--closed {
-  color: var(--bento-muted);
-}
-
-.bot-card__status--error {
-  color: var(--bento-danger);
-  border-color: rgb(251 113 133 / 22%);
-  background: linear-gradient(135deg, rgb(251 113 133 / 12%) 0%, rgb(251 113 133 / 5%) 100%);
-}
-
-.bot-card__bento {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.bot-card__cell {
+.bot-tile__rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 18px;
-  border: 1px solid var(--bento-border);
-  border-radius: var(--bento-cell-radius);
-  background: var(--bento-surface);
+  gap: 8px;
+  margin: 0;
 }
 
-.bot-card__label {
-  color: var(--bento-muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.bot-card__cell--pnl {
-  grid-column: 1 / -1;
-  gap: 12px;
-  padding: 20px 22px;
-}
-
-.bot-card__cell--pnl-up {
-  border-color: rgb(186 242 74 / 24%);
-  background:
-    linear-gradient(135deg, rgb(186 242 74 / 14%) 0%, rgb(186 242 74 / 5%) 100%),
-    var(--bento-surface);
-}
-
-.bot-card__cell--pnl-down {
-  border-color: rgb(251 113 133 / 18%);
-  background:
-    linear-gradient(135deg, rgb(251 113 133 / 10%) 0%, rgb(251 113 133 / 3%) 100%),
-    var(--bento-surface);
-}
-
-.bot-card__value {
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.bot-card__pnl {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.bot-card__pnl--up {
-  color: var(--bento-accent);
-}
-
-.bot-card__pnl--down {
-  color: var(--bento-danger);
-}
-
-.bot-card__actions {
-  position: relative;
-  z-index: 1;
+.bot-tile__row {
   display: flex;
-  margin-top: 24px;
-  padding-top: 22px;
-  border-top: 1px solid var(--bento-border);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
 }
 
-.bot-card__action-group {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid var(--bento-border);
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 4%) 0%, transparent 100%),
-    var(--bento-surface);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+.bot-tile__row dt {
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
-.bot-card__action-sep {
-  width: 1px;
-  align-self: stretch;
-  min-height: 18px;
-  margin: 4px 2px;
-  background: var(--bento-border);
+.bot-tile__row dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.bot-card__action {
-  justify-content: center;
-  min-width: 36px;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+.bot-tile__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentcolor;
+  vertical-align: 1px;
+  animation: bot-tile-pulse 2.4s ease-in-out infinite;
 }
 
-.bot-card__action-icon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
+.bot-tile__status--live .bot-tile__dot {
+  background: var(--color-up);
 }
 
-.bot-card__action:hover:not(:disabled) {
-  transform: translateY(-1px);
+.bot-tile__status--warning {
+  color: var(--color-warning);
 }
 
-.bot-card__action--danger {
-  color: var(--bento-danger) !important;
-  background: rgb(251 113 133 / 12%) !important;
-  --tw-ring-color: rgb(251 113 133 / 28%) !important;
+.bot-tile__status--error {
+  color: var(--color-down);
 }
 
-.bot-card__action--danger:hover:not(:disabled) {
-  background: rgb(251 113 133 / 20%) !important;
-  --tw-ring-color: rgb(251 113 133 / 42%) !important;
+@keyframes bot-tile-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 
-.bot-card__action-error {
-  position: relative;
-  z-index: 1;
-  margin: 14px 0 0;
+
+.bot-tile__pnl--up {
+  color: var(--color-up);
+}
+
+/* Losses stay white like the reference; switch to var(--color-down) for red */
+.bot-tile__pnl--down {
+  color: var(--color-text);
+}
+
+.bot-tile__pnl--flat {
+  color: var(--color-text-muted);
+}
+
+.bot-tile__engine-error {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-down);
   font-size: 0.78rem;
-  color: var(--bento-danger);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
-.bot-card__history {
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
+.bot-tile__action-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 640px) {
-  .bot-card {
-    padding: 20px;
-  }
-
-  .bot-card__header {
-    margin-bottom: 20px;
-  }
-
-  .bot-card__symbol {
-    font-size: 1.15rem;
-  }
-
-  .bot-card__bento {
-    gap: 10px;
-  }
-
-  .bot-card__cell {
+  .bot-tile {
     padding: 14px;
-    gap: 8px;
   }
 
-  .bot-card__cell--pnl {
-    padding: 16px 16px;
+  .bot-tile__menu {
+    width: 36px;
+    height: 36px;
+    margin: -4px -6px -4px 0;
   }
+}
 
-  .bot-card__pnl {
-    font-size: 1.05rem;
-  }
-
-  .bot-card__actions {
-    margin-top: 18px;
-    padding-top: 18px;
-  }
-
-  .bot-card__action-group {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .bot-card__action {
-    min-width: 44px;
-    min-height: 44px;
+@media (prefers-reduced-motion: reduce) {
+  .bot-tile,
+  .bot-tile__dot,
+  .bot-tile__star--pop svg {
+    transition: none;
+    animation: none;
   }
 }
 </style>

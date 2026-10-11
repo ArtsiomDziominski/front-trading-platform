@@ -101,6 +101,31 @@ export function isUserAction(payload: Record<string, unknown> | null): boolean {
   return payload?.source !== 'auto'
 }
 
+/**
+ * Leg of an anti-martingale fill from its `client_order_id` (`b{id}v{ver}o{n}`):
+ * `0` is the breakout entry, `n >= 1` is add-on #n. `null` for grid ids and anything else.
+ */
+export function antiMartingaleLegIndex(clientOrderId: unknown): number | null {
+  if (typeof clientOrderId !== 'string') return null
+  const match = /o(\d+)$/.exec(clientOrderId.trim())
+  if (!match?.[1]) return null
+  const index = Number(match[1])
+  return Number.isSafeInteger(index) ? index : null
+}
+
+function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined): string {
+  const kind = typeof payload?.kind === 'string' ? normalizeBotEventType(payload.kind) : ''
+  if (kind === 'entry') return 'bots.event_type_order_filled_entry'
+  if (kind === 'addon') return 'bots.event_type_order_filled_addon'
+  if (kind === 'order') {
+    const leg = antiMartingaleLegIndex(payload?.client_order_id)
+    if (leg === 0) return 'bots.event_type_order_filled_entry'
+    if (leg != null) return 'bots.event_type_order_filled_addon'
+    return 'bots.event_type_order_filled'
+  }
+  return 'bots.event_type_order_filled_grid'
+}
+
 export function translateBotEventTitle(
   t: TranslateFn,
   te: HasKeyFn,
@@ -127,14 +152,7 @@ export function translateBotEventTitle(
   }
 
   if (normalized === 'order_filled') {
-    const kind = typeof payload?.kind === 'string'
-      ? normalizeBotEventType(payload.kind)
-      : ''
-    const key = kind === 'entry'
-      ? 'bots.event_type_order_filled_entry'
-      : kind === 'addon'
-        ? 'bots.event_type_order_filled_addon'
-        : 'bots.event_type_order_filled_grid'
+    const key = orderFilledTitleKey(payload)
     if (te(key)) return t(key)
   }
 

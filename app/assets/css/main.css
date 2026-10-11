@@ -31,6 +31,12 @@
   --color-accent-dim: rgb(139 92 246 / 18%);
   --color-danger: #fb7185;
   --color-warning: #f5a623;
+  /* Market colours: LONG, profit and rising candles / SHORT, loss and falling candles */
+  --color-up: #4ade80;
+  --color-up-dim: rgb(74 222 128 / 45%);
+  --color-down: var(--color-danger);
+  --color-down-dim: rgb(251 113 133 / 45%);
+  --color-info: #60a5fa;
 
   --shadow-sm: 0 8px 24px rgb(0 0 0 / 35%);
   --shadow-md: 0 16px 40px rgb(0 0 0 / 45%);
@@ -265,6 +271,115 @@ a,
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
+}
+
+/* Bot page panels (app/pages/bots/[id].vue and its BotDetail* parts) */
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: var(--radius-lg);
+  background: #0d0d12;
+}
+
+.detail-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.detail-panel__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.detail-panel__note {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.detail-panel__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.detail-panel__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.detail-table-wrap {
+  margin: 0 -4px;
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-table th {
+  padding: 6px 8px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.detail-table td {
+  padding: 8px;
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  white-space: nowrap;
+}
+
+.detail-table .num {
+  text-align: right;
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+}
+
+.detail-list__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.875rem;
+}
+
+.detail-list__row dt {
+  color: var(--color-text-muted);
+}
+
+.detail-list__row dd {
+  min-width: 0;
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .detail-panel {
+    padding: 16px;
+  }
 }
 
 /* AppButton on dark cards */

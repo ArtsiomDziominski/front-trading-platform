@@ -1,6 +1,6 @@
 # Stop-loss сетки (GRID)
 
-Страницы: `/bots/create/futures/grid` (создание), карточка на `/bots`, деталь `/bots/:id` (редактирование порога).
+Страницы: `/bots/create/futures/grid` (создание), меню «⋯» карточки на `/bots`, шапка `/bots/:id` (редактирование порога).
 
 Поле живёт в **`bot.config`**, не в настройках пользователя. Это не take-profit и не Telegram-алерт прибыли (`telegram_profit_alert_*`): алерт прибыли пишет в чат по ROE/USDT, stop-loss ставит **reduce-only STOP_MARKET** на бирже (Binance / OKX). Если Telegram привязан, после SL придёт отдельное сообщение (уведомление `bot_removed`).
 
@@ -87,7 +87,7 @@ flowchart TD
 
 Критично не перепутать `bot_closed` и `bot_removed`. После SL не оставлять бота как CLOSED.
 
-Пока бот жив, карточка читает порог из `bot.config`: «SL 5%» / «SL выкл.».
+Пока бот жив, меню карточки и шапка страницы бота читают порог из `bot.config`: «Stop-loss 5%» / «Stop-loss выкл.».
 
 Если открыта `/bots/:id` и пришёл `bot_removed` по этому id — тост «Бот закрыт по stop-loss и убран из отслеживания» и редирект на `/bots`. `GET /bots/{id}` после этого не вызывать (фронт этот метод не использует).
 
@@ -112,8 +112,8 @@ flowchart TD
 |-------|------|
 | Поля формы | `app/components/BotStopLossFields.vue` |
 | Создание | `app/components/BotGridFuturesForm.vue` |
-| PATCH с карточки | `app/components/BotStopLossEditModal.vue` |
-| Деталь | `app/pages/bots/[id].vue` |
+| PATCH с карточки и страницы бота | `app/components/BotStopLossEditModal.vue` (открывается из `useBotActions`) |
+| Страница бота | `app/pages/bots/[id].vue`, `app/components/BotDetailView.vue` |
 | Парсинг / валидация | `app/utils/stopLoss.ts` |
 | API / WS | `app/composables/useBots.ts` |
 | Типы | `shared/types/bot.ts` (`GridFuturesConfig`) |

@@ -1,6 +1,6 @@
 # Take-profit сетки (GRID)
 
-Страницы: `/bots/create/futures/grid` (создание), карточка бота на `/bots` (редактирование порога).
+Страницы: `/bots/create/futures/grid` (создание), меню «⋯» карточки на `/bots` и кнопка в шапке `/bots/:id` (редактирование порога, текущее значение видно рядом с подписью).
 
 Поля живут в **`bot.config`**, не в настройках пользователя. Это не Telegram-алерт (`telegram_profit_alert_*`): алерт только пишет в чат, take-profit ставит **reduce-only LIMIT** на бирже (Binance / OKX).
 
@@ -85,7 +85,8 @@ flowchart TD
 |-------|------|
 | Поля формы | `app/components/BotTakeProfitFields.vue` |
 | Создание | `app/components/BotGridFuturesForm.vue` |
-| PATCH с карточки | `app/components/BotTakeProfitEditModal.vue` |
+| PATCH с карточки и страницы бота | `app/components/BotTakeProfitEditModal.vue` (открывается из `useBotActions`) |
+| Цель TP «≈» в блоке позиции | `app/components/BotDetailPosition.vue` |
 | Парсинг / XOR | `app/utils/takeProfit.ts` |
 | API | `app/composables/useBots.ts` (`createBot`, `updateBotConfig`) |
 | Типы | `shared/types/bot.ts` (`GridFuturesConfig`) |

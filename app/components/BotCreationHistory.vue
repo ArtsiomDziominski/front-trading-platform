@@ -92,9 +92,13 @@
 </template>
 
 <script setup lang="ts">
-import type { BotCreationLogOut, BotCreationOutcome, BotType } from '#shared/types/bot'
+import type { BotCreationLogOut, BotCreationOutcome } from '#shared/types/bot'
 import type { CreationHistorySetting, CreationSettingKey } from '~/utils/formatBotCreationSettings'
-import { extractCreationHistorySettings } from '~/utils/formatBotCreationSettings'
+import {
+  CREATION_SETTING_LABEL_KEYS,
+  extractCreationHistorySettings,
+  formatCreationSettingValue,
+} from '~/utils/formatBotCreationSettings'
 
 defineProps<{
   items: BotCreationLogOut[]
@@ -126,41 +130,6 @@ async function onFavoriteClick(item: BotCreationLogOut) {
   emit('toggleFavorite', item)
 }
 
-const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
-  bot_type: 'bots.field_bot_type',
-  api_key_id: 'bots.field_api_key',
-  symbol: 'bots.field_symbol',
-  direction: 'bots.field_direction',
-  initial_amount: 'bots.field_initial_amount',
-  initial_amount_usdt: 'bots.field_initial_amount_usdt',
-  initial_amount_percent: 'bots.field_initial_amount_percent',
-  grid_orders_count: 'bots.field_grid_orders',
-  grid_step_percent: 'bots.field_grid_step',
-  volume_mode: 'bots.field_volume_mode',
-  start_price: 'bots.field_start_price',
-  auto_restart: 'bots.field_auto_restart',
-  take_profit_percent: 'bots.take_profit_value_percent',
-  take_profit_amount: 'bots.take_profit_value_amount',
-  stop_loss_percent: 'bots.stop_loss_value_percent',
-  orders_summary: 'bots.field_orders_summary',
-  breakout_lookback_hours: 'bots.field_breakout_lookback_hours',
-  ema_fast_period: 'bots.field_ema_fast_period',
-  ema_slow_period: 'bots.field_ema_slow_period',
-  trailing_stop_percent: 'bots.field_trailing_stop_percent',
-  leverage: 'bots.field_leverage',
-  mixed_deposit_usdt: 'bots.mixed_deposit',
-  mixed_orders_summary: 'bots.mixed_orders_summary',
-}
-
-const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
-  GRID_FUTURES: 'bots.type_grid_futures',
-  GRID_SPOT: 'bots.type_grid_spot',
-  DCA_FUTURES: 'bots.type_dca_futures',
-  DCA_SPOT: 'bots.type_dca_spot',
-  ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
-  CUSTOM: 'bots.type_custom',
-}
-
 function outcomeLabel(outcome: BotCreationOutcome): string {
   const keys: Record<BotCreationOutcome, string> = {
     CREATED_OK: 'bots.creation_outcome_ok',
@@ -184,38 +153,11 @@ function settingsFor(item: BotCreationLogOut): CreationHistorySetting[] {
 }
 
 function settingLabel(key: CreationSettingKey): string {
-  return t(SETTING_LABEL_KEYS[key])
+  return t(CREATION_SETTING_LABEL_KEYS[key])
 }
 
 function settingValue(setting: CreationHistorySetting): string {
-  switch (setting.key) {
-    case 'bot_type': {
-      const key = BOT_TYPE_LABEL_KEYS[setting.value as BotType]
-      return key ? t(key) : String(setting.value)
-    }
-    case 'api_key_id':
-      return `#${setting.value}`
-    case 'direction':
-      return setting.value === 'SHORT' ? t('bots.direction_short') : t('bots.direction_long')
-    case 'volume_mode':
-      if (setting.value === 'exponential') return t('bots.volume_exponential')
-      if (setting.value === 'fixed') return t('bots.volume_fixed')
-      return t('bots.volume_linear')
-    case 'auto_restart':
-      return setting.value ? t('common.yes') : t('common.no')
-    case 'grid_step_percent':
-    case 'initial_amount_percent':
-    case 'take_profit_percent':
-    case 'stop_loss_percent':
-    case 'trailing_stop_percent':
-      return `${setting.value}%`
-    case 'take_profit_amount':
-    case 'initial_amount_usdt':
-    case 'mixed_deposit_usdt':
-      return `${setting.value} USDT`
-    default:
-      return String(setting.value)
-  }
+  return formatCreationSettingValue(setting, t)
 }
 </script>
 
