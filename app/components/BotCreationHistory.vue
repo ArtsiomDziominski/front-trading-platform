@@ -7,6 +7,16 @@
       {{ $t('bots.creation_history_hint') }}
     </p>
 
+    <AppButton
+      size="sm"
+      icon="i-lucide-star"
+      class="creation-history__filter"
+      :variant="favoritesOnly ? 'primary' : 'secondary'"
+      :aria-pressed="favoritesOnly"
+      :label="$t('bots.creation_history_favorites_only')"
+      @click="$emit('update:favoritesOnly', !favoritesOnly)"
+    />
+
     <p v-if="loading" class="creation-history__state" role="status">
       {{ $t('common.loading') }}
     </p>
@@ -27,7 +37,19 @@
       >
         <div class="creation-history__item-body">
           <div class="creation-history__item-head">
-            <span class="creation-history__symbol">{{ item.symbol || '—' }}</span>
+            <span class="creation-history__symbol">
+              <button
+                type="button"
+                class="creation-history__favorite"
+                :class="{ 'creation-history__favorite--on': item.favorite, 'creation-history__favorite--pop': poppingId === item.id }"
+                :aria-label="item.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
+                :aria-pressed="Boolean(item.favorite)"
+                @click="onFavoriteClick(item)"
+              >
+                <svg class="creation-history__favorite-icon" viewBox="0 0 24 24" :fill="item.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
+              </button>
+              {{ item.symbol || '—' }}
+            </span>
             <span class="creation-history__outcome" :class="`creation-history__outcome--${item.outcome.toLowerCase()}`">
               {{ outcomeLabel(item.outcome) }}
             </span>
@@ -64,7 +86,7 @@
     </ul>
 
     <p v-else class="creation-history__state">
-      {{ $t('bots.creation_history_empty') }}
+      {{ favoritesOnly ? $t('bots.creation_history_empty_favorites') : $t('bots.creation_history_empty') }}
     </p>
   </UCard>
 </template>
@@ -79,14 +101,30 @@ defineProps<{
   loading: boolean
   error: string | null
   selectedId: number | null
+  favoritesOnly: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
+  toggleFavorite: [item: BotCreationLogOut]
   select: [item: BotCreationLogOut]
   retry: []
+  'update:favoritesOnly': [value: boolean]
 }>()
 
 const { t, locale } = useI18n()
+
+const poppingId = ref<number | null>(null)
+
+async function onFavoriteClick(item: BotCreationLogOut) {
+  // Restart the animation on every click
+  poppingId.value = null
+  await nextTick()
+  poppingId.value = item.id
+  setTimeout(() => {
+    if (poppingId.value === item.id) poppingId.value = null
+  }, 500)
+  emit('toggleFavorite', item)
+}
 
 const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   bot_type: 'bots.field_bot_type',
@@ -94,6 +132,8 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   symbol: 'bots.field_symbol',
   direction: 'bots.field_direction',
   initial_amount: 'bots.field_initial_amount',
+  initial_amount_usdt: 'bots.field_initial_amount_usdt',
+  initial_amount_percent: 'bots.field_initial_amount_percent',
   grid_orders_count: 'bots.field_grid_orders',
   grid_step_percent: 'bots.field_grid_step',
   volume_mode: 'bots.field_volume_mode',
@@ -102,6 +142,14 @@ const SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   take_profit_percent: 'bots.take_profit_value_percent',
   take_profit_amount: 'bots.take_profit_value_amount',
   stop_loss_percent: 'bots.stop_loss_value_percent',
+  orders_summary: 'bots.field_orders_summary',
+  breakout_lookback_hours: 'bots.field_breakout_lookback_hours',
+  ema_fast_period: 'bots.field_ema_fast_period',
+  ema_slow_period: 'bots.field_ema_slow_period',
+  trailing_stop_percent: 'bots.field_trailing_stop_percent',
+  leverage: 'bots.field_leverage',
+  mixed_deposit_usdt: 'bots.mixed_deposit',
+  mixed_orders_summary: 'bots.mixed_orders_summary',
 }
 
 const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
@@ -109,6 +157,7 @@ const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
   GRID_SPOT: 'bots.type_grid_spot',
   DCA_FUTURES: 'bots.type_dca_futures',
   DCA_SPOT: 'bots.type_dca_spot',
+  ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
   CUSTOM: 'bots.type_custom',
 }
 
@@ -155,10 +204,14 @@ function settingValue(setting: CreationHistorySetting): string {
     case 'auto_restart':
       return setting.value ? t('common.yes') : t('common.no')
     case 'grid_step_percent':
+    case 'initial_amount_percent':
     case 'take_profit_percent':
     case 'stop_loss_percent':
+    case 'trailing_stop_percent':
       return `${setting.value}%`
     case 'take_profit_amount':
+    case 'initial_amount_usdt':
+    case 'mixed_deposit_usdt':
       return `${setting.value} USDT`
     default:
       return String(setting.value)
@@ -241,6 +294,40 @@ function settingValue(setting: CreationHistorySetting): string {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.creation-history__filter {
+  margin-bottom: 14px;
+}
+
+.creation-history__favorite {
+  display: inline-flex;
+  vertical-align: middle;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.creation-history__favorite:hover,
+.creation-history__favorite--on {
+  color: var(--color-accent);
+}
+
+.creation-history__favorite--pop .creation-history__favorite-icon {
+  animation: favorite-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes favorite-pop {
+  0% { transform: scale(1) rotate(0); }
+  40% { transform: scale(1.5) rotate(-18deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.creation-history__favorite-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .creation-history__symbol {

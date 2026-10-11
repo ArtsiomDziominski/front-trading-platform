@@ -3,6 +3,12 @@ type ValidationErrorItem = {
   loc?: unknown[]
 }
 
+export function getApiErrorStatus(error: unknown): number | undefined {
+  const err = error as { statusCode?: number, status?: number, response?: { status?: number } } | null
+
+  return err?.statusCode ?? err?.status ?? err?.response?.status
+}
+
 export function parseApiError(error: unknown, fallback: string): string {
   const err = error as { data?: { detail?: string | ValidationErrorItem[] } }
   const detail = err?.data?.detail

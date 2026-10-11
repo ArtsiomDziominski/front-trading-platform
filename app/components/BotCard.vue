@@ -13,7 +13,19 @@
 
     <header class="bot-card__header">
       <div class="bot-card__identity">
-        <span class="bot-card__symbol">{{ bot.symbol }}</span>
+        <div class="bot-card__title-row">
+          <button
+            type="button"
+            class="bot-card__favorite"
+            :class="{ 'bot-card__favorite--on': bot.favorite, 'bot-card__favorite--pop': favoritePop }"
+            :aria-label="bot.favorite ? $t('bots.favorite_remove') : $t('bots.favorite_add')"
+            :aria-pressed="bot.favorite"
+            @click.stop.prevent="handleFavorite"
+          >
+            <svg class="bot-card__favorite-icon" viewBox="0 0 24 24" :fill="bot.favorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></svg>
+          </button>
+          <span class="bot-card__symbol">{{ bot.symbol }}</span>
+        </div>
         <NuxtLink
           v-if="!isDetailPage"
           :to="`/bots/${bot.id}`"
@@ -22,12 +34,23 @@
           #{{ bot.id }}
         </NuxtLink>
         <span v-else class="bot-card__id">#{{ bot.id }}</span>
-        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
-          {{ takeProfitLabel }}
-        </span>
-        <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
-          {{ stopLossLabel }}
-        </span>
+        <template v-if="bot.bot_type === 'GRID_FUTURES'">
+          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasTakeProfit }">
+            {{ takeProfitLabel }}
+          </span>
+          <span class="bot-card__tp" :class="{ 'bot-card__tp--on': hasStopLoss }">
+            {{ stopLossLabel }}
+          </span>
+          <span v-if="orderSizeLabel" class="bot-card__tp">
+            {{ orderSizeLabel }}
+          </span>
+          <span v-if="mixedGridLabel" class="bot-card__tp bot-card__tp--on">
+            {{ mixedGridLabel }}
+          </span>
+          <span v-if="mixedDepositLabel" class="bot-card__tp" :title="$t('bots.mixed_deposit_hint')">
+            {{ mixedDepositLabel }}
+          </span>
+        </template>
       </div>
 
       <motion.span
@@ -89,6 +112,8 @@
       </motion.div>
     </div>
 
+    <BotCandleChart v-if="bot.recent_candles?.length" :candles="bot.recent_candles" />
+
     <motion.div
       v-if="hasActions"
       class="bot-card__actions"
@@ -97,6 +122,26 @@
       :transition="{ duration: 0.4, delay: staggerDelay + 0.3 }"
     >
       <div class="bot-card__action-group" role="group" :aria-label="$t('bots.help_actions_title')">
+        <UTooltip
+          v-if="canEditMixedGrid"
+          :text="$t('bots.mixed_edit')"
+          :delay-duration="1000"
+          :content="{ side: 'top', sideOffset: 8 }"
+        >
+          <AppButton
+            variant="secondary"
+            size="sm"
+            square
+            class="bot-card__action"
+            :aria-label="$t('bots.mixed_edit')"
+            :disabled="isBusy"
+            :loading="isBotActionLoading(bot.id, 'update-config')"
+            @click="mixedGridEditOpen = true"
+          >
+            <UIcon name="i-lucide-list-ordered" class="bot-card__action-icon" />
+          </AppButton>
+        </UTooltip>
+
         <UTooltip
           v-if="canEditGridConfig"
           :text="$t('bots.take_profit_edit')"
@@ -233,10 +278,14 @@
       {{ engineError }}
     </p>
 
-    <BotCardHistory
-      ref="historyPanel"
-      :bot-id="bot.id"
-    />
+    <AppButton
+      class="bot-card__history"
+      variant="secondary"
+      size="sm"
+      :to="`/history?bot_id=${bot.id}`"
+    >
+      {{ $t('bots.event_history_open') }}
+    </AppButton>
 
     <ConfirmModal
       v-model="confirmOpen"
@@ -261,6 +310,12 @@
       v-model:open="stopLossEditOpen"
       :bot="bot"
     />
+
+    <BotMixedGridEditModal
+      v-if="canEditMixedGrid"
+      v-model:open="mixedGridEditOpen"
+      :bot="bot"
+    />
   </motion.article>
 </template>
 
@@ -269,6 +324,8 @@ import { motion } from 'motion-v'
 import { EXCHANGE_IMAGES, exchangeDisplayName } from '#shared/utils/exchange-images'
 import { StopLossMode, TakeProfitMode, type BotListItem } from '#shared/types/bot'
 import { formatSignedPercent } from '~/utils/formatPercent'
+import { formatOrderSizeBadge } from '~/utils/orderSize'
+import { isMixedConfig } from '~/utils/mixedGrid'
 import { formatStopLossBadge, parseStopLoss } from '~/utils/stopLoss'
 import { formatTakeProfitBadge, parseTakeProfit } from '~/utils/takeProfit'
 
@@ -287,12 +344,12 @@ const {
   closeBot,
   redeployBotGrid,
   removeBot,
+  toggleBotFavorite,
   isBotActionLoading,
   getBotActionError,
   clearBotActionError,
 } = useBots()
 
-const historyPanel = useTemplateRef<{ reloadIfOpen: () => void }>('historyPanel')
 const staggerDelay = computed(() => Math.min(props.index * 0.07, 0.42))
 const isDetailPage = computed(() => route.path === `/bots/${props.bot.id}`)
 
@@ -347,6 +404,7 @@ const typeLabel = computed(() => {
     GRID_SPOT: t('bots.type_grid_spot'),
     DCA_FUTURES: t('bots.type_dca_futures'),
     DCA_SPOT: t('bots.type_dca_spot'),
+    ANTI_MARTINGALE_FUTURES: t('bots.type_anti_martingale_futures'),
     CUSTOM: t('bots.type_custom'),
   }
   return labels[props.bot.bot_type] ?? props.bot.bot_type
@@ -368,6 +426,19 @@ const takeProfitLabel = computed(() => formatTakeProfitBadge(props.bot.config, t
 const hasTakeProfit = computed(() => parseTakeProfit(props.bot.config).mode !== TakeProfitMode.Off)
 const stopLossLabel = computed(() => formatStopLossBadge(props.bot.config, t))
 const hasStopLoss = computed(() => parseStopLoss(props.bot.config).mode !== StopLossMode.Off)
+const orderSizeLabel = computed(() => formatOrderSizeBadge(props.bot.config, props.bot.symbol, t))
+const isMixedGrid = computed(() => props.bot.bot_type === 'GRID_FUTURES' && isMixedConfig(props.bot.config))
+const mixedGridLabel = computed(() => {
+  if (!isMixedGrid.value) return null
+  const orders = (props.bot.config.mixed_grid as { orders?: unknown[] } | undefined)?.orders
+  return t('bots.mixed_badge', { count: Array.isArray(orders) ? orders.length : 0 })
+})
+const mixedDepositLabel = computed(() => {
+  if (!isMixedGrid.value) return null
+  const deposit = props.bot.cycle_state?.deposit_usdt
+    ?? (props.bot.config.mixed_grid as { deposit_usdt?: unknown } | undefined)?.deposit_usdt
+  return deposit == null ? null : t('bots.mixed_deposit_badge', { value: deposit })
+})
 
 const canStop = computed(() => props.bot.lifecycle_status === 'ACTIVE')
 const canClose = computed(() => props.bot.lifecycle_status !== 'CLOSED')
@@ -377,6 +448,7 @@ const canRedeploy = computed(() =>
 const canEditGridConfig = computed(() =>
   props.bot.bot_type === 'GRID_FUTURES' && props.bot.lifecycle_status !== 'CLOSED',
 )
+const canEditMixedGrid = computed(() => canEditGridConfig.value && isMixedGrid.value)
 const canRemove = computed(() => !props.bot.deleted_at)
 const hasActions = computed(() =>
   canEditGridConfig.value || canStop.value || canClose.value || canRedeploy.value || canRemove.value,
@@ -394,6 +466,7 @@ const confirmLoading = ref(false)
 const pendingAction = ref<CardAction | null>(null)
 const takeProfitEditOpen = ref(false)
 const stopLossEditOpen = ref(false)
+const mixedGridEditOpen = ref(false)
 
 const confirmCopy = computed(() => {
   const symbol = props.bot.symbol
@@ -456,7 +529,6 @@ async function confirmAction() {
         await router.replace('/bots')
       }
     }
-    historyPanel.value?.reloadIfOpen()
     confirmOpen.value = false
     pendingAction.value = null
   } catch {
@@ -466,11 +538,25 @@ async function confirmAction() {
   }
 }
 
+const favoritePop = ref(false)
+
+async function handleFavorite() {
+  favoritePop.value = false
+  await nextTick()
+  favoritePop.value = true
+  setTimeout(() => { favoritePop.value = false }, 500)
+
+  try {
+    await toggleBotFavorite(props.bot.id, !props.bot.favorite)
+  } catch {
+    // error shown via toast
+  }
+}
+
 async function handleStop() {
   clearBotActionError(props.bot.id)
   try {
     await stopBot(props.bot.id)
-    historyPanel.value?.reloadIfOpen()
   } catch {
     // error shown under card
   }
@@ -524,6 +610,48 @@ async function handleStop() {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.15;
+}
+
+.bot-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bot-card__favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: var(--bento-muted);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.bot-card__favorite:hover {
+  color: var(--bento-accent);
+  transform: scale(1.1);
+}
+
+.bot-card__favorite--on {
+  color: var(--bento-accent);
+}
+
+.bot-card__favorite--pop .bot-card__favorite-icon {
+  animation: favorite-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes favorite-pop {
+  0% { transform: scale(1) rotate(0); }
+  40% { transform: scale(1.5) rotate(-18deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.bot-card__favorite-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .bot-card__id {
@@ -726,6 +854,12 @@ async function handleStop() {
   margin: 14px 0 0;
   font-size: 0.78rem;
   color: var(--bento-danger);
+}
+
+.bot-card__history {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
 }
 
 @media (max-width: 640px) {

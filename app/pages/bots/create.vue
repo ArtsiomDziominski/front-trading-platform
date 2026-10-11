@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { StopLossMode, TakeProfitMode, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { OrderSizeMode, StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type GridSizingMode, type VolumeMode } from '#shared/types/bot'
+import { defaultMixedGridForm, type MixedGridForm } from '~/utils/mixedGrid'
+import { parseApiError } from '~/utils/parseApiError'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
 definePageMeta({
@@ -8,7 +10,8 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const { fetchApiKeys, fetchCreationHistory } = useBots()
+const toast = useToast()
+const { bots, fetchBots, fetchApiKeys, fetchCreationHistory, setCreationLogFavorite } = useBots()
 
 useSeoMeta({
   title: () => t('bots.create_title'),
@@ -28,11 +31,13 @@ const liquidationCheckRef = ref<{ clearResult: () => void } | null>(null)
 const creationHistory = ref<BotCreationLogOut[]>([])
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
+const historyFavoritesOnly = ref(false)
 
 const apiKeyId = ref<number | ''>('')
 const symbol = ref('ETHUSDT')
 const direction = ref<GridDirection>('LONG')
-const initialAmount = ref('0.01')
+const orderSizeMode = ref<OrderSizeMode>(OrderSizeMode.Coin)
+const orderSizeValue = ref('0.01')
 const gridOrdersCount = ref(10)
 const gridStepPercent = ref('5')
 const volumeMode = ref<VolumeMode>('linear')
@@ -43,16 +48,31 @@ const takeProfitValue = ref('')
 const stopLossMode = ref<StopLossMode>(StopLossMode.Off)
 const stopLossValue = ref('')
 const botType = ref<BotType>('GRID_FUTURES')
+const sizingMode = ref<GridSizingMode>('legacy')
+const mixedGrid = ref<MixedGridForm>(defaultMixedGridForm())
 const leverage = ref(10)
 const currentPrice = ref('')
 const totalBalance = ref('')
+
+const amOrders = ref<AntiMartingaleOrderLevel[]>([
+  { trigger_percent: '0', size_percent: '33.75' },
+  { trigger_percent: '1.5', size_percent: '33.75' },
+  { trigger_percent: '3.0', size_percent: '42.5' },
+  { trigger_percent: '5.0', size_percent: '50' },
+  { trigger_percent: '7.5', size_percent: '67.5' },
+])
+const amBreakoutLookbackHours = ref('')
+const amEmaFastPeriod = ref('')
+const amEmaSlowPeriod = ref('')
+const amTrailingStopPercent = ref('')
+const amLeverage = ref('')
 
 async function loadCreationHistory() {
   historyLoading.value = true
   historyError.value = null
 
   try {
-    creationHistory.value = await fetchCreationHistory(30)
+    creationHistory.value = await fetchCreationHistory(30, historyFavoritesOnly.value ? true : undefined)
   } catch {
     historyError.value = t('bots.creation_history_load_error')
     creationHistory.value = []
@@ -71,7 +91,7 @@ async function loadPageData() {
         apiKeyId.value = onlyKey.id
       }
     }
-    await loadCreationHistory()
+    await Promise.all([loadCreationHistory(), fetchBots()])
   } catch {
     formError.value = t('bots.create_error')
   } finally {
@@ -81,6 +101,26 @@ async function loadPageData() {
 
 onMounted(() => {
   loadPageData()
+})
+
+async function toggleHistoryFavorite(item: BotCreationLogOut) {
+  const next = !item.favorite
+  try {
+    const updated = await setCreationLogFavorite(item.id, next)
+    if (historyFavoritesOnly.value && !updated.favorite) {
+      creationHistory.value = creationHistory.value.filter((entry) => entry.id !== item.id)
+      return
+    }
+    creationHistory.value = creationHistory.value
+      .map((entry) => (entry.id === item.id ? { ...entry, favorite: updated.favorite } : entry))
+      .sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)))
+  } catch (e) {
+    toast.add({ title: parseApiError(e, t('bots.action_error')), color: 'error' })
+  }
+}
+
+watch(historyFavoritesOnly, () => {
+  loadCreationHistory()
 })
 
 function cloneFromHistory(item: BotCreationLogOut) {
@@ -124,7 +164,7 @@ async function handleBotCreated() {
         </AppButton>
       </UCard>
 
-      <div v-else class="create-layout">
+      <div v-else class="create-layout" :class="{ 'create-layout--single': botType !== 'GRID_FUTURES' }">
         <div class="create-main">
           <UAlert v-if="formError" color="error" variant="subtle" :title="formError" class="mb-4" />
 
@@ -134,7 +174,8 @@ async function handleBotCreated() {
             v-model:bot-type="botType"
             v-model:symbol="symbol"
             v-model:direction="direction"
-            v-model:initial-amount="initialAmount"
+            v-model:order-size-mode="orderSizeMode"
+            v-model:order-size-value="orderSizeValue"
             v-model:grid-orders-count="gridOrdersCount"
             v-model:grid-step-percent="gridStepPercent"
             v-model:volume-mode="volumeMode"
@@ -144,28 +185,40 @@ async function handleBotCreated() {
             v-model:take-profit-value="takeProfitValue"
             v-model:stop-loss-mode="stopLossMode"
             v-model:stop-loss-value="stopLossValue"
+            v-model:am-orders="amOrders"
+            v-model:am-breakout-lookback-hours="amBreakoutLookbackHours"
+            v-model:am-ema-fast-period="amEmaFastPeriod"
+            v-model:am-ema-slow-period="amEmaSlowPeriod"
+            v-model:am-trailing-stop-percent="amTrailingStopPercent"
+            v-model:am-leverage="amLeverage"
+            v-model:sizing-mode="sizingMode"
+            v-model:mixed-grid="mixedGrid"
             :api-keys="apiKeys"
+            :existing-bots="bots"
             :show-clone-notice="clonedFromId != null"
             @created="handleBotCreated"
           />
 
           <BotCreationHistory
+            v-model:favorites-only="historyFavoritesOnly"
             :items="creationHistory"
             :loading="historyLoading"
             :error="historyError"
             :selected-id="clonedFromId"
+            @toggle-favorite="toggleHistoryFavorite"
             @select="cloneFromHistory"
             @retry="loadCreationHistory"
           />
         </div>
 
-        <div class="create-sidebar">
+        <div v-if="botType === 'GRID_FUTURES'" class="create-sidebar">
           <BotLiquidationCheck
             ref="liquidationCheckRef"
             v-model:bot-type="botType"
             v-model:symbol="symbol"
             v-model:direction="direction"
-            v-model:initial-amount="initialAmount"
+            v-model:order-size-mode="orderSizeMode"
+            v-model:order-size-value="orderSizeValue"
             v-model:grid-orders-count="gridOrdersCount"
             v-model:grid-step-percent="gridStepPercent"
             v-model:volume-mode="volumeMode"
@@ -177,6 +230,8 @@ async function handleBotCreated() {
             v-model:leverage="leverage"
             v-model:current-price="currentPrice"
             v-model:total-balance="totalBalance"
+            v-model:sizing-mode="sizingMode"
+            v-model:mixed-grid="mixedGrid"
           />
         </div>
       </div>
@@ -202,6 +257,11 @@ async function handleBotCreated() {
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
   gap: 24px;
   align-items: start;
+}
+
+.create-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 720px;
 }
 
 .create-main {

@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import type { BotType, GridDirection, GridFuturesConfig, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import type { BotType, GridDirection, GridFuturesConfig, GridSizingMode, OrderSizeMode, StopLossMode, TakeProfitMode, LiquidationCheckOut, VolumeMode } from '#shared/types/bot'
+import { buildMixedGridPayload, defaultMixedGridForm, validateMixedGrid, type MixedGridForm } from '~/utils/mixedGrid'
+import { buildOrderSizePayload, validateOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload } from '~/utils/stopLoss'
 import { buildTakeProfitPayload } from '~/utils/takeProfit'
 
 const botType = defineModel<BotType>('botType', { required: true })
 const symbol = defineModel<string>('symbol', { required: true })
 const direction = defineModel<GridDirection>('direction', { required: true })
-const initialAmount = defineModel<string>('initialAmount', { required: true })
+const orderSizeMode = defineModel<OrderSizeMode>('orderSizeMode', { required: true })
+const orderSizeValue = defineModel<string>('orderSizeValue', { required: true })
 const gridOrdersCount = defineModel<number>('gridOrdersCount', { required: true })
 const gridStepPercent = defineModel<string>('gridStepPercent', { required: true })
 const volumeMode = defineModel<VolumeMode>('volumeMode', { required: true })
@@ -18,6 +21,9 @@ const stopLossValue = defineModel<string>('stopLossValue', { required: true })
 const leverage = defineModel<number>('leverage', { required: true })
 const currentPrice = defineModel<string>('currentPrice', { required: true })
 const totalBalance = defineModel<string>('totalBalance', { required: true })
+const sizingMode = defineModel<GridSizingMode>('sizingMode', { default: 'legacy' })
+const mixedGrid = defineModel<MixedGridForm>('mixedGrid', { default: () => defaultMixedGridForm() })
+const isMixed = computed(() => sizingMode.value === 'mixed')
 
 const { t } = useI18n()
 const { liquidationChecking, liquidationError, checkLiquidation, creating } = useBots()
@@ -36,13 +42,36 @@ function formatPrice(value: number): string {
 
 function buildLiquidationConfig(): GridFuturesConfig {
   const startPriceValue = startPrice.value.trim()
+  const orderSize = buildOrderSizePayload(orderSizeMode.value, orderSizeValue.value)
   const takeProfit = buildTakeProfitPayload(takeProfitMode.value, takeProfitValue.value)
   const stopLoss = buildStopLossPayload(stopLossMode.value, stopLossValue.value)
+
+  if (isMixed.value) {
+    // Mixed sizes: % orders are taken from the bot's deposit, not from the balance below
+    return {
+      symbol: symbol.value.trim().toUpperCase(),
+      direction: direction.value,
+      initial_amount: null,
+      initial_amount_usdt: null,
+      initial_amount_percent: null,
+      grid_orders_count: Math.max(mixedGrid.value.orders.length - 1, 1),
+      grid_step_percent: gridStepPercent.value.trim(),
+      volume_mode: 'fixed',
+      take_profit_percent: takeProfit.take_profit_percent,
+      take_profit_amount: takeProfit.take_profit_amount,
+      stop_loss_percent: stopLoss.stop_loss_percent,
+      sizing_mode: 'mixed',
+      mixed_grid: buildMixedGridPayload(mixedGrid.value),
+      ...(startPriceValue ? { start_price: startPriceValue } : {}),
+    }
+  }
 
   return {
     symbol: symbol.value.trim().toUpperCase(),
     direction: direction.value,
-    initial_amount: initialAmount.value.trim(),
+    initial_amount: orderSize.initial_amount,
+    initial_amount_usdt: orderSize.initial_amount_usdt,
+    initial_amount_percent: orderSize.initial_amount_percent,
     grid_orders_count: gridOrdersCount.value,
     grid_step_percent: gridStepPercent.value.trim(),
     volume_mode: volumeMode.value,
@@ -76,12 +105,15 @@ function validateLiquidation(): boolean {
     return false
   }
 
-  if (!initialAmount.value.trim()) {
-    liquidationCheckError.value = t('bots.error_amount_required')
+  const sizeError = isMixed.value
+    ? validateMixedGrid(mixedGrid.value, t)
+    : validateOrderSize(orderSizeValue.value, t, orderSizeMode.value)
+  if (sizeError) {
+    liquidationCheckError.value = sizeError
     return false
   }
 
-  if (gridOrdersCount.value < 1 || gridOrdersCount.value > 500) {
+  if (!isMixed.value && (gridOrdersCount.value < 1 || gridOrdersCount.value > 500)) {
     liquidationCheckError.value = t('bots.error_grid_orders')
     return false
   }
@@ -143,7 +175,7 @@ async function handleCheckLiquidation() {
 }
 
 watch(
-  [botType, symbol, direction, initialAmount, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
+  [botType, symbol, direction, orderSizeMode, orderSizeValue, gridOrdersCount, gridStepPercent, volumeMode, startPrice, takeProfitMode, takeProfitValue, stopLossMode, stopLossValue, leverage, currentPrice, totalBalance],
   clearLiquidationResult,
 )
 
@@ -191,16 +223,20 @@ defineExpose({ clearResult: clearLiquidationResult })
         />
       </UFormField>
 
-      <UFormField :label="$t('bots.field_initial_amount')">
-        <UInput
-          id="liquidation-initial-amount"
-          v-model="initialAmount"
-          inputmode="decimal"
-          class="w-full"
-        />
-      </UFormField>
+      <BotOrderSizeFields
+        v-if="!isMixed"
+        v-model:mode="orderSizeMode"
+        v-model:value="orderSizeValue"
+        input-id="liquidation-order-size"
+        :symbol="symbol"
+        compact
+      />
 
-      <UFormField :label="$t('bots.field_grid_orders')">
+      <p v-else class="liquidation-mixed-note">
+        {{ $t('bots.liquidation_mixed_note', { count: mixedGrid.orders.length, deposit: mixedGrid.deposit || '—' }) }}
+      </p>
+
+      <UFormField v-if="!isMixed" :label="$t('bots.field_grid_orders')">
         <UInput
           id="liquidation-grid-orders"
           v-model.number="gridOrdersCount"
@@ -220,7 +256,7 @@ defineExpose({ clearResult: clearLiquidationResult })
         />
       </UFormField>
 
-      <UFormField :label="$t('bots.field_volume_mode')">
+      <UFormField v-if="!isMixed" :label="$t('bots.field_volume_mode')">
         <USelect
           id="liquidation-volume-mode"
           v-model="volumeMode"
@@ -378,5 +414,12 @@ defineExpose({ clearResult: clearLiquidationResult })
 
 .liquidation-result__value--accent {
   color: var(--color-accent);
+}
+
+.liquidation-mixed-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 </style>

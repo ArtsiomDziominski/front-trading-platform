@@ -93,4 +93,5 @@ flowchart TD
 Take-profit и stop-loss независимы: оба можно включить сразу. XOR `%` / `USDT` есть только у TP.
 
 Telegram-алерт — отдельный экран, см. [`../user/telegram-settings.md`](../user/telegram-settings.md).  
-Stop-loss сетки — отдельный блок и поле `stop_loss_percent`, см. [`stop-loss.md`](./stop-loss.md).
+Stop-loss сетки — отдельный блок и поле `stop_loss_percent`, см. [`stop-loss.md`](./stop-loss.md).  
+Размер ордера (`initial_amount` / `initial_amount_usdt`) от take-profit не зависит, см. [`order-size.md`](./order-size.md).

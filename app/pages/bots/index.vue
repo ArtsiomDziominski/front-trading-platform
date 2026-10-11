@@ -35,6 +35,7 @@ const {
 let unsubscribeWs: (() => void) | undefined
 
 const filter = ref<BotFilterKey>('all')
+const favoritesOnly = ref(false)
 const helpOpen = ref(false)
 const confirmOpen = ref(false)
 const confirmLoading = ref(false)
@@ -136,7 +137,7 @@ useSeoMeta({
 function loadBots() {
   clearBulkActionFeedback()
   const statuses = filter.value === 'all' ? undefined : FILTER_STATUSES[filter.value]
-  return fetchBots(statuses)
+  return fetchBots(statuses, favoritesOnly.value ? true : undefined)
 }
 
 function openBulkConfirm(action: BulkActionKey) {
@@ -172,7 +173,7 @@ async function confirmBulkAction() {
   }
 }
 
-watch(filter, () => {
+watch([filter, favoritesOnly], () => {
   loadBots()
 })
 
@@ -248,6 +249,15 @@ onUnmounted(() => {
             :items="filterSelectItems"
             :aria-label="$t('bots.filter_label')"
           />
+
+          <AppButton
+            size="sm"
+            icon="i-lucide-star"
+            :variant="favoritesOnly ? 'primary' : 'secondary'"
+            :aria-pressed="favoritesOnly"
+            :label="$t('bots.filter_favorites')"
+            @click="favoritesOnly = !favoritesOnly"
+          />
         </div>
 
         <div class="bots-toolbar__bulk">
@@ -321,8 +331,8 @@ onUnmounted(() => {
         <div class="empty-state__icon" aria-hidden="true">
           <UIcon name="i-lucide-bot-off" class="empty-state__glyph" />
         </div>
-        <p class="empty-state__text">{{ $t('bots.no_bots') }}</p>
-        <div class="empty-state__actions">
+        <p class="empty-state__text">{{ favoritesOnly ? $t('bots.no_favorite_bots') : $t('bots.no_bots') }}</p>
+        <div v-if="!favoritesOnly" class="empty-state__actions">
           <AppButton to="/bots/create">
             {{ $t('bots.create_first') }}
           </AppButton>
@@ -381,6 +391,9 @@ onUnmounted(() => {
 }
 
 .bots-toolbar__filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   flex: 1;
 }
@@ -392,7 +405,7 @@ onUnmounted(() => {
 }
 
 .bots-toolbar__select {
-  width: 100%;
+  flex: 1;
   min-width: 0;
 }
 

@@ -113,7 +113,7 @@ async function handleCreateSubmit() {
       exchange: exchange.value,
       api_key: trimmedKey,
       api_secret: trimmedSecret,
-      ...(needsPassphrase.value ? { api_passphrase: trimmedPassphrase } : {}),
+      ...(needsPassphrase.value ? { passphrase: trimmedPassphrase } : {}),
       label: label.value.trim() || undefined,
     })
     formSuccess.value = true

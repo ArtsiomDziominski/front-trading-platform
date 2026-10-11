@@ -9,6 +9,7 @@ export type BotWsEventType =
   | 'bot_error'
   | 'bot_grid_redeployed'
   | 'bot_config_updated'
+  | 'bot_favorite_updated'
 
 export interface BotWsMessage {
   event: BotWsEventType

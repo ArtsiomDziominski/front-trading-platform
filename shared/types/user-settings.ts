@@ -5,6 +5,8 @@ export type TelegramNotificationId =
   | 'bot_grid_redeployed'
   | 'bot_removed'
   | 'bot_config_updated'
+  | 'cycle_started'
+  | 'cycle_closed'
   | 'profit_alert'
 
 /** @deprecated Use TelegramNotificationId */

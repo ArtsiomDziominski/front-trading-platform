@@ -4,6 +4,10 @@ export type CreationSettingKey =
   | 'symbol'
   | 'direction'
   | 'initial_amount'
+  | 'initial_amount_usdt'
+  | 'initial_amount_percent'
+  | 'mixed_deposit_usdt'
+  | 'mixed_orders_summary'
   | 'grid_orders_count'
   | 'grid_step_percent'
   | 'volume_mode'
@@ -12,6 +16,12 @@ export type CreationSettingKey =
   | 'take_profit_percent'
   | 'take_profit_amount'
   | 'stop_loss_percent'
+  | 'orders_summary'
+  | 'breakout_lookback_hours'
+  | 'ema_fast_period'
+  | 'ema_slow_period'
+  | 'trailing_stop_percent'
+  | 'leverage'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -24,6 +34,10 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'symbol',
   'direction',
   'initial_amount',
+  'initial_amount_usdt',
+  'initial_amount_percent',
+  'mixed_deposit_usdt',
+  'mixed_orders_summary',
   'grid_orders_count',
   'grid_step_percent',
   'volume_mode',
@@ -32,6 +46,12 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'take_profit_percent',
   'take_profit_amount',
   'stop_loss_percent',
+  'orders_summary',
+  'breakout_lookback_hours',
+  'ema_fast_period',
+  'ema_slow_period',
+  'trailing_stop_percent',
+  'leverage',
 ]
 
 function readConfig(payload: Record<string, unknown>): Record<string, unknown> {
@@ -53,6 +73,43 @@ function readNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+function readOrdersSummary(value: unknown): string | null {
+  if (!Array.isArray(value) || !value.length) return null
+
+  const parts = value.map((item) => {
+    if (!item || typeof item !== 'object') return null
+    const row = item as Record<string, unknown>
+    const trigger = readString(row.trigger_percent)
+    const size = readString(row.size_percent)
+    if (trigger == null || size == null) return null
+    return `${trigger}%→${size}%`
+  })
+
+  return parts.every((part) => part != null) ? parts.join(' · ') : null
+}
+
+/** Mixed grid orders in a line: `1 USDT ×4 · 5% · 10% · 15%` (equal neighbours collapsed). */
+function readMixedOrdersSummary(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null
+  const orders = (value as { orders?: unknown }).orders
+  if (!Array.isArray(orders) || !orders.length) return null
+
+  const labels = orders.map((item) => {
+    const row = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
+    const size = readString(row.size) ?? '?'
+    return row.unit === 'PERCENT' ? `${size}%` : `${size} USDT`
+  })
+  const parts: string[] = []
+  for (let index = 0; index < labels.length;) {
+    let end = index
+    while (end + 1 < labels.length && labels[end + 1] === labels[index]) end += 1
+    const count = end - index + 1
+    parts.push(count > 1 ? `${labels[index]} ×${count}` : String(labels[index]))
+    index = end + 1
+  }
+  return parts.join(' · ')
+}
+
 export function extractCreationHistorySettings(
   payload: Record<string, unknown>,
   fallbackSymbol?: string | null,
@@ -70,6 +127,13 @@ export function extractCreationHistorySettings(
   set('symbol', readString(config.symbol) ?? readString(fallbackSymbol))
   set('direction', readString(config.direction)?.toUpperCase() ?? null)
   set('initial_amount', readString(config.initial_amount))
+  set('initial_amount_usdt', readString(config.initial_amount_usdt))
+  set('initial_amount_percent', readString(config.initial_amount_percent))
+  if (config.sizing_mode === 'mixed') {
+    const mixed = (config.mixed_grid && typeof config.mixed_grid === 'object' ? config.mixed_grid : {}) as Record<string, unknown>
+    set('mixed_deposit_usdt', readString(mixed.deposit_usdt))
+    set('mixed_orders_summary', readMixedOrdersSummary(mixed))
+  }
   set('grid_orders_count', readNumber(config.grid_orders_count))
   set('grid_step_percent', readString(config.grid_step_percent))
   set('volume_mode', readString(config.volume_mode)?.toLowerCase() ?? null)
@@ -93,6 +157,13 @@ export function extractCreationHistorySettings(
   if (stopLossPercent != null && stopLossPercent > 0) {
     set('stop_loss_percent', stopLossPercent)
   }
+
+  set('orders_summary', readOrdersSummary(config.orders))
+  set('breakout_lookback_hours', readNumber(config.breakout_lookback_hours))
+  set('ema_fast_period', readNumber(config.ema_fast_period))
+  set('ema_slow_period', readNumber(config.ema_slow_period))
+  set('trailing_stop_percent', readString(config.trailing_stop_percent))
+  set('leverage', readNumber(config.leverage))
 
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
