@@ -1,4 +1,5 @@
 import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
+import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
@@ -63,11 +64,13 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
   if (!VOLUME_MODES.includes(volumeMode as VolumeMode)) return null
   if (!asString(config.grid_step_percent).trim()) return null
 
-  // Old entries only have `initial_amount`; newer ones carry either field with the other one `null`
+  // Mixed sizes: the order table replaces the single size field
+  const mixed = isMixedConfig(config) ? parseMixedGrid(config.mixed_grid) : null
+  // Old entries only have `initial_amount`; newer ones carry one of the size fields with the others `null`
   const orderSize = parseOrderSize(config)
-  if (!orderSize.value) return null
+  if (!mixed && !orderSize.value) return null
 
-  const gridOrdersCount = Number(config.grid_orders_count)
+  const gridOrdersCount = mixed ? mixed.orders.length - 1 : Number(config.grid_orders_count)
   if (!Number.isFinite(gridOrdersCount) || gridOrdersCount < 1 || gridOrdersCount > 500) {
     return null
   }
@@ -82,10 +85,20 @@ function parseConfig(raw: unknown): GridFuturesConfig | null {
   const stopLoss = parseStopLoss(config)
   const stopLossFields = buildStopLossPayload(stopLoss.mode, stopLoss.value)
 
+  const sizeFields = mixed
+    ? {
+        initial_amount: null,
+        initial_amount_usdt: null,
+        initial_amount_percent: null,
+        sizing_mode: 'mixed' as const,
+        mixed_grid: buildMixedGridPayload(mixed),
+      }
+    : buildOrderSizePayload(orderSize.mode, orderSize.value)
+
   return {
     symbol,
     direction: direction as GridDirection,
-    ...buildOrderSizePayload(orderSize.mode, orderSize.value),
+    ...sizeFields,
     grid_orders_count: gridOrdersCount,
     grid_step_percent: asString(config.grid_step_percent).trim(),
     volume_mode: volumeMode as VolumeMode,

@@ -5,6 +5,9 @@ export type CreationSettingKey =
   | 'direction'
   | 'initial_amount'
   | 'initial_amount_usdt'
+  | 'initial_amount_percent'
+  | 'mixed_deposit_usdt'
+  | 'mixed_orders_summary'
   | 'grid_orders_count'
   | 'grid_step_percent'
   | 'volume_mode'
@@ -32,6 +35,9 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'direction',
   'initial_amount',
   'initial_amount_usdt',
+  'initial_amount_percent',
+  'mixed_deposit_usdt',
+  'mixed_orders_summary',
   'grid_orders_count',
   'grid_step_percent',
   'volume_mode',
@@ -82,6 +88,28 @@ function readOrdersSummary(value: unknown): string | null {
   return parts.every((part) => part != null) ? parts.join(' · ') : null
 }
 
+/** Mixed grid orders in a line: `1 USDT ×4 · 5% · 10% · 15%` (equal neighbours collapsed). */
+function readMixedOrdersSummary(value: unknown): string | null {
+  if (!value || typeof value !== 'object') return null
+  const orders = (value as { orders?: unknown }).orders
+  if (!Array.isArray(orders) || !orders.length) return null
+
+  const labels = orders.map((item) => {
+    const row = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
+    const size = readString(row.size) ?? '?'
+    return row.unit === 'PERCENT' ? `${size}%` : `${size} USDT`
+  })
+  const parts: string[] = []
+  for (let index = 0; index < labels.length;) {
+    let end = index
+    while (end + 1 < labels.length && labels[end + 1] === labels[index]) end += 1
+    const count = end - index + 1
+    parts.push(count > 1 ? `${labels[index]} ×${count}` : String(labels[index]))
+    index = end + 1
+  }
+  return parts.join(' · ')
+}
+
 export function extractCreationHistorySettings(
   payload: Record<string, unknown>,
   fallbackSymbol?: string | null,
@@ -100,6 +128,12 @@ export function extractCreationHistorySettings(
   set('direction', readString(config.direction)?.toUpperCase() ?? null)
   set('initial_amount', readString(config.initial_amount))
   set('initial_amount_usdt', readString(config.initial_amount_usdt))
+  set('initial_amount_percent', readString(config.initial_amount_percent))
+  if (config.sizing_mode === 'mixed') {
+    const mixed = (config.mixed_grid && typeof config.mixed_grid === 'object' ? config.mixed_grid : {}) as Record<string, unknown>
+    set('mixed_deposit_usdt', readString(mixed.deposit_usdt))
+    set('mixed_orders_summary', readMixedOrdersSummary(mixed))
+  }
   set('grid_orders_count', readNumber(config.grid_orders_count))
   set('grid_step_percent', readString(config.grid_step_percent))
   set('volume_mode', readString(config.volume_mode)?.toLowerCase() ?? null)

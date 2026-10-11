@@ -14,6 +14,9 @@ const QUOTE_SUFFIXES = ['FDUSD', 'USDT', 'USDC', 'BUSD', 'USD']
 
 const SIZE_FIELD_PATTERN = /initial_amount/i
 
+/** Same bound as the API: % of the balance as notional, so with leverage it may exceed 100. */
+export const ORDER_SIZE_PERCENT_MAX = 1000
+
 /** A size field counts as set only when it is a number greater than zero. */
 function readAmount(value: unknown): string | null {
   const parsed = toNullableNumber(value)
@@ -25,10 +28,13 @@ function readAmount(value: unknown): string | null {
 }
 
 /**
- * Reads the order size from a bot config: `initial_amount_usdt` wins when set,
- * otherwise `initial_amount`. Bots created before the USDT mode have no `initial_amount_usdt` key.
+ * Reads the order size from a bot config: `initial_amount_percent`, then `initial_amount_usdt`,
+ * then `initial_amount`. Bots created before the USDT / percent modes do not have those keys.
  */
 export function parseOrderSize(config: ConfigLike): ParsedOrderSize {
+  const percent = readAmount(config?.initial_amount_percent)
+  if (percent != null) return { mode: OrderSizeMode.Percent, value: percent }
+
   const usdt = readAmount(config?.initial_amount_usdt)
   if (usdt != null) return { mode: OrderSizeMode.Usdt, value: usdt }
 
@@ -38,38 +44,44 @@ export function parseOrderSize(config: ConfigLike): ParsedOrderSize {
   return { mode: OrderSizeMode.Coin, value: '' }
 }
 
-/** Exactly one field carries the size, the other one is an explicit `null` (never `0` or `""`). */
+/** Exactly one field carries the size, the others are an explicit `null` (never `0` or `""`). */
 export function buildOrderSizePayload(mode: OrderSizeMode, rawValue: string) {
   const value = rawValue.trim() || null
 
   return {
     initial_amount: mode === OrderSizeMode.Coin ? value : null,
     initial_amount_usdt: mode === OrderSizeMode.Usdt ? value : null,
+    initial_amount_percent: mode === OrderSizeMode.Percent ? value : null,
   }
 }
 
 /**
  * Brings a stored config into the shape the API accepts back on `PATCH /bots/{id}`:
- * one size field set, the other one `null`. A config with both or neither is left to the API to judge.
+ * one size field set, the others `null`. A config with several or none is left to the API to judge.
  */
 export function normalizeOrderSizeFields(config: Record<string, unknown>): Record<string, unknown> {
   const hasCoin = readAmount(config.initial_amount) != null
   const hasUsdt = readAmount(config.initial_amount_usdt) != null
+  const hasPercent = readAmount(config.initial_amount_percent) != null
 
-  if (hasCoin === hasUsdt) return config
+  if ([hasCoin, hasUsdt, hasPercent].filter(Boolean).length !== 1) return config
 
   return {
     ...config,
     initial_amount: hasCoin ? config.initial_amount : null,
     initial_amount_usdt: hasUsdt ? config.initial_amount_usdt : null,
+    initial_amount_percent: hasPercent ? config.initial_amount_percent : null,
   }
 }
 
 /** The only check the client can do — exchange minimums are unknown until the API answers. */
-export function validateOrderSize(rawValue: string, t: (key: string) => string) {
+export function validateOrderSize(rawValue: string, t: (key: string) => string, mode?: OrderSizeMode) {
   const parsed = toNullableNumber(rawValue.trim())
 
-  return parsed == null || parsed <= 0 ? t('bots.error_order_size_positive') : null
+  if (parsed == null || parsed <= 0) return t('bots.error_order_size_positive')
+  if (mode === OrderSizeMode.Percent && parsed > ORDER_SIZE_PERCENT_MAX) return t('bots.error_order_size_percent_max')
+
+  return null
 }
 
 /** `ETHUSDT` → `ETH`; null when the quote currency cannot be told apart. */
@@ -93,6 +105,10 @@ export function formatOrderSizeBadge(
     return t('bots.order_size_badge_usdt', { value })
   }
 
+  if (mode === OrderSizeMode.Percent) {
+    return t('bots.order_size_badge_percent', { value })
+  }
+
   return t('bots.order_size_badge_coin', { value, coin: baseCoinFromSymbol(symbol) ?? '' }).trim()
 }
 
@@ -112,13 +128,14 @@ function readErrorDetail(error: unknown): unknown {
 }
 
 /**
- * 422: the size fields are the problem (both set, none, `<= 0`, not a number).
- * 400 in USDT mode: the amount is below the exchange minimum, the bot was not created.
+ * 422: the size fields are the problem (several set, none, `<= 0`, not a number).
+ * 400 in USDT / percent mode: the amount is below the exchange minimum (or there is no free balance),
+ * the bot was not created.
  */
 export function isOrderSizeApiError(error: unknown, mode: OrderSizeMode) {
   const status = getApiErrorStatus(error)
 
-  if (status === 400) return mode === OrderSizeMode.Usdt
+  if (status === 400) return mode === OrderSizeMode.Usdt || mode === OrderSizeMode.Percent
   if (status !== 422) return false
 
   const detail = readErrorDetail(error)

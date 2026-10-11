@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
-import { OrderSizeMode, StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type VolumeMode } from '#shared/types/bot'
+import { OrderSizeMode, StopLossMode, TakeProfitMode, type AntiMartingaleOrderLevel, type BotCreationLogOut, type BotCreate, type BotType, type GridDirection, type GridSizingMode, type VolumeMode } from '#shared/types/bot'
+import { defaultMixedGridForm, type MixedGridForm } from '~/utils/mixedGrid'
 import { parseApiError } from '~/utils/parseApiError'
 import { parseBotCreatePayload } from '~/utils/parseBotCreatePayload'
 
@@ -47,6 +48,8 @@ const takeProfitValue = ref('')
 const stopLossMode = ref<StopLossMode>(StopLossMode.Off)
 const stopLossValue = ref('')
 const botType = ref<BotType>('GRID_FUTURES')
+const sizingMode = ref<GridSizingMode>('legacy')
+const mixedGrid = ref<MixedGridForm>(defaultMixedGridForm())
 const leverage = ref(10)
 const currentPrice = ref('')
 const totalBalance = ref('')
@@ -188,6 +191,8 @@ async function handleBotCreated() {
             v-model:am-ema-slow-period="amEmaSlowPeriod"
             v-model:am-trailing-stop-percent="amTrailingStopPercent"
             v-model:am-leverage="amLeverage"
+            v-model:sizing-mode="sizingMode"
+            v-model:mixed-grid="mixedGrid"
             :api-keys="apiKeys"
             :existing-bots="bots"
             :show-clone-notice="clonedFromId != null"
@@ -225,6 +230,8 @@ async function handleBotCreated() {
             v-model:leverage="leverage"
             v-model:current-price="currentPrice"
             v-model:total-balance="totalBalance"
+            v-model:sizing-mode="sizingMode"
+            v-model:mixed-grid="mixedGrid"
           />
         </div>
       </div>

@@ -32,6 +32,9 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   order_filled: 'bots.event_type_order_filled_grid',
   removed_from_tracking: 'bots.event_type_removed_from_tracking',
   cycle_started: 'bots.event_type_cycle_started',
+  grid_size_resolved: 'bots.event_type_grid_size_resolved',
+  grid_cycle_started: 'bots.event_type_grid_cycle_started',
+  grid_cycle_settled: 'bots.event_type_grid_cycle_settled',
   addon_placed: 'bots.event_type_addon_placed',
   addon_rejected: 'bots.event_type_addon_rejected',
   entry_rejected: 'bots.event_type_entry_rejected',
@@ -171,6 +174,7 @@ export function botEventTypeTone(eventType: string): BotEventTone {
     || type === 'running'
     || type === 'created_ok'
     || type === 'cycle_started'
+    || type === 'grid_cycle_started'
     || type.includes('created')
   ) {
     return 'created'

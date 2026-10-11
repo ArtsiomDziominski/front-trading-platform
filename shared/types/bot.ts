@@ -34,18 +34,109 @@ export enum OrderSizeMode {
   Coin = 'coin',
   /** `initial_amount_usdt` — entry notional in USDT (quantity × price, not margin). */
   Usdt = 'usdt',
+  /** `initial_amount_percent` — entry notional as % of the free USDT balance at the moment of the entry. */
+  Percent = 'percent',
+}
+
+/** `legacy` — one entry size + `volume_mode`; `mixed` — every order sized on its own. Missing on old bots = legacy. */
+export type GridSizingMode = 'legacy' | 'mixed'
+
+/** `USDT` — fixed notional; `PERCENT` — % of the deposit fixed at the start of the cycle. */
+export type GridOrderUnit = 'USDT' | 'PERCENT'
+
+export type GridProgressionType = 'none' | 'arithmetic' | 'geometric'
+
+export interface GridOrderSpec {
+  /** Notional in USDT or % of the deposit (not margin: leverage does not multiply it). */
+  size: string | number
+  unit: GridOrderUnit
+  /** Price step to the NEXT order, %; null = `grid_step_percent`. */
+  step_percent?: string | number | null
+}
+
+export interface GridProgression {
+  /** 1-based; always `fixed_orders_count + 1`. */
+  start_order: number
+  type: GridProgressionType
+  start_value: string | number
+  unit: GridOrderUnit
+  /** Arithmetic: added to each next order. */
+  increment?: string | number | null
+  /** Geometric: each next order is multiplied by it. */
+  ratio?: string | number | null
+  step_percent?: string | number | null
+}
+
+export interface MixedGridSettings {
+  /** Capital allocated to this bot; % orders are sized from it and it is compounded after every cycle. */
+  deposit_usdt: string | number
+  fixed_orders_count: number
+  fixed_order_usdt?: string | number | null
+  /** The fill recipe, kept so it can be re-applied; sizes always come from `orders`. */
+  progression?: GridProgression | null
+  /** All orders: #1 is the market entry, #2… are grid levels. */
+  orders: GridOrderSpec[]
+}
+
+export interface GridCycleOrderSnapshot {
+  number: number
+  kind: 'entry' | 'grid'
+  client_order_id: string
+  size: string
+  unit: GridOrderUnit
+  step_percent: string | null
+  notional_usdt: string
+  price: string
+  quantity: string
+}
+
+export interface GridCycleSettlement {
+  config_version: number
+  started_at: string
+  closed_at: string
+  base_deposit_usdt: string
+  realized_pnl_usdt: string
+  fees_usdt: string
+  funding_usdt: string
+  net_result_usdt: string
+  deposit_after_usdt: string
+  source: 'exchange_income' | 'orders_estimate' | 'unavailable'
+}
+
+/** `bots.cycle_state`, mixed grids only. */
+export interface GridCycleState {
+  /** Deposit the next cycle starts from (compounded). */
+  deposit_usdt?: string
+  deposit_source_usdt?: string
+  cycle?: {
+    config_version: number
+    started_at: string
+    closed_at: string | null
+    settled: boolean
+    base_deposit_usdt: string
+    anchor_price: string
+    total_notional_usdt: string
+    config: Record<string, unknown>
+    orders: GridCycleOrderSnapshot[]
+  }
+  history?: GridCycleSettlement[]
 }
 
 export interface GridFuturesConfig {
   symbol: string
   direction: GridDirection
   /**
-   * Entry size in the base coin. Send exactly one of `initial_amount` / `initial_amount_usdt`:
+   * Entry size in the base coin. Send exactly one of `initial_amount` / `initial_amount_usdt` / `initial_amount_percent`:
    * the unused one is `null` or omitted, never `0` or `""`.
    */
   initial_amount?: string | number | null
   /** Entry notional in USDT. Bots created before this field existed do not have the key. */
   initial_amount_usdt?: string | number | null
+  /**
+   * Entry notional as % of the free USDT balance (0…1000), taken when the entry is placed and then
+   * fixed in USDT until the grid restarts. Bots created before this field existed do not have the key.
+   */
+  initial_amount_percent?: string | number | null
   grid_orders_count: number
   grid_step_percent: string | number
   volume_mode: VolumeMode
@@ -57,6 +148,10 @@ export interface GridFuturesConfig {
   take_profit_amount?: string | number | null
   /** Price shift from last filled grid level, 0…100; null/0 = off. */
   stop_loss_percent?: string | number | null
+  /** Missing on bots created before the mixed mode = `legacy`. */
+  sizing_mode?: GridSizingMode
+  /** Only with `sizing_mode: 'mixed'`; then all `initial_amount*` are null and `grid_orders_count` = orders − 1. */
+  mixed_grid?: MixedGridSettings | null
 }
 
 export interface AntiMartingaleOrderLevel {
@@ -124,6 +219,8 @@ export interface BotOut {
   engine_error: string | null
   config: Record<string, unknown>
   config_version: number
+  /** Mixed grids: deposit, the frozen snapshot of the current cycle and finished cycles. */
+  cycle_state?: GridCycleState | null
   /** Missing in old caches — treat as false. */
   favorite?: boolean
   created_at: string
@@ -205,6 +302,8 @@ export type BotEventType =
   | 'entry_rejected'
   | 'exit_order_filled'
   | 'cycle_closed'
+  | 'grid_cycle_started'
+  | 'grid_cycle_settled'
   | 'error'
 
 export interface BotEventOut {

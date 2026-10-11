@@ -25,24 +25,28 @@ const rootRef = useTemplateRef('rootRef')
 const modeOptions = computed(() => [
   { mode: OrderSizeMode.Coin, label: t('bots.order_size_mode_coin') },
   { mode: OrderSizeMode.Usdt, label: t('bots.order_size_mode_usdt') },
+  { mode: OrderSizeMode.Percent, label: t('bots.order_size_mode_percent') },
 ])
 
 const isUsdt = computed(() => mode.value === OrderSizeMode.Usdt)
+const isPercent = computed(() => mode.value === OrderSizeMode.Percent)
 const baseCoin = computed(() => baseCoinFromSymbol(props.symbol))
 
 const inputLabel = computed(() => {
   if (isUsdt.value) return t('bots.order_size_label_usdt')
+  if (isPercent.value) return t('bots.order_size_label_percent')
 
   return baseCoin.value
     ? t('bots.order_size_label_coin', { coin: baseCoin.value })
     : t('bots.order_size_label_coin_generic')
 })
 
-const placeholder = computed(() => (
-  isUsdt.value
-    ? t('bots.order_size_placeholder_usdt')
-    : t('bots.order_size_placeholder_coin')
-))
+const placeholder = computed(() => {
+  if (isUsdt.value) return t('bots.order_size_placeholder_usdt')
+  if (isPercent.value) return t('bots.order_size_placeholder_percent')
+
+  return t('bots.order_size_placeholder_coin')
+})
 
 function selectMode(next: OrderSizeMode) {
   if (mode.value === next) return
@@ -99,6 +103,12 @@ defineExpose({ reveal })
       <template v-if="isUsdt && !compact">
         <p class="order-size__hint">{{ $t('bots.order_size_hint_notional') }}</p>
         <p class="order-size__hint">{{ $t('bots.order_size_hint_rounding') }}</p>
+        <p class="order-size__hint">{{ $t('bots.order_size_hint_levels') }}</p>
+      </template>
+
+      <template v-if="isPercent && !compact">
+        <p class="order-size__hint">{{ $t('bots.order_size_hint_percent') }}</p>
+        <p class="order-size__hint">{{ $t('bots.order_size_hint_notional') }}</p>
         <p class="order-size__hint">{{ $t('bots.order_size_hint_levels') }}</p>
       </template>
     </div>
