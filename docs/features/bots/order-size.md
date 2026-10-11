@@ -1,6 +1,6 @@
 # Размер ордера сетки (GRID)
 
-Страницы: `/bots/create` (создание, в том числе панель проверки ликвидации), карточка бота на `/bots` и `/bots/:id` (отображение).
+Страницы: `/bots/create/futures/grid` (создание, в том числе панель проверки ликвидации), карточка бота на `/bots` и `/bots/:id` (отображение).
 
 Размер живёт в **`bot.config`** (`GRID_FUTURES`, Binance и OKX), не в настройках пользователя. Задать его можно двумя способами: количеством монеты или суммой в USDT. `ANTI_MARTINGALE_FUTURES` не затронут — там размер в процентах от баланса.
 
@@ -84,7 +84,7 @@ flowchart TD
 | Часть | Путь |
 |-------|------|
 | Блок формы | `app/components/BotOrderSizeFields.vue` |
-| Создание | `app/components/BotCreateForm.vue` |
+| Создание | `app/components/BotGridFuturesForm.vue` |
 | Проверка ликвидации | `app/components/BotLiquidationCheck.vue` |
 | Карточка | `app/components/BotCard.vue` |
 | Парсинг / payload / валидация / ошибки API | `app/utils/orderSize.ts` |
