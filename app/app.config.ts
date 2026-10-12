@@ -34,6 +34,8 @@ export default defineAppConfig({
     },
     formField: {
       slots: {
+        // flex-wrap: a long hint drops under the label instead of squeezing it into a narrow column
+        labelWrapper: 'flex flex-wrap content-center items-center justify-between gap-x-3 gap-y-0.5',
         label: 'block font-medium text-[var(--color-text-muted)]',
         description: 'text-[var(--color-text-muted)]',
         hint: 'text-[var(--color-text-muted)]',

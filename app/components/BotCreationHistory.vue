@@ -228,6 +228,7 @@ function settingValue(setting: CreationHistorySetting): string {
 
 .creation-history__copy-btn {
   align-self: stretch;
+  justify-content: center;
 }
 
 .creation-history__item-head {
@@ -273,6 +274,11 @@ function settingValue(setting: CreationHistorySetting): string {
 }
 
 .creation-history__symbol {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 700;
   font-size: 0.95rem;
 }
@@ -344,6 +350,14 @@ function settingValue(setting: CreationHistorySetting): string {
 }
 
 @media (max-width: 640px) {
+  .creation-history {
+    padding: 4px;
+  }
+
+  .creation-history__item {
+    padding: 12px;
+  }
+
   .creation-history__settings {
     grid-template-columns: 1fr;
   }
