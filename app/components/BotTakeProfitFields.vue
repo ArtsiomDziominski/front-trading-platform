@@ -91,7 +91,7 @@ onUnmounted(hideUnitHint)
     <div v-if="enabled" class="take-profit__fields">
       <UFormField
         :label="$t('bots.take_profit_value')"
-        :error="props.error"
+        :error="props.error || undefined"
       >
         <UInput
           id="bot-take-profit-value"

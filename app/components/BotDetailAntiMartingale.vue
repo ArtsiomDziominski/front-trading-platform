@@ -284,11 +284,11 @@ const cycleRows = computed(() => cycleList.value.map((cycle) => {
           <tbody>
             <tr v-for="leg in current.legs" :key="leg.index">
               <td>{{ leg.index === 0 ? $t('bots.am_leg_entry') : $t('bots.am_leg_addon', { n: leg.index }) }}</td>
-              <td class="num">{{ leg.index === 0 ? $t('bots.am_leg_breakout') : `+${leg.triggerPercent}%` }}</td>
-              <td v-if="cycleActive" class="num">{{ legPrice(leg) }}</td>
-              <td class="num">{{ $t('bots.am_leg_size', { percent: leg.sizePercent }) }}</td>
-              <td v-if="cycleActive" class="num">{{ leg.notionalUsdt == null ? '—' : formatUsdt(leg.notionalUsdt, locale) }}</td>
-              <td v-if="cycleActive">
+              <td class="num" :data-label="$t('bots.am_col_trigger')">{{ leg.index === 0 ? $t('bots.am_leg_breakout') : `+${leg.triggerPercent}%` }}</td>
+              <td v-if="cycleActive" class="num" :data-label="$t('bots.am_col_price')">{{ legPrice(leg) }}</td>
+              <td class="num" :data-label="$t('bots.am_col_size')">{{ $t('bots.am_leg_size', { percent: leg.sizePercent }) }}</td>
+              <td v-if="cycleActive" class="num" :data-label="$t('bots.am_col_notional')">{{ leg.notionalUsdt == null ? '—' : formatUsdt(leg.notionalUsdt, locale) }}</td>
+              <td v-if="cycleActive" :data-label="$t('bots.am_col_status')">
                 <span
                   class="am-detail__leg-status"
                   :class="`am-detail__leg-status--${leg.status}`"
@@ -330,13 +330,13 @@ const cycleRows = computed(() => cycleList.value.map((cycle) => {
           </thead>
           <tbody>
             <tr v-for="cycle in cycleRows" :key="cycle.configVersion">
-              <td>{{ cycle.configVersion - 1 }}</td>
-              <td>{{ formatDateTime(cycle.startedAt, locale) }}</td>
-              <td>{{ cycle.closedAt ? formatDuration(cycle.startedAt, cycle.closedAt) : $t('bots.am_cycle_running') }}</td>
-              <td class="num">{{ cycle.startBalance == null ? '—' : formatUsdt(cycle.startBalance, locale) }}</td>
-              <td class="num">{{ approxPrice(cycle.firstEntryPrice, cycle.firstEntryApprox) }}</td>
-              <td class="num">{{ approxPrice(cycle.exitPrice, true) }}</td>
-              <td class="num" :class="`tone-${pnlTone(cycle.change)}`">
+              <td :data-label="$t('bots.am_col_cycle')">{{ cycle.configVersion - 1 }}</td>
+              <td :data-label="$t('bots.am_col_started')">{{ formatDateTime(cycle.startedAt, locale) }}</td>
+              <td :data-label="$t('bots.am_col_duration')">{{ cycle.closedAt ? formatDuration(cycle.startedAt, cycle.closedAt) : $t('bots.am_cycle_running') }}</td>
+              <td class="num" :data-label="$t('bots.am_col_balance')">{{ cycle.startBalance == null ? '—' : formatUsdt(cycle.startBalance, locale) }}</td>
+              <td class="num" :data-label="$t('bots.am_col_entry')">{{ approxPrice(cycle.firstEntryPrice, cycle.firstEntryApprox) }}</td>
+              <td class="num" :data-label="$t('bots.am_col_exit')">{{ approxPrice(cycle.exitPrice, true) }}</td>
+              <td class="num" :class="`tone-${pnlTone(cycle.change)}`" :data-label="$t('bots.am_col_change')">
                 {{ cycle.change == null ? '—' : formatPercentValue(cycle.change, locale, true) }}
               </td>
             </tr>

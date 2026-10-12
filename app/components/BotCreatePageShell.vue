@@ -19,7 +19,7 @@ const hasSidebar = computed(() => Boolean(slots.sidebar))
           <p class="page-header__eyebrow">{{ marketLabel }}</p>
           <h1 class="section-title">{{ title }}</h1>
         </div>
-        <AppButton variant="secondary" to="/bots">
+        <AppButton variant="secondary" size="sm" icon="i-lucide-arrow-left" to="/bots" class="page-header__back">
           {{ $t('bots.back_to_bots') }}
         </AppButton>
       </div>
@@ -111,21 +111,25 @@ const hasSidebar = computed(() => Boolean(slots.sidebar))
 }
 
 @media (max-width: 900px) {
+  /* minmax(0, …): a wide child (an orders table) must not stretch the column past the screen */
   .create-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 640px) {
+  /* Back link above the title, as on the bot page */
   .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 18px;
-    margin-bottom: 24px;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
   }
 
-  .page-header > :last-child {
-    width: 100%;
+  .create-layout,
+  .create-main,
+  .create-sidebar {
+    gap: 16px;
   }
 }
 </style>

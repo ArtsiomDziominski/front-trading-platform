@@ -72,7 +72,7 @@ defineExpose({ reveal })
     <div class="order-size__head">
       <span :id="titleId" class="order-size__title">{{ $t('bots.field_order_size') }}</span>
 
-      <UFieldGroup size="sm" role="group" :aria-labelledby="titleId">
+      <UFieldGroup size="sm" class="segmented" role="group" :aria-labelledby="titleId">
         <!-- Slot text, not the `label` prop: the form card recolours `[data-slot="label"]` and hides it on the white button -->
         <AppButton
           v-for="option in modeOptions"

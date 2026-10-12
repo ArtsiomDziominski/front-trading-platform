@@ -237,7 +237,7 @@ defineExpose({ reveal })
               <span class="mixed-grid__number">{{ index + 1 }}</span>
               <span class="mixed-grid__kind">{{ rowKind(index) }}</span>
             </td>
-            <td>
+            <td :data-label="$t('bots.mixed_col_size')">
               <UInput
                 v-model="row.size"
                 inputmode="decimal"
@@ -246,10 +246,10 @@ defineExpose({ reveal })
                 class="mixed-grid__cell-input"
               />
             </td>
-            <td>
+            <td :data-label="$t('bots.mixed_col_unit')">
               <USelect v-model="row.unit" :items="unitItems" size="sm" class="mixed-grid__cell-select" />
             </td>
-            <td>
+            <td :data-label="$t('bots.mixed_col_step')">
               <UInput
                 v-if="index < form.orders.length - 1"
                 v-model="row.step"
@@ -261,8 +261,8 @@ defineExpose({ reveal })
               />
               <span v-else class="mixed-grid__muted">—</span>
             </td>
-            <td class="mixed-grid__num">{{ formatUsdt(notionals[index]) }}</td>
-            <td v-if="showPrices" class="mixed-grid__num">
+            <td class="mixed-grid__num mixed-grid__notional" :data-label="$t('bots.mixed_col_notional')">{{ formatUsdt(notionals[index]) }}</td>
+            <td v-if="showPrices" class="mixed-grid__num mixed-grid__price" :data-label="$t('bots.mixed_col_price')">
               {{ prices[index] == null ? '—' : priceFormatter.format(prices[index] as number) }}
             </td>
           </tr>
@@ -440,6 +440,105 @@ defineExpose({ reveal })
     &__input {
       width: 100%;
       max-width: 100%;
+    }
+
+    /* Phones: each order is a small card — number and amount on top, the three inputs under their labels */
+    &__table-wrap {
+      max-height: none;
+      overflow: visible;
+    }
+
+    &__table {
+      display: block;
+
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+
+      tbody {
+        display: block;
+      }
+
+      tr {
+        display: grid;
+        /* Middle column fits the unit select so "% депозита" is never cut */
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 6px 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      tr:last-child {
+        border-bottom: 0;
+      }
+
+      td,
+      tr:last-child td {
+        display: block;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        white-space: normal;
+      }
+
+      td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 2px;
+        color: var(--color-text-muted);
+        font-size: 0.72rem;
+      }
+
+      tr td:first-child {
+        grid-column: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+    }
+
+    &__notional {
+      grid-row: 1;
+      grid-column: 2 / -1;
+      white-space: nowrap !important;
+    }
+
+    &__price {
+      grid-column: 1 / -1;
+      display: flex !important;
+      justify-content: space-between;
+
+      &::before {
+        margin: 0 !important;
+      }
+    }
+
+    &__kind {
+      display: inline;
+    }
+
+    &__cell-input {
+      width: 100%;
+    }
+
+    /* USelect renders a Reka trigger without the scoped attribute, so reach it with :deep */
+    :deep(.mixed-grid__cell-select) {
+      width: auto;
+      min-width: 92px;
+    }
+
+    &__notional::before {
+      content: none !important;
+    }
+
+    &__notional::after {
+      content: " USDT";
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
     }
   }
 }

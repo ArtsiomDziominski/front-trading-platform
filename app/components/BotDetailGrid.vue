@@ -154,14 +154,14 @@ function sourceLabel(source: GridCycleSettlement['source']) {
           </thead>
           <tbody>
             <tr v-for="order in cycle.orders" :key="order.client_order_id">
-              <td>{{ order.number }}</td>
-              <td>{{ order.kind === 'entry' ? $t('bots.mixed_kind_entry') : $t('bots.mixed_kind_grid') }}</td>
-              <td class="num">{{ orderSize(order.size, order.unit) }}</td>
-              <td class="num">{{ order.step_percent == null ? '—' : `${order.step_percent}%` }}</td>
-              <td class="num">{{ order.kind === 'entry' ? `≈ ${price(order.price)}` : price(order.price) }}</td>
-              <td class="num">{{ quantity(order.quantity) }}</td>
-              <td class="num">{{ usdt(order.notional_usdt) }}</td>
-              <td>
+              <td :data-label="$t('bots.col_number')">{{ order.number }}</td>
+              <td :data-label="$t('bots.grid_col_kind')">{{ order.kind === 'entry' ? $t('bots.mixed_kind_entry') : $t('bots.mixed_kind_grid') }}</td>
+              <td class="num" :data-label="$t('bots.mixed_col_size')">{{ orderSize(order.size, order.unit) }}</td>
+              <td class="num" :data-label="$t('bots.mixed_col_step')">{{ order.step_percent == null ? '—' : `${order.step_percent}%` }}</td>
+              <td class="num" :data-label="$t('bots.mixed_col_price')">{{ order.kind === 'entry' ? `≈ ${price(order.price)}` : price(order.price) }}</td>
+              <td class="num" :data-label="$t('bots.grid_col_quantity')">{{ quantity(order.quantity) }}</td>
+              <td class="num" :data-label="$t('bots.mixed_col_notional')">{{ usdt(order.notional_usdt) }}</td>
+              <td :data-label="$t('bots.am_col_status')">
                 <span
                   class="grid-detail__order-status"
                   :class="{ 'grid-detail__order-status--filled': filledOrderIds.has(order.client_order_id) }"
@@ -200,16 +200,16 @@ function sourceLabel(source: GridCycleSettlement['source']) {
           </thead>
           <tbody>
             <tr v-for="row in history" :key="`${row.config_version}-${row.closed_at}`">
-              <td>
+              <td :data-label="$t('bots.grid_cycle_closed')">
                 {{ formatDateTime(row.closed_at, locale) }}
                 <span v-if="row.source !== 'exchange_income'" class="grid-detail__source" :title="sourceLabel(row.source)">*</span>
               </td>
-              <td class="num">{{ usdt(row.base_deposit_usdt) }}</td>
-              <td class="num">{{ usdt(row.realized_pnl_usdt, true) }}</td>
-              <td class="num">{{ usdt(row.fees_usdt) }}</td>
-              <td class="num">{{ usdt(row.funding_usdt, true) }}</td>
-              <td class="num" :class="`tone-${pnlTone(toNumber(row.net_result_usdt))}`">{{ usdt(row.net_result_usdt, true) }}</td>
-              <td class="num">{{ usdt(row.deposit_after_usdt) }}</td>
+              <td class="num" :data-label="$t('bots.mixed_base_deposit')">{{ usdt(row.base_deposit_usdt) }}</td>
+              <td class="num" :data-label="$t('bots.grid_col_realized')">{{ usdt(row.realized_pnl_usdt, true) }}</td>
+              <td class="num" :data-label="$t('bots.grid_col_fees')">{{ usdt(row.fees_usdt) }}</td>
+              <td class="num" :data-label="$t('bots.grid_col_funding')">{{ usdt(row.funding_usdt, true) }}</td>
+              <td class="num" :class="`tone-${pnlTone(toNumber(row.net_result_usdt))}`" :data-label="$t('bots.grid_col_net')">{{ usdt(row.net_result_usdt, true) }}</td>
+              <td class="num" :data-label="$t('bots.grid_col_deposit_after')">{{ usdt(row.deposit_after_usdt) }}</td>
             </tr>
           </tbody>
         </table>

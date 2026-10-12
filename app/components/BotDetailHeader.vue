@@ -59,6 +59,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         variant="secondary"
         size="sm"
         icon="i-lucide-list-ordered"
+        class="bot-detail-header__config"
         :disabled="actions.isBusy"
         :loading="actions.isLoading('update-config')"
         @click="actions.openMixedGrid"
@@ -71,6 +72,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         variant="secondary"
         size="sm"
         icon="i-lucide-target"
+        class="bot-detail-header__config"
         :disabled="actions.isBusy"
         @click="actions.openTakeProfit"
       >
@@ -82,6 +84,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         variant="secondary"
         size="sm"
         icon="i-lucide-shield"
+        class="bot-detail-header__config"
         :disabled="actions.isBusy"
         @click="actions.openStopLoss"
       >
@@ -105,6 +108,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
           variant="secondary"
           size="sm"
           icon="i-lucide-refresh-cw"
+          class="bot-detail-header__wide"
           :disabled="actions.isBusy"
           :loading="actions.isLoading('redeploy')"
           @click="actions.openConfirm('redeploy')"
@@ -307,6 +311,34 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
 
 .bot-detail-header__remove:not(:disabled) {
   color: var(--color-danger) !important;
+}
+
+/* Phones: settings with their values as full-width rows, actions two per row */
+@media (max-width: 640px) {
+  .bot-detail-header__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row dense;
+  }
+
+  .bot-detail-header__actions :deep(.app-button) {
+    min-width: 0;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .bot-detail-header__actions :deep(.app-button.bot-detail-header__config) {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .bot-detail-header__config .bot-detail-header__action-value {
+    margin-left: auto;
+  }
+
+  .bot-detail-header__actions :deep(.app-button.bot-detail-header__wide) {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
