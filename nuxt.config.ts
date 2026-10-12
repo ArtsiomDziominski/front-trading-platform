@@ -73,9 +73,6 @@ export default defineNuxtConfig({
     strategy: 'prefix_except_default',
     restructureDir: 'app',
     langDir: 'i18n/',
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
   },
   vite: {
     optimizeDeps: {

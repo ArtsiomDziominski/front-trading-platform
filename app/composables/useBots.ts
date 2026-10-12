@@ -131,7 +131,7 @@ export const useBots = () => {
   }
 
   function isBotDetailRoute(botId: number) {
-    const rawId = route.params.id
+    const rawId = (route.params as { id?: string | string[] }).id
     const paramId = Array.isArray(rawId) ? rawId[0] : rawId
     return route.path === `/bots/${botId}` && Number(paramId) === botId
   }
