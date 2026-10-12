@@ -4,7 +4,10 @@ import { isFiniteCandle } from '~/utils/candleChart'
 
 definePageMeta({
   middleware: 'bots-auth',
-  validate: (route) => /^\d+$/.test(String(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id)),
+  validate: (route) => {
+    const id = (route.params as { id?: string | string[] }).id
+    return /^\d+$/.test(String(Array.isArray(id) ? id[0] : id))
+  },
 })
 
 const route = useRoute()
