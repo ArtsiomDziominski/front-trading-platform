@@ -4,8 +4,9 @@ const auth = useAuth()
 const router = useRouter()
 const config = useRuntimeConfig()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('auth.login_title'),
+  description: () => t('seo.login_description'),
 })
 
 const email = ref('')

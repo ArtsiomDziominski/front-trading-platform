@@ -131,7 +131,7 @@
     "trust_4_label": "live bot monitoring\nover WebSocket",
     "scale_hero_line1": "Better strategies.",
     "scale_hero_line2": "Scalable trading.",
-    "scale_hero_subtitle": "Create, launch, and monitor algorithmic bots on major exchanges — with full control over keys and risk.",
+    "scale_hero_subtitle": "Create, launch, and monitor crypto trading bots on major exchanges — with full control over keys and risk.",
     "scale_hero_secondary": "Explore the platform",
     "scale_partners_label": "Works with",
     "lifecycle_title": "The end-to-end trading lifecycle",
@@ -852,5 +852,28 @@
     "confirm": "Confirm",
     "yes": "Yes",
     "no": "No"
+  },
+  "seo": {
+    "site_name": "Botinex",
+    "default_title": "Botinex — crypto trading bots",
+    "default_description": "Botinex is an automated crypto trading platform: grid and anti-martingale bots for Binance and OKX futures with built-in risk control.",
+    "keywords": "crypto trading bot, crypto bot, bitcoin trading bot, grid bot, grid trading bot, anti-martingale, futures trading bot, Binance bot, OKX bot, automated trading, algorithmic trading, Botinex",
+    "og_image_alt": "Botinex — crypto trading bots for Binance and OKX",
+    "home_title": "Botinex — crypto trading bots for Binance and OKX",
+    "home_description": "Automated crypto trading platform: grid and anti-martingale bots for Binance and OKX futures. Stop loss, take profit and Telegram alerts included.",
+    "home_h1_prefix": "Botinex — crypto trading bots.",
+    "overview_title": "Crypto bots: grid and anti-martingale for futures",
+    "overview_description": "Trading bots available on Botinex: Grid Futures and anti-martingale bots for Binance and OKX futures. How the strategies work and how to get started.",
+    "exchanges_title": "Exchanges for trading bots: Binance and OKX",
+    "exchanges_description": "Connect your Binance or OKX API keys to Botinex and run crypto trading bots. Keys are stored encrypted on the server.",
+    "login_description": "Sign in to Botinex, the crypto trading bot platform.",
+    "register_description": "Create a Botinex account and launch your first crypto trading bot on Binance or OKX in minutes.",
+    "org_description": "Botinex is a service for running automated crypto trading bots on Binance and OKX.",
+    "app_category": "Crypto trading bots",
+    "feature_grid": "Grid bot for futures",
+    "feature_anti_martingale": "Anti-martingale bot for futures",
+    "feature_risk": "Stop loss and take profit",
+    "feature_telegram": "Telegram notifications",
+    "feature_keys": "Encrypted exchange API keys"
   }
 }

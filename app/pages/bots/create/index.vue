@@ -6,9 +6,10 @@ definePageMeta({
 const { t } = useI18n()
 const { market, type, selectedEntry, openSelected } = useBotTypePicker()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('bots.create_title'),
   description: () => t('bots.create_modal_desc'),
+  noindex: true,
 })
 </script>
 

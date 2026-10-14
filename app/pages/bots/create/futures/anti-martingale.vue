@@ -8,9 +8,10 @@ definePageMeta({
 
 const { t } = useI18n()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('bots.type_anti_martingale_futures'),
   description: () => t('bots.create_subtitle'),
+  noindex: true,
 })
 
 const formRef = ref<{

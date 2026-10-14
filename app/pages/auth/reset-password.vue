@@ -2,8 +2,9 @@
 const { t } = useI18n()
 const auth = useAuth()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('auth.reset_password_title'),
+  noindex: true,
 })
 
 const email = ref('')

@@ -4,8 +4,9 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('auth.login_title'),
+  noindex: true,
 })
 
 const status = ref<'loading' | 'error'>('loading')
