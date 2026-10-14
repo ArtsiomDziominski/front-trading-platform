@@ -1,6 +1,6 @@
 export const LOCALE_CATALOG = {
-  ru: { name: 'Русский', file: 'ru.json' },
-  en: { name: 'English', file: 'en.json' },
+  ru: { name: 'Русский', file: 'ru.json', language: 'ru-RU' },
+  en: { name: 'English', file: 'en.json', language: 'en-US' },
 } as const
 
 export type LocaleCode = keyof typeof LOCALE_CATALOG
@@ -12,6 +12,7 @@ export const ALL_I18N_LOCALES = DEFAULT_LOCALE_CODES.map((code) => ({
   code,
   name: LOCALE_CATALOG[code].name,
   file: LOCALE_CATALOG[code].file,
+  language: LOCALE_CATALOG[code].language,
 }))
 
 export function parseLocaleCodesFromEnv(raw = process.env.NUXT_PUBLIC_LOCALES): LocaleCode[] {
@@ -52,5 +53,6 @@ export function buildI18nLocales<const T extends readonly LocaleCode[]>(codes: T
     code,
     name: LOCALE_CATALOG[code].name,
     file: LOCALE_CATALOG[code].file,
+    language: LOCALE_CATALOG[code].language,
   }))
 }

@@ -7,8 +7,9 @@ const { t } = useI18n()
 const auth = useAuth()
 const userSettings = useUserSettings()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('settings.title'),
+  noindex: true,
 })
 
 const name = ref('')

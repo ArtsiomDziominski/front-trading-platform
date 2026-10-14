@@ -1,7 +1,7 @@
 {
-  "name": "Trading Bot Platform",
-  "short_name": "Trading Bot",
-  "description": "Платформа для создания торговых ботов. Binance, Bybit, OKX.",
+  "name": "Botinex — торговые боты для криптовалюты",
+  "short_name": "Botinex",
+  "description": "Платформа для автоматической торговли криптовалютой: grid и анти-мартингейл боты на фьючерсах Binance и OKX.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -19,5 +19,11 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "lang": "ru",
+  "categories": [
+    "finance",
+    "business",
+    "productivity"
   ]
 }

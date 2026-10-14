@@ -80,11 +80,12 @@ watch(eventTrigger, (next, previous) => {
   if (next && previous && next !== previous) refreshEvents()
 })
 
-useSeoMeta({
+usePageSeo({
   title: () => (bot.value
     ? `${bot.value.symbol} #${bot.value.id}`
     : t('bots.title')),
   description: () => t('bots.subtitle'),
+  noindex: true,
 })
 
 async function loadBots() {

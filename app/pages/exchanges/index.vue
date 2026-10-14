@@ -6,9 +6,9 @@ const settingsLink = computed(() =>
   auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
 )
 
-useSeoMeta({
-  title: () => t('exchanges.title'),
-  description: () => t('exchanges.subtitle'),
+usePageSeo({
+  title: () => t('seo.exchanges_title'),
+  description: () => t('seo.exchanges_description'),
 })
 </script>
 

@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
-defineProps<{
+const props = defineProps<{
   error: NuxtError
 }>()
+
+useSeoMeta({
+  title: () => String(props.error.statusCode || 'Error'),
+  robots: 'noindex, nofollow',
+})
 
 const handleError = () => clearError({ redirect: '/' })
 </script>

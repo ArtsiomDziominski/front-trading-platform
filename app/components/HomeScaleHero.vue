@@ -158,6 +158,7 @@ onBeforeUnmount(() => {
       <div class="scale-hero__grid">
         <div class="scale-hero__copy">
           <h1 class="scale-hero__title">
+            <span class="sr-only">{{ $t('seo.home_h1_prefix') }}</span>
             <span>{{ $t('home.scale_hero_line1') }}</span>
             <span>{{ $t('home.scale_hero_line2') }}</span>
           </h1>

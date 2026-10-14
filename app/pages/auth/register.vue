@@ -3,8 +3,9 @@ const { t } = useI18n()
 const auth = useAuth()
 const router = useRouter()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('auth.register_title'),
+  description: () => t('seo.register_description'),
 })
 
 const email = ref('')

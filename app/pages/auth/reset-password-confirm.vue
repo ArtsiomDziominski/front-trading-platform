@@ -3,8 +3,9 @@ const { t } = useI18n()
 const auth = useAuth()
 const route = useRoute()
 
-useSeoMeta({
+usePageSeo({
   title: () => t('auth.reset_password_confirm_title'),
+  noindex: true,
 })
 
 const token = ref(route.query.token as string || '')

@@ -1,11 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
-
 useHomeSmoothScroll()
-useSeoMeta({
-  title: () => t('bots.public_title'),
-  description: () => t('bots.public_subtitle'),
-})
 
 const trackRef = useTemplateRef<HTMLElement>('trackRef')
 const { progress } = useHomeHeroScroll(trackRef)

@@ -161,9 +161,10 @@ const confirmCopy = computed(() => {
   }
 })
 
-useSeoMeta({
+usePageSeo({
   title: () => t('bots.title'),
   description: () => t('bots.subtitle'),
+  noindex: true,
 })
 
 function loadBots() {

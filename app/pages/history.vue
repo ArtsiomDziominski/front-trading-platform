@@ -16,6 +16,11 @@ const HISTORY_EXCHANGES: ExchangeType[] = ['BINANCE', 'OKX', 'BYBIT', 'OTHER']
 
 const { t } = useI18n()
 const route = useRoute()
+
+usePageSeo({
+  title: () => t('nav.history'),
+  noindex: true,
+})
 const router = useRouter()
 const { fetchBots, bots } = useBots()
 const {
