@@ -341,7 +341,7 @@ defineExpose({ applyPayload, scrollIntoView })
 
     <div class="sizing-mode">
       <span :id="sizingModeTitleId" class="sizing-mode__title">{{ $t('bots.sizing_mode') }}</span>
-      <UFieldGroup size="sm" role="group" :aria-labelledby="sizingModeTitleId">
+      <UFieldGroup size="sm" class="segmented" role="group" :aria-labelledby="sizingModeTitleId">
         <AppButton
           v-for="option in sizingModeOptions"
           :key="option.value"

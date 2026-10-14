@@ -481,6 +481,17 @@ const menuItems = computed<MenuItem[][]>(() => {
   }
 }
 
+@media (max-width: 374px) {
+  .bot-tile__head {
+    gap: 6px;
+  }
+
+  .bot-tile__direction {
+    padding: 1px 7px;
+    font-size: 10px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bot-tile,
   .bot-tile__dot,

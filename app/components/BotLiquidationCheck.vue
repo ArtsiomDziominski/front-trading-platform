@@ -312,7 +312,7 @@ defineExpose({ clearResult: clearLiquidationResult })
       <AppButton
         type="button"
         variant="secondary"
-        class="w-full"
+        class="w-full justify-center"
         :loading="liquidationChecking"
         :disabled="creating"
         @click="handleCheckLiquidation"
@@ -343,6 +343,12 @@ defineExpose({ clearResult: clearLiquidationResult })
 <style scoped>
 .liquidation-card {
   padding: 24px;
+}
+
+@media (max-width: 640px) {
+  .liquidation-card {
+    padding: 4px;
+  }
 }
 
 .liquidation-section {

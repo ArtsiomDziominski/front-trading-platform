@@ -36,6 +36,14 @@ const emit = defineEmits<{
 }>()
 
 const isDesktop = useMediaQuery(() => props.desktopQuery)
+
+// The sheet scrolls as a whole; the footer stays pinned to its bottom so the actions are reachable on short screens
+const DRAWER_FOOTER = 'sticky -bottom-4 z-10 -mx-4 -mb-4 mt-auto px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] bg-default border-t border-default [&>*]:justify-center'
+
+const drawerUi = computed(() => {
+  const footer = typeof props.ui?.footer === 'string' ? props.ui.footer : ''
+  return { ...props.ui, footer: `${DRAWER_FOOTER} ${footer}`.trim() }
+})
 </script>
 
 <template>
@@ -104,7 +112,7 @@ const isDesktop = useMediaQuery(() => props.desktopQuery)
       :portal="portal"
       :dismissible="dismissible"
       :class="props.class"
-      :ui="ui"
+      :ui="drawerUi"
       @close:prevent="emit('close:prevent')"
     >
       <slot />

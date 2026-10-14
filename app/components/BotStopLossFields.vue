@@ -46,7 +46,7 @@ watch(enabled, async (isOn) => {
     <div v-if="enabled" class="stop-loss__fields">
       <UFormField
         :label="$t('bots.stop_loss_value')"
-        :error="props.error"
+        :error="props.error || undefined"
       >
         <UInput
           id="bot-stop-loss-value"

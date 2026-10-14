@@ -112,8 +112,9 @@ defineExpose({ scrollIntoView })
 }
 
 @media (max-width: 640px) {
+  /* UCard's body already pads 16px on phones */
   .create-form-card {
-    padding: 20px;
+    padding: 4px;
   }
 
   .form-actions {

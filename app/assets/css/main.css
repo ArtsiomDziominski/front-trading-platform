@@ -107,6 +107,12 @@ a,
   touch-action: manipulation;
 }
 
+/* `font: inherit` above beats Nuxt UI's text-sm on <button> menu items but not on <a> ones; keep a menu one size */
+button[role='menuitem'] {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
@@ -348,6 +354,80 @@ a,
   text-align: right;
 }
 
+/* Phones: each row becomes a small card, cells in two columns with the `data-label` above the value; the first cell is the row title */
+@media (max-width: 640px) {
+  .detail-table-wrap {
+    margin: 0;
+    overflow-x: visible;
+  }
+
+  .detail-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .detail-table,
+  .detail-table tbody {
+    display: block;
+  }
+
+  .detail-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    padding: 12px 0;
+    border-top: 1px solid rgb(255 255 255 / 7%);
+  }
+
+  .detail-table tr:first-child {
+    border-top: 0;
+    padding-top: 4px;
+  }
+
+  .detail-table td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+    padding: 0;
+    border-top: 0;
+    overflow-wrap: anywhere;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .detail-table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .detail-table .num {
+    text-align: left;
+  }
+
+  .detail-table td:first-child {
+    flex-direction: row;
+    grid-column: 1 / -1;
+    gap: 6px;
+    font-weight: 700;
+  }
+
+  .detail-table td:first-child::before {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .detail-table td:first-child:not([data-label])::before {
+    content: none;
+  }
+}
+
 .detail-list {
   display: flex;
   flex-direction: column;
@@ -480,5 +560,24 @@ html.home-smooth-scroll body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Segmented UFieldGroup (mode switches in forms): on phones it fills the row and labels may wrap instead of overflowing */
+@media (max-width: 640px) {
+  .segmented {
+    display: flex;
+    width: 100%;
+  }
+
+  .segmented > * {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 6px;
+    font-size: 0.8rem !important;
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
   }
 }

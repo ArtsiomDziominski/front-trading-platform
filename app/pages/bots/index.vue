@@ -288,15 +288,20 @@ onUnmounted(() => {
             size="sm"
             icon="i-lucide-filter"
             :items="filterSelectItems"
+            :content="{ align: 'start' }"
+            :ui="{ content: 'min-w-48', item: 'text-sm py-2' }"
             :aria-label="$t('bots.filter_label')"
           />
 
           <AppButton
             size="sm"
             icon="i-lucide-star"
+            :square="!isDesktop"
             :variant="favoritesOnly ? 'primary' : 'secondary'"
             :aria-pressed="favoritesOnly"
-            :label="$t('bots.filter_favorites')"
+            :aria-label="$t('bots.filter_favorites')"
+            :title="isDesktop ? undefined : $t('bots.filter_favorites')"
+            :label="isDesktop ? $t('bots.filter_favorites') : undefined"
             @click="favoritesOnly = !favoritesOnly"
           />
         </div>
@@ -556,13 +561,16 @@ onUnmounted(() => {
     margin-bottom: 22px;
   }
 
-  .bots-toolbar__bulk {
-    flex: 1;
+  .bots-toolbar {
+    gap: 8px;
   }
 
-  .bots-toolbar__bulk :deep(button) {
-    width: 100%;
-    justify-content: space-between;
+  .bots-toolbar__filters {
+    gap: 8px;
+  }
+
+  .bots-toolbar__filters :deep(.app-button) {
+    flex: none;
   }
 
   .bots-grid {

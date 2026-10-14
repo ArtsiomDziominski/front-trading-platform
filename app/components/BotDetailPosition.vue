@@ -183,4 +183,15 @@ const roe = computed(() => props.bot.pnl_percent)
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 480px) {
+  .position-panel__stat {
+    padding: 12px;
+  }
+
+  .position-panel__side {
+    display: block;
+    margin: 0 0 2px;
+  }
+}
 </style>

@@ -171,8 +171,35 @@ function selectType(entry: BotCatalogEntry) {
 }
 
 @media (max-width: 640px) {
+  .bot-type-picker {
+    gap: 16px;
+  }
+
   .bot-type-picker__types {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Type rows: icon beside the text, so the sheet keeps its buttons on screen */
+  .bot-type-picker__types .bot-type-picker__option {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 2px;
+    padding: 12px 14px;
+  }
+
+  .bot-type-picker__types .bot-type-picker__icon {
+    grid-row: span 2;
+    margin: 1px 0 0;
+  }
+
+  .bot-type-picker__types .bot-type-picker__option-title {
+    padding-right: 56px;
+  }
+
+  .bot-type-picker__markets .bot-type-picker__option {
+    padding: 12px 14px;
   }
 }
 </style>

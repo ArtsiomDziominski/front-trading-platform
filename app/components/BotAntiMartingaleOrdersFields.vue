@@ -43,6 +43,12 @@ function updateSize(index: number, value: string) {
 <template>
   <UFormField :label="$t('bots.field_orders')">
     <div class="orders-table">
+      <!-- Column names: once filled, the inputs no longer show their placeholders -->
+      <div class="orders-row orders-row--head" aria-hidden="true">
+        <span>{{ $t('bots.field_trigger_percent') }}</span>
+        <span>{{ $t('bots.field_size_percent') }}</span>
+        <span class="orders-row__head-spacer" />
+      </div>
       <div
         v-for="(order, index) in orders"
         :key="index"
@@ -54,6 +60,7 @@ function updateSize(index: number, value: string) {
             :model-value="order.size_percent"
             inputmode="decimal"
             :placeholder="$t('bots.field_size_percent')"
+            :aria-label="`${$t('bots.orders_first_row_label')}: ${$t('bots.field_size_percent')}`"
             class="orders-row__size"
             @update:model-value="(value: string | number) => updateSize(index, String(value))"
           />
@@ -64,6 +71,7 @@ function updateSize(index: number, value: string) {
             :model-value="order.trigger_percent"
             inputmode="decimal"
             :placeholder="$t('bots.field_trigger_percent')"
+            :aria-label="`${index + 1}: ${$t('bots.field_trigger_percent')}`"
             class="orders-row__trigger"
             @update:model-value="(value: string | number) => updateTrigger(index, String(value))"
           />
@@ -71,6 +79,7 @@ function updateSize(index: number, value: string) {
             :model-value="order.size_percent"
             inputmode="decimal"
             :placeholder="$t('bots.field_size_percent')"
+            :aria-label="`${index + 1}: ${$t('bots.field_size_percent')}`"
             class="orders-row__size"
             @update:model-value="(value: string | number) => updateSize(index, String(value))"
           />
@@ -129,6 +138,16 @@ function updateSize(index: number, value: string) {
   font-size: 0.85rem;
 }
 
+.orders-row__head-spacer {
+  width: 32px;
+}
+
+.orders-row--head {
+  margin-bottom: -4px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
 .orders-row__trigger,
 .orders-row__size {
   width: 100%;
@@ -145,6 +164,11 @@ function updateSize(index: number, value: string) {
 
   .orders-row__first-label {
     grid-column: 1 / -1;
+  }
+
+  /* Under the size column, not the trigger one */
+  .orders-row__first-label + .orders-row__size {
+    grid-column: 2;
   }
 }
 </style>
