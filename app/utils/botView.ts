@@ -13,6 +13,7 @@ export const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
   DCA_FUTURES: 'bots.type_dca_futures',
   DCA_SPOT: 'bots.type_dca_spot',
   ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
+  TREND_FUTURES: 'bots.type_trend_futures',
   CUSTOM: 'bots.type_custom',
 }
 
@@ -31,16 +32,25 @@ export function effectiveGridConfig(
 }
 
 /**
- * Grid bots trade the configured direction; anti-martingale bots are long only.
- * `position_side` is not used: the server keeps the last side even when the position is flat.
+ * Grid bots trade the configured direction; anti-martingale bots are long only; trend bots pick the side
+ * themselves (see `trendBotSide`), so for them this is the side of the open position, else LONG.
+ * `position_side` is not used for grid bots: the server keeps the last side even when the position is flat.
  */
 export function botDirection(
-  bot: Pick<BotListItem, 'bot_type' | 'config' | 'position_side' | 'cycle_state' | 'config_version' | 'lifecycle_status'>,
+  bot: Pick<BotListItem, 'bot_type' | 'config' | 'position_side' | 'cycle_state' | 'config_version' | 'lifecycle_status' | 'trend'>,
 ): BotDirection {
   if (bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return 'LONG'
+  if (bot.bot_type === 'TREND_FUTURES') return trendBotSide(bot) ?? 'LONG'
   const direction = effectiveGridConfig(bot).direction
   if (direction === 'LONG' || direction === 'SHORT') return direction
   return bot.position_side === 'SHORT' ? 'SHORT' : 'LONG'
+}
+
+/** Side of a trend bot's open position; `null` when it is flat (it then has no direction of its own). */
+export function trendBotSide(bot: Pick<BotListItem, 'bot_type' | 'trend' | 'lifecycle_status'>): BotDirection | null {
+  if (bot.bot_type !== 'TREND_FUTURES' || bot.lifecycle_status === 'CLOSED') return null
+  const side = bot.trend?.side
+  return side === 'LONG' || side === 'SHORT' ? side : null
 }
 
 /**
