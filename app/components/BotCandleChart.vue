@@ -217,7 +217,6 @@ const lineLayer = computed(() => {
   return props.lines.map(line => ({
     id: line.id,
     color: CHART_TONE_COLORS[line.tone],
-    dashed: Boolean(line.dashed),
     d: linePath(line.values, scale.count, index => (index + 0.5) * scale.slot, value => priceToY(scale, value)),
   }))
 })
@@ -301,7 +300,7 @@ const markerLayer = computed(() => {
 })
 
 const legend = computed(() => [
-  ...props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: Boolean(line.dashed) })),
+  ...props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: false })),
   ...chartLevels.value.map(level => ({ id: `level-${level.id}`, label: level.label, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })),
 ])
 
@@ -616,7 +615,6 @@ onBeforeUnmount(() => {
             v-for="line in lineLayer"
             :key="line.id"
             class="candle-chart__line"
-            :class="{ 'candle-chart__line--dashed': line.dashed }"
             :d="line.d"
             :style="{ stroke: line.color }"
           />
@@ -866,12 +864,6 @@ onBeforeUnmount(() => {
   stroke-width: 1.25;
   stroke-linejoin: round;
   stroke-linecap: round;
-}
-
-.candle-chart__line--dashed {
-  stroke-width: 1;
-  stroke-dasharray: 4 3;
-  opacity: 0.8;
 }
 
 .candle-chart__level {

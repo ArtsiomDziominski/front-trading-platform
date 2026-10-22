@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BotListItem } from '#shared/types/bot'
 import type { BotActions } from '~/composables/useBotActions'
-import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, supportedExchange, trendBotSide } from '~/utils/botView'
+import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, supportedExchange } from '~/utils/botView'
 import { formatDateTime } from '~/utils/formatNumber'
 
 /** Bot page header: identity, status and every action as a labelled button. */
@@ -14,8 +14,6 @@ const { t, locale } = useI18n()
 
 const status = computed(() => botStatusView(props.bot))
 const direction = computed(() => botDirection(props.bot))
-// A flat trend bot has no side until it enters
-const showDirection = computed(() => props.bot.bot_type !== 'TREND_FUTURES' || trendBotSide(props.bot) != null)
 const exchange = computed(() => supportedExchange(props.bot))
 const typeLabel = computed(() => {
   const key = BOT_TYPE_LABEL_KEYS[props.bot.bot_type]
@@ -40,7 +38,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         </button>
         <h1 class="bot-detail-header__symbol">{{ bot.symbol }}</h1>
         <BotExchangeBadge v-if="exchange" :exchange="exchange" size="md" />
-        <span v-if="showDirection" class="bot-detail-header__direction" :class="`bot-detail-header__direction--${direction.toLowerCase()}`">
+        <span class="bot-detail-header__direction" :class="`bot-detail-header__direction--${direction.toLowerCase()}`">
           {{ direction }}
         </span>
         <span class="bot-detail-header__status" :class="`bot-detail-header__status--${status.tone}`">

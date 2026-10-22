@@ -1,9 +1,8 @@
-import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
-import { TREND_SIGNAL_TIMEFRAMES, TREND_TREND_TIMEFRAMES } from '~/utils/trend'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
 const VOLUME_MODES: VolumeMode[] = ['linear', 'exponential', 'fixed']
@@ -48,65 +47,6 @@ function parseAntiMartingaleConfig(raw: unknown): AntiMartingaleFuturesConfig | 
 
   const leverage = Number(config.leverage)
   if (Number.isFinite(leverage)) result.leverage = leverage
-
-  return result
-}
-
-const TREND_INTEGER_FIELDS = [
-  'ema_fast',
-  'ema_slow',
-  'adx_period',
-  'atr_period',
-  'donchian_entry',
-  'donchian_exit',
-  'volume_sma_period',
-  'max_units',
-  'cooldown_bars',
-  'exchange_leverage',
-] as const
-
-const TREND_DECIMAL_FIELDS = [
-  'adx_min',
-  'volume_mult',
-  'risk_per_unit_pct',
-  'stop_atr',
-  'add_step_atr',
-  'trail_atr',
-  'daily_stop_pct',
-  'monthly_stop_pct',
-  'max_notional_x',
-  'capital_usdt',
-] as const
-
-/** Only the fields TrendFuturesConfig knows; anything the server would reject is dropped, not guessed. */
-function parseTrendConfig(raw: unknown): TrendFuturesConfig | null {
-  if (!raw || typeof raw !== 'object') return null
-
-  const config = raw as Record<string, unknown>
-  const symbol = asString(config.symbol).trim().toUpperCase()
-  if (symbol.length < 3) return null
-
-  const result: TrendFuturesConfig = { symbol }
-  const target = result as unknown as Record<string, unknown>
-
-  if (TREND_SIGNAL_TIMEFRAMES.includes(config.signal_timeframe as TrendSignalTimeframe)) {
-    result.signal_timeframe = config.signal_timeframe as TrendSignalTimeframe
-  }
-  if (TREND_TREND_TIMEFRAMES.includes(config.trend_timeframe as TrendTrendTimeframe)) {
-    result.trend_timeframe = config.trend_timeframe as TrendTrendTimeframe
-  }
-
-  for (const key of TREND_INTEGER_FIELDS) {
-    if (config[key] == null || config[key] === '') continue
-    const value = Number(config[key])
-    if (Number.isFinite(value)) target[key] = value
-  }
-  for (const key of TREND_DECIMAL_FIELDS) {
-    const value = asString(config[key]).trim()
-    if (value && Number.isFinite(Number(value))) target[key] = value
-  }
-  if (typeof config.exit_on_regime_flip === 'boolean') result.exit_on_regime_flip = config.exit_on_regime_flip
-  if (typeof config.close_on_stop === 'boolean') result.close_on_stop = config.close_on_stop
 
   return result
 }
@@ -178,9 +118,7 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
 
   const config = botType === 'ANTI_MARTINGALE_FUTURES'
     ? parseAntiMartingaleConfig(payload.config)
-    : botType === 'TREND_FUTURES'
-      ? parseTrendConfig(payload.config)
-      : parseConfig(payload.config)
+    : parseConfig(payload.config)
   if (!config) return null
 
   return {

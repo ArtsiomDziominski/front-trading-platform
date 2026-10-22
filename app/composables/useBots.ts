@@ -5,7 +5,7 @@ import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotCreationLogOut, BotEventOut, BotHistoryFilters, BotHistoryQuery, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, HistoryClearResult, LiquidationCheckOut, LiquidationCheckRequest, TrendChart, TrendDecision, TrendDecisionsQuery, TrendMarket, TrendMarketQuery, TrendStats, TrendTrade } from '#shared/types/bot'
+import type { BotCreate, BotCreationLogOut, BotEventOut, BotHistoryFilters, BotHistoryQuery, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, HistoryClearResult, LiquidationCheckOut, LiquidationCheckRequest } from '#shared/types/bot'
 import { compactBotHistoryQuery } from '~/utils/botHistory'
 
 function normalizeBotConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -530,30 +530,6 @@ export const useBots = () => {
     }
   }
 
-  // TREND_FUTURES read models; the server answers 400 for other bot types
-  function fetchTrendTrades(botId: number, query: { status?: 'OPEN' | 'CLOSED', limit?: number } = {}) {
-    return auth.authFetch<TrendTrade[]>(`${baseUrl}/bots/${botId}/trades`, { query })
-  }
-
-  function fetchTrendDecisions(botId: number, query: TrendDecisionsQuery = {}) {
-    return auth.authFetch<TrendDecision[]>(`${baseUrl}/bots/${botId}/decisions`, { query })
-  }
-
-  function fetchTrendStats(botId: number) {
-    return auth.authFetch<TrendStats>(`${baseUrl}/bots/${botId}/stats`)
-  }
-
-  function fetchTrendChart(botId: number, limit?: number) {
-    return auth.authFetch<TrendChart>(`${baseUrl}/bots/${botId}/trend-chart`, {
-      query: limit != null ? { limit } : {},
-    })
-  }
-
-  /** Public market data (no API key needed): the badge on the trend create form. */
-  function fetchMarketTrend(query: TrendMarketQuery) {
-    return auth.authFetch<TrendMarket>(`${baseUrl}/market/trend`, { query })
-  }
-
   const liquidationChecking = useState<boolean>('user_bots_liquidation_checking', () => false)
   const liquidationError = useState<string | null>('user_bots_liquidation_error', () => null)
 
@@ -599,11 +575,6 @@ export const useBots = () => {
     liquidationChecking,
     liquidationError,
     checkLiquidation,
-    fetchTrendTrades,
-    fetchTrendDecisions,
-    fetchTrendStats,
-    fetchTrendChart,
-    fetchMarketTrend,
     subscribeBotsUpdates,
     stopBot,
     closeBot,
