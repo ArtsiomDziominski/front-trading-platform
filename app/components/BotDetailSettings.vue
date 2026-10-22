@@ -73,6 +73,14 @@ const rows = computed<SettingRow[]>(() => {
     )
   }
 
+  // Trend bots: `capital_usdt: null` means the account balance taken when the bot started
+  if (props.bot.bot_type === 'TREND_FUTURES' && !settings.some((setting) => setting.key === 'capital_usdt')) {
+    const index = result.findIndex((row) => row.key === 'max_units')
+    const row = { key: 'capital_usdt', label: t('bots.trend_field_capital_usdt'), value: t('bots.trend_capital_from_balance') }
+    if (index >= 0) result.splice(index + 1, 0, row)
+    else result.push(row)
+  }
+
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES' && config.leverage != null) {
     const leverage = result.find((row) => row.key === 'leverage')
     if (leverage) leverage.value = `${leverage.value}×`

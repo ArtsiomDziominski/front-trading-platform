@@ -48,6 +48,15 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
   },
   {
     market: 'futures',
+    slug: 'trend',
+    botType: 'TREND_FUTURES',
+    titleKey: 'bots.catalog_trend',
+    descKey: 'bots.catalog_trend_futures_desc',
+    icon: 'i-lucide-activity',
+    available: true,
+  },
+  {
+    market: 'futures',
     slug: 'dca',
     botType: 'DCA_FUTURES',
     titleKey: 'bots.catalog_dca',

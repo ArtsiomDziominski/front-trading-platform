@@ -9,8 +9,10 @@ import {
   isInPosition,
   pnlTone,
   supportedExchange,
+  trendBotSide,
 } from '~/utils/botView'
-import { formatUsdt } from '~/utils/formatNumber'
+import { formatPercentValue, formatUsdt } from '~/utils/formatNumber'
+import { formatR, trendStateLabel, trendStateTone } from '~/utils/trend'
 
 /** Compact bot tile for the `/bots` list; every action sits in the «⋯» menu, the tile opens the bot page. */
 const props = withDefaults(defineProps<{
@@ -38,6 +40,31 @@ const hasError = computed(() => props.bot.engine_state === 'ERROR')
 // Flat bots report PnL 0, which reads as a result; show a dash instead
 const pnl = computed(() => (isInPosition(props.bot) ? props.bot.unrealized_pnl : null))
 const pnlLabel = computed(() => (pnl.value == null ? '—' : formatUsdt(pnl.value, locale.value, true)))
+
+// Trend bots: strategy state from `bot.trend`; the position rows only while a side is open
+const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
+const trend = computed(() => (isTrend.value ? props.bot.trend ?? null : null))
+const trendSide = computed(() => trendBotSide(props.bot))
+const showDirection = computed(() => !isTrend.value || trendSide.value != null)
+const trendRows = computed(() => {
+  const status = trend.value
+  if (!status || !trendSide.value) return []
+  return [
+    { key: 'units', label: t('bots.trend_units'), value: `${status.units}/${status.max_units}`, tone: '' },
+    {
+      key: 'r',
+      label: t('bots.trend_current_r'),
+      value: formatR(status.current_r, locale.value),
+      tone: `bot-tile__pnl--${pnlTone(status.current_r)}`,
+    },
+    {
+      key: 'stop',
+      label: t('bots.trend_distance_to_stop'),
+      value: status.distance_to_stop_pct == null ? '—' : formatPercentValue(status.distance_to_stop_pct, locale.value),
+      tone: '',
+    },
+  ]
+})
 
 type MenuItem = DropdownMenuItem & { value?: string }
 
@@ -147,7 +174,7 @@ const menuItems = computed<MenuItem[][]>(() => {
 
       <span class="bot-tile__spacer" />
 
-      <span class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
+      <span v-if="showDirection" class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
         {{ direction }}
       </span>
 
@@ -178,6 +205,14 @@ const menuItems = computed<MenuItem[][]>(() => {
           <span v-if="status.live" class="bot-tile__dot" aria-hidden="true" />
           {{ $t(status.labelKey) }}
         </dd>
+      </div>
+      <div v-if="isTrend" class="bot-tile__row">
+        <dt>{{ $t('bots.trend_state') }}</dt>
+        <dd :class="`bot-tile__trend--${trendStateTone(trend?.state)}`">{{ trend ? trendStateLabel(t, trend.state) : '—' }}</dd>
+      </div>
+      <div v-for="row in trendRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
       </div>
       <div class="bot-tile__row">
         <dt>{{ $t('bots.pnl_usdt') }}</dt>
@@ -434,6 +469,18 @@ const menuItems = computed<MenuItem[][]>(() => {
   }
 }
 
+
+.bot-tile__trend--long {
+  color: var(--color-up);
+}
+
+.bot-tile__trend--short {
+  color: var(--color-down);
+}
+
+.bot-tile__trend--pause {
+  color: var(--color-warning);
+}
 
 .bot-tile__pnl--up {
   color: var(--color-up);
