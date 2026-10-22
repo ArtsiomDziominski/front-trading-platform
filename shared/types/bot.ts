@@ -6,6 +6,7 @@ export type BotType =
   | 'DCA_FUTURES'
   | 'DCA_SPOT'
   | 'ANTI_MARTINGALE_FUTURES'
+  | 'TREND_FUTURES'
   | 'CUSTOM'
 
 export type BotLifecycleStatus = 'ACTIVE' | 'STOPPED' | 'CLOSED'
@@ -177,7 +178,314 @@ export interface AntiMartingaleFuturesConfig {
   leverage?: number
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig
+export type TrendSignalTimeframe = '15m' | '30m' | '1h' | '2h'
+
+export type TrendTrendTimeframe = '1h' | '2h' | '4h' | '6h' | '12h' | '1d'
+
+/**
+ * TREND_FUTURES: one pair, the side follows the EMA regime of the higher timeframe, entry on a Donchian breakout
+ * of the signal timeframe (closed candles only), exchange stop, pyramiding, trailing stop, capital protection.
+ * Every field but `symbol` is optional: the server fills its defaults. Decimals go as strings or numbers.
+ */
+export interface TrendFuturesConfig {
+  symbol: string
+  /** Server default: "1h". */
+  signal_timeframe?: TrendSignalTimeframe
+  /** Must be longer than `signal_timeframe`. Server default: "4h". */
+  trend_timeframe?: TrendTrendTimeframe
+  /** Server default: 50; must be less than `ema_slow`. */
+  ema_fast?: number
+  /** Server default: 200. */
+  ema_slow?: number
+  /** Server default: 14. */
+  adx_period?: number
+  /** ADX below it is a sideways market: no new entries. Server default: "20". */
+  adx_min?: string | number
+  /** Server default: 14. */
+  atr_period?: number
+  /** Entry channel, candles. Server default: 48. */
+  donchian_entry?: number
+  /** Exit channel, candles. Server default: 24. */
+  donchian_exit?: number
+  /** Volume filter multiplier; 0 = off. Server default: "0". */
+  volume_mult?: string | number
+  /** Server default: 20. */
+  volume_sma_period?: number
+  /** Risk of one unit, % of the capital, (0; 10]. Server default: "2". */
+  risk_per_unit_pct?: string | number
+  /** Stop distance in ATR. Server default: "2". */
+  stop_atr?: string | number
+  /** Pyramid step in ATR. Server default: "1". */
+  add_step_atr?: string | number
+  /** 1–10; 1 = no pyramiding. Server default: 4. */
+  max_units?: number
+  /** Trailing stop distance in ATR. Server default: "3". */
+  trail_atr?: string | number
+  /** Server default: true. */
+  exit_on_regime_flip?: boolean
+  /** Candles without entries after a stop-out. Server default: 4. */
+  cooldown_bars?: number
+  /** 0 = off. Server default: "10". */
+  daily_stop_pct?: string | number
+  /** 0 = off. Server default: "35". */
+  monthly_stop_pct?: string | number
+  /** Position notional cap, × capital. Server default: "8". */
+  max_notional_x?: string | number
+  /** 1–125, set on the exchange by the bot (cross). Server default: 10. */
+  exchange_leverage?: number
+  /** null = the account USDT balance when the bot starts. */
+  capital_usdt?: string | number | null
+  /** Stopping the bot: true closes the position at market, false leaves it with its exchange stop. Server default: false. */
+  close_on_stop?: boolean
+}
+
+export type TrendState =
+  | 'WARMUP'
+  | 'WAITING_TREND'
+  | 'WAITING_BREAKOUT'
+  | 'IN_LONG'
+  | 'IN_SHORT'
+  | 'COOLDOWN'
+  | 'PAUSED_RISK'
+
+export type TrendReasonCode =
+  | 'warmup'
+  | 'no_regime'
+  | 'adx_low'
+  | 'no_breakout'
+  | 'volume_low'
+  | 'cooldown'
+  | 'risk_pause'
+  | 'breakout'
+  | 'hold'
+  | 'channel'
+  | 'regime_flip'
+  | 'position_exists'
+  | 'stale_signal'
+  | 'size_too_small'
+  | 'not_started'
+
+export type TrendExitReason = 'stop' | 'trail' | 'channel' | 'regime_flip' | 'risk_pause' | 'manual' | 'liquidation'
+
+export type TrendStopSource = 'initial' | 'pyramid' | 'trail'
+
+/** `trend` field of a GET /bots item: TREND_FUTURES only, `null` for other types. Decimals arrive as numbers. */
+export interface TrendBotStatus {
+  /** Plain string on the server; the known values are `TrendState`. */
+  state: string
+  side: PositionSide | null
+  trade_id: number | null
+  units: number
+  max_units: number
+  entry_price: number | null
+  avg_price: number | null
+  stop_price: number | null
+  initial_stop: number | null
+  stop_source: string | null
+  next_add_price: number | null
+  /** Mark price to the stop, %. */
+  distance_to_stop_pct: number | null
+  /** Unrealized PnL in R (risk of the first unit). */
+  current_r: number | null
+  risk_usdt: number | null
+  regime: PositionSide | null
+  adx: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr: number | null
+  last_reason_code: string | null
+  last_reason: string | null
+  /** Numbers for `last_reason_code`, like `TrendDecision.reason_params`. */
+  last_reason_params?: Record<string, unknown>
+  last_evaluated_at: string | null
+  cooldown_until: string | null
+  paused_until: string | null
+  /** daily | monthly */
+  pause_reason: string | null
+  capital: number | null
+  equity: number | null
+}
+
+/** GET /bots/{id}/trades item: one position, newest first. */
+export interface TrendTrade {
+  id: number
+  bot_id: number
+  config_version: number
+  symbol: string
+  side: string
+  /** OPEN | CLOSED */
+  status: string
+  opened_at: string
+  closed_at: string | null
+  entry_avg: number | null
+  exit_avg: number | null
+  qty_max: number | null
+  units: number
+  initial_stop: number | null
+  risk_usdt: number | null
+  pnl_gross: number | null
+  /** Signed like the wallet: paid is negative. */
+  fees: number | null
+  funding: number | null
+  pnl_net: number | null
+  r_multiple: number | null
+  /** Known values are `TrendExitReason`. */
+  exit_reason: string | null
+  /** Best move from the entry, %. */
+  mfe: number | null
+  /** Worst move from the entry, % (≤ 0). */
+  mae: number | null
+  entry_snapshot: Record<string, unknown> | null
+}
+
+/** enter | exit | hold | wait */
+export type TrendAction = 'enter' | 'exit' | 'hold' | 'wait'
+
+/** GET /bots/{id}/decisions item: the decision on one closed candle, newest first. */
+export interface TrendDecision {
+  id: number
+  created_at: string
+  candle_open: string | null
+  candle_close: string | null
+  state: string | null
+  action: string | null
+  side: string | null
+  /** Stable code for i18n; the known values are `TrendReasonCode`. */
+  reason_code: string | null
+  /** Server-side Russian text, the fallback for unknown codes. */
+  reason: string | null
+  reason_params: Record<string, unknown>
+  regime: string | null
+  adx: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr: number | null
+  close: number | null
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+}
+
+export interface TrendDecisionsQuery {
+  from?: string
+  to?: string
+  limit?: number
+}
+
+export interface TrendMonthPnl {
+  /** YYYY-MM, UTC, by the trade close date. */
+  month: string
+  pnl_net: number | null
+}
+
+/** GET /bots/{id}/stats: closed trades of a trend bot. */
+export interface TrendStats {
+  trades: number
+  wins: number
+  losses: number
+  win_rate_pct: number | null
+  pnl_net: number | null
+  pnl_gross: number | null
+  fees: number | null
+  funding: number | null
+  avg_r: number | null
+  /** null when there is no losing trade. */
+  profit_factor: number | null
+  max_drawdown_usdt: number | null
+  max_drawdown_pct: number | null
+  /** Fees and funding paid, % of the sum of |pnl_gross|. */
+  costs_share_pct: number | null
+  pnl_by_month: TrendMonthPnl[]
+  capital: number | null
+  open_trade: TrendTrade | null
+}
+
+export type TrendMarketExchange = 'BINANCE' | 'OKX'
+
+export interface TrendMarketQuery {
+  exchange: TrendMarketExchange
+  symbol: string
+  signal_timeframe?: TrendSignalTimeframe
+  trend_timeframe?: TrendTrendTimeframe
+  ema_fast?: number
+  ema_slow?: number
+  adx_min?: string | number
+  donchian_entry?: number
+  donchian_exit?: number
+}
+
+/** GET /market/trend: the current trend of a pair, public data. */
+export interface TrendMarket {
+  exchange: ExchangeType
+  symbol: string
+  signal_timeframe: string
+  trend_timeframe: string
+  price: number | null
+  regime: PositionSide | null
+  /** ADX below the threshold: the bot would wait. */
+  sideways: boolean
+  /** WARMUP | WAITING_TREND | WAITING_BREAKOUT */
+  state: string
+  breakout: boolean
+  reason_code: string
+  reason: string
+  reason_params: Record<string, unknown>
+  distance_to_breakout_pct: number | null
+  adx: number | null
+  adx_min: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr_signal: number | null
+  atr_trend: number | null
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+  candle_close: string | null
+}
+
+export interface TrendChartPoint {
+  timestamp: string
+  open: number | null
+  high: number | null
+  low: number | null
+  close: number | null
+  volume: number | null
+  /** EMA of the higher timeframe at this candle (a step line). */
+  ema_fast: number | null
+  ema_slow: number | null
+  /** Channels from the previous candles. */
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+}
+
+/** entry | add | exit | stop_moved */
+export interface TrendChartMarker {
+  timestamp: string
+  price: number | null
+  kind: string
+  side: string | null
+  trade_id: number | null
+  /** For `exit` — the exit reason; for `stop_moved` — the stop source. */
+  label: string | null
+}
+
+/** GET /bots/{id}/trend-chart */
+export interface TrendChart {
+  symbol: string
+  signal_timeframe: string
+  trend_timeframe: string
+  points: TrendChartPoint[]
+  markers: TrendChartMarker[]
+  /** Current stop of the open position. */
+  stop_price: number | null
+  stop_history: TrendChartMarker[]
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -238,6 +546,8 @@ export interface BotListOut extends BotOut {
   pnl_percent: number | null
   /** null for grid bots; closed 15m candles for the breakout window for anti-martingale bots. */
   recent_candles?: CandleOut[] | null
+  /** TREND_FUTURES only: strategy state, side, R, stop; null for other types and in old caches. */
+  trend?: TrendBotStatus | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -305,6 +615,14 @@ export type BotEventType =
   | 'grid_cycle_started'
   | 'grid_cycle_settled'
   | 'grid_size_resolved'
+  | 'trend_evaluated'
+  | 'trend_entry'
+  | 'trend_add'
+  | 'trend_stop_moved'
+  | 'trend_exit'
+  | 'trend_regime_changed'
+  | 'trend_risk_pause'
+  | 'trend_exchange_ready'
   | 'error'
 
 export interface BotEventOut {

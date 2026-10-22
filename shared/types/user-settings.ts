@@ -8,6 +8,10 @@ export type TelegramNotificationId =
   | 'cycle_started'
   | 'cycle_closed'
   | 'profit_alert'
+  | 'trend_entry'
+  | 'trend_add'
+  | 'trend_exit'
+  | 'trend_risk_pause'
 
 /** @deprecated Use TelegramNotificationId */
 export type TelegramNotificationType = TelegramNotificationId

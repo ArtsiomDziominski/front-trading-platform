@@ -27,6 +27,7 @@ const actions = useBotActions(() => props.bot, {
 })
 
 const isAntiMartingale = computed(() => props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES')
+const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
 const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
 </script>
 
@@ -62,6 +63,8 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
       :events-loaded="eventsLoaded"
       :events-error="eventsError"
     />
+
+    <BotDetailTrend v-if="isTrend" :bot="bot" />
 
     <div class="bot-detail-view__columns">
       <div class="bot-detail-view__main">

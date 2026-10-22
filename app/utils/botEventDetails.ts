@@ -14,6 +14,14 @@ import {
   formatUsdt,
   toNumber,
 } from '~/utils/formatNumber'
+import {
+  formatR,
+  trendExitReasonLabel,
+  trendPauseScopeLabel,
+  trendReasonText,
+  trendSideLabel,
+  trendStopSourceLabel,
+} from '~/utils/trend'
 
 export type BotEventDetailTone = 'up' | 'down' | 'muted'
 
@@ -73,6 +81,16 @@ export function botEventDetails(
   }
   const pushLeg = (leg: number | null) => {
     if (leg != null && leg >= 1) details.push({ value: t('bots.event_detail_addon_leg', { n: leg }) })
+  }
+  /** `labelKey` may be a plain label (e.g. "ADX") when `translate` is false. */
+  const pushNumber = (key: string, labelKey: string, format: (value: number, locale: string) => string, translate = true) => {
+    const value = num(key)
+    if (value != null) details.push({ label: translate ? t(labelKey) : labelKey, value: format(value, locale) })
+  }
+  const pushTrendSide = () => {
+    const side = text(payload, 'side')?.toUpperCase()
+    if (side === 'LONG') details.push({ value: 'LONG', tone: 'up' })
+    else if (side === 'SHORT') details.push({ value: 'SHORT', tone: 'down' })
   }
   const pushReason = () => {
     const reason = text(payload, 'reason')
@@ -208,6 +226,113 @@ export function botEventDetails(
         details.push({ value: t('bots.event_type_removed_from_tracking'), tone: 'muted' })
       }
       break
+
+    case 'trend_entry':
+      pushTrendSide()
+      pushPrice('price', 'bots.event_detail_price')
+      pushNumber('qty', 'bots.event_detail_quantity', formatQuantity)
+      pushPrice('stop', 'bots.trend_event_stop')
+      pushUsdt('risk_usdt', 'bots.trend_event_risk')
+      pushPrice('level', 'bots.trend_event_level')
+      pushNumber('adx', 'ADX', formatCount, false)
+      break
+
+    case 'trend_add': {
+      pushTrendSide()
+      const unit = num('unit')
+      if (unit != null) details.push({ value: t('bots.trend_event_unit', { n: formatCount(unit, locale) }) })
+      pushPrice('price', 'bots.event_detail_price')
+      pushNumber('qty', 'bots.event_detail_quantity', formatQuantity)
+      pushNumber('total_qty', 'bots.trend_event_total_qty', formatQuantity)
+      pushPrice('avg_price', 'bots.trend_event_avg_price')
+      pushPrice('stop', 'bots.trend_event_stop')
+      if (payload.capped === true) details.push({ value: t('bots.trend_event_capped'), tone: 'muted' })
+      break
+    }
+
+    case 'trend_stop_moved': {
+      pushTrendSide()
+      const from = num('from')
+      const to = num('to')
+      if (from != null && to != null) {
+        details.push({ label: t('bots.trend_event_stop'), value: `${formatPrice(from, locale)} → ${formatPrice(to, locale)}` })
+      }
+      else if (to != null) {
+        details.push({ label: t('bots.trend_event_stop'), value: formatPrice(to, locale) })
+      }
+      const source = trendStopSourceLabel(t, text(payload, 'source'))
+      if (source) details.push({ value: source, tone: 'muted' })
+      break
+    }
+
+    case 'trend_exit': {
+      pushTrendSide()
+      const reason = text(payload, 'reason')
+      if (reason) details.push({ label: t('bots.trend_event_exit_reason'), value: trendExitReasonLabel(t, reason) })
+      pushPrice('exit_price', 'bots.event_detail_exit_price')
+      const net = num('pnl_net')
+      if (net != null) details.push({ label: t('bots.trend_event_pnl_net'), value: usdt(net, true), tone: signTone(cents(net)) })
+      const r = num('r_multiple')
+      if (r != null) details.push({ label: 'R', value: formatR(r, locale), tone: signTone(r) })
+      pushUsdt('fees', 'bots.event_detail_fees', true)
+      pushUsdt('funding', 'bots.event_detail_funding', true)
+      pushNumber('units', 'bots.trend_units', formatCount)
+      break
+    }
+
+    case 'trend_regime_changed': {
+      const from = text(payload, 'from')
+      const to = text(payload, 'to')
+      details.push({
+        label: t('bots.trend_event_regime'),
+        value: `${trendSideLabel(t, from)} → ${trendSideLabel(t, to)}`,
+        tone: to === 'LONG' ? 'up' : to === 'SHORT' ? 'down' : undefined,
+      })
+      pushPrice('ema_fast', 'bots.trend_event_ema_fast')
+      pushPrice('ema_slow', 'bots.trend_event_ema_slow')
+      pushNumber('adx', 'ADX', formatCount, false)
+      break
+    }
+
+    case 'trend_risk_pause': {
+      const scope = trendPauseScopeLabel(t, text(payload, 'scope'))
+      if (scope) details.push({ value: scope, tone: 'down' })
+      const loss = num('loss_pct')
+      const limit = num('limit_pct')
+      if (loss != null) {
+        details.push({
+          label: t('bots.trend_event_loss'),
+          value: limit != null
+            ? `${formatPercentValue(loss, locale)} / ${formatPercentValue(limit, locale)}`
+            : formatPercentValue(loss, locale),
+        })
+      }
+      const until = text(payload, 'until')
+      if (until) details.push({ label: t('bots.trend_event_until'), value: formatDateTime(until, locale) })
+      pushUsdt('equity', 'bots.trend_equity')
+      break
+    }
+
+    case 'trend_exchange_ready': {
+      const leverage = num('leverage')
+      if (leverage != null) details.push({ label: t('bots.field_leverage'), value: `${formatCount(leverage, locale)}×` })
+      const marginMode = text(payload, 'margin_mode')
+      if (marginMode) details.push({ label: t('bots.trend_event_margin_mode'), value: marginMode })
+      const positionMode = text(payload, 'position_mode')
+      if (positionMode) details.push({ label: t('bots.trend_event_position_mode'), value: positionMode })
+      pushUsdt('capital', 'bots.trend_capital')
+      break
+    }
+
+    case 'trend_evaluated': {
+      const code = text(payload, 'reason_code')
+      const params = payload.reason_params && typeof payload.reason_params === 'object'
+        ? payload.reason_params as Record<string, unknown>
+        : null
+      const reason = trendReasonText(t, locale, code, params, text(payload, 'reason'))
+      if (reason) details.push({ value: reason, tone: 'muted', note: true })
+      break
+    }
 
     // Take-profit and stop-loss closes already say so in the title.
     case 'close_completed':

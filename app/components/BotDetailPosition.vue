@@ -56,6 +56,7 @@ const emptyText = computed(() => {
   if (props.bot.lifecycle_status === 'CLOSED') return t('bots.position_none_closed')
   if (props.bot.lifecycle_status === 'STOPPED') return t('bots.position_none_stopped')
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return t('bots.position_none_waiting')
+  if (props.bot.bot_type === 'TREND_FUTURES') return t('bots.trend_position_none')
   return t('bots.position_none')
 })
 
