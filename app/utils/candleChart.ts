@@ -30,8 +30,6 @@ export interface ChartLine {
   label: string
   values: (number | null)[]
   tone: ChartTone
-  /** Channel-style line (e.g. Donchian bounds) rather than an indicator. */
-  dashed?: boolean
 }
 
 export const CHART_TONE_COLORS: Record<ChartTone, string> = {

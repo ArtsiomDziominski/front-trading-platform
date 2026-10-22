@@ -40,14 +40,6 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   entry_rejected: 'bots.event_type_entry_rejected',
   exit_order_filled: 'bots.event_type_exit_order_filled',
   cycle_closed: 'bots.event_type_cycle_closed',
-  trend_evaluated: 'bots.event_type_trend_evaluated',
-  trend_entry: 'bots.event_type_trend_entry',
-  trend_add: 'bots.event_type_trend_add',
-  trend_stop_moved: 'bots.event_type_trend_stop_moved',
-  trend_exit: 'bots.event_type_trend_exit',
-  trend_regime_changed: 'bots.event_type_trend_regime_changed',
-  trend_risk_pause: 'bots.event_type_trend_risk_pause',
-  trend_exchange_ready: 'bots.event_type_trend_exchange_ready',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -83,7 +75,6 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     dca_futures: 'bots.type_dca_futures',
     dca_spot: 'bots.type_dca_spot',
     anti_martingale_futures: 'bots.type_anti_martingale_futures',
-    trend_futures: 'bots.type_trend_futures',
     custom: 'bots.type_custom',
   },
   reason: {
@@ -195,11 +186,6 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type.includes('redeploy') || type === 'restarting' || type === 'grid_recreated') {
     return 'redeployed'
   }
-  // Trend events, before the substring rules below (`trend_exit` has no keyword of its own)
-  if (type === 'trend_entry' || type === 'trend_add' || type === 'trend_exchange_ready') return 'created'
-  if (type === 'trend_exit') return 'closed'
-  if (type === 'trend_risk_pause') return 'error'
-  if (type === 'trend_stop_moved' || type === 'trend_regime_changed' || type === 'trend_evaluated') return 'updated'
   if (
     type === 'order_filled'
     || type === 'active'

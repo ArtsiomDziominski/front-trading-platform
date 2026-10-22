@@ -25,30 +25,6 @@ export type CreationSettingKey =
   | 'ema_slow_period'
   | 'trailing_stop_percent'
   | 'leverage'
-  | 'signal_timeframe'
-  | 'trend_timeframe'
-  | 'risk_per_unit_pct'
-  | 'max_units'
-  | 'capital_usdt'
-  | 'exchange_leverage'
-  | 'max_notional_x'
-  | 'close_on_stop'
-  | 'ema_fast'
-  | 'ema_slow'
-  | 'adx_period'
-  | 'adx_min'
-  | 'atr_period'
-  | 'donchian_entry'
-  | 'donchian_exit'
-  | 'volume_mult'
-  | 'volume_sma_period'
-  | 'stop_atr'
-  | 'add_step_atr'
-  | 'trail_atr'
-  | 'exit_on_regime_flip'
-  | 'cooldown_bars'
-  | 'daily_stop_pct'
-  | 'monthly_stop_pct'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -79,54 +55,7 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'ema_slow_period',
   'trailing_stop_percent',
   'leverage',
-  'signal_timeframe',
-  'trend_timeframe',
-  'risk_per_unit_pct',
-  'max_units',
-  'capital_usdt',
-  'exchange_leverage',
-  'max_notional_x',
-  'close_on_stop',
-  'ema_fast',
-  'ema_slow',
-  'adx_period',
-  'adx_min',
-  'atr_period',
-  'donchian_entry',
-  'donchian_exit',
-  'volume_mult',
-  'volume_sma_period',
-  'stop_atr',
-  'add_step_atr',
-  'trail_atr',
-  'exit_on_regime_flip',
-  'cooldown_bars',
-  'daily_stop_pct',
-  'monthly_stop_pct',
 ]
-
-const TREND_NUMERIC_KEYS = [
-  'risk_per_unit_pct',
-  'max_units',
-  'capital_usdt',
-  'exchange_leverage',
-  'max_notional_x',
-  'ema_fast',
-  'ema_slow',
-  'adx_period',
-  'adx_min',
-  'atr_period',
-  'donchian_entry',
-  'donchian_exit',
-  'volume_mult',
-  'volume_sma_period',
-  'stop_atr',
-  'add_step_atr',
-  'trail_atr',
-  'cooldown_bars',
-  'daily_stop_pct',
-  'monthly_stop_pct',
-] as const satisfies readonly CreationSettingKey[]
 
 function readConfig(payload: Record<string, unknown>): Record<string, unknown> {
   if (!payload.config || typeof payload.config !== 'object') return {}
@@ -239,14 +168,6 @@ export function extractCreationHistorySettings(
   set('trailing_stop_percent', readString(config.trailing_stop_percent))
   set('leverage', readNumber(config.leverage))
 
-  if (payload.bot_type === 'TREND_FUTURES') {
-    set('signal_timeframe', readString(config.signal_timeframe))
-    set('trend_timeframe', readString(config.trend_timeframe))
-    for (const key of TREND_NUMERIC_KEYS) set(key, readString(config[key]))
-    if (typeof config.close_on_stop === 'boolean') set('close_on_stop', config.close_on_stop)
-    if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
-  }
-
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
     return row ? [row] : []
@@ -277,30 +198,6 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   leverage: 'bots.field_leverage',
   mixed_deposit_usdt: 'bots.mixed_deposit',
   mixed_orders_summary: 'bots.mixed_orders_summary',
-  signal_timeframe: 'bots.trend_field_signal_timeframe',
-  trend_timeframe: 'bots.trend_field_trend_timeframe',
-  risk_per_unit_pct: 'bots.trend_field_risk_per_unit_pct',
-  max_units: 'bots.trend_field_max_units',
-  capital_usdt: 'bots.trend_field_capital_usdt',
-  exchange_leverage: 'bots.trend_field_exchange_leverage',
-  max_notional_x: 'bots.trend_field_max_notional_x',
-  close_on_stop: 'bots.trend_field_close_on_stop',
-  ema_fast: 'bots.trend_field_ema_fast',
-  ema_slow: 'bots.trend_field_ema_slow',
-  adx_period: 'bots.trend_field_adx_period',
-  adx_min: 'bots.trend_field_adx_min',
-  atr_period: 'bots.trend_field_atr_period',
-  donchian_entry: 'bots.trend_field_donchian_entry',
-  donchian_exit: 'bots.trend_field_donchian_exit',
-  volume_mult: 'bots.trend_field_volume_mult',
-  volume_sma_period: 'bots.trend_field_volume_sma_period',
-  stop_atr: 'bots.trend_field_stop_atr',
-  add_step_atr: 'bots.trend_field_add_step_atr',
-  trail_atr: 'bots.trend_field_trail_atr',
-  exit_on_regime_flip: 'bots.trend_field_exit_on_regime_flip',
-  cooldown_bars: 'bots.trend_field_cooldown_bars',
-  daily_stop_pct: 'bots.trend_field_daily_stop_pct',
-  monthly_stop_pct: 'bots.trend_field_monthly_stop_pct',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -321,24 +218,7 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       if (setting.value === 'fixed') return t('bots.volume_fixed')
       return t('bots.volume_linear')
     case 'auto_restart':
-    case 'close_on_stop':
-    case 'exit_on_regime_flip':
       return setting.value ? t('common.yes') : t('common.no')
-    case 'risk_per_unit_pct':
-    case 'daily_stop_pct':
-    case 'monthly_stop_pct':
-      return `${setting.value}%`
-    case 'capital_usdt':
-      return `${setting.value} USDT`
-    case 'exchange_leverage':
-    case 'max_notional_x':
-      return `${setting.value}×`
-    case 'stop_atr':
-    case 'add_step_atr':
-    case 'trail_atr':
-      return `${setting.value} ATR`
-    case 'volume_mult':
-      return Number(setting.value) === 0 ? t('bots.trend_volume_filter_off') : `${setting.value}×`
     case 'grid_step_percent':
     case 'initial_amount_percent':
     case 'take_profit_percent':
