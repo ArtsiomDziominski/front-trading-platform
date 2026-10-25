@@ -22,12 +22,11 @@ const orders = ref<AntiMartingaleOrderLevel[]>([
   { trigger_percent: '5.0', size_percent: '50' },
   { trigger_percent: '7.5', size_percent: '67.5' },
 ])
-// UInput type="number" emits numbers, so these refs may hold a number, not a string.
-const breakoutLookbackHours = ref<string | number>('')
-const emaFastPeriod = ref<string | number>('')
-const emaSlowPeriod = ref<string | number>('')
-const trailingStopPercent = ref<string | number>('')
-const leverage = ref<string | number>('')
+const breakoutLookbackHours = ref('')
+const emaFastPeriod = ref('')
+const emaSlowPeriod = ref('')
+const trailingStopPercent = ref('')
+const leverage = ref('')
 const advancedOpen = ref(false)
 
 const { t } = useI18n()
@@ -44,7 +43,8 @@ const {
 const shellRef = ref<{ scrollIntoView: () => void } | null>(null)
 const ordersError = ref('')
 
-function toTrimmed(value: string | number | null | undefined): string {
+/** UInput type="number" writes a number into its v-model at runtime despite the string type. */
+function toTrimmed(value: unknown): string {
   return String(value ?? '').trim()
 }
 
