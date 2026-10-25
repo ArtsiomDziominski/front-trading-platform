@@ -22,11 +22,12 @@ const orders = ref<AntiMartingaleOrderLevel[]>([
   { trigger_percent: '5.0', size_percent: '50' },
   { trigger_percent: '7.5', size_percent: '67.5' },
 ])
-const breakoutLookbackHours = ref('')
-const emaFastPeriod = ref('')
-const emaSlowPeriod = ref('')
-const trailingStopPercent = ref('')
-const leverage = ref('')
+// UInput type="number" emits numbers, so these refs may hold a number, not a string.
+const breakoutLookbackHours = ref<string | number>('')
+const emaFastPeriod = ref<string | number>('')
+const emaSlowPeriod = ref<string | number>('')
+const trailingStopPercent = ref<string | number>('')
+const leverage = ref<string | number>('')
 const advancedOpen = ref(false)
 
 const { t } = useI18n()
@@ -43,28 +44,32 @@ const {
 const shellRef = ref<{ scrollIntoView: () => void } | null>(null)
 const ordersError = ref('')
 
+function toTrimmed(value: string | number | null | undefined): string {
+  return String(value ?? '').trim()
+}
+
 function buildConfig(): AntiMartingaleFuturesConfig {
   const config: AntiMartingaleFuturesConfig = {
     symbol: symbol.value.trim().toUpperCase(),
     orders: orders.value.map((order, index) => ({
-      trigger_percent: index === 0 ? '0' : order.trigger_percent.trim(),
-      size_percent: order.size_percent.trim(),
+      trigger_percent: index === 0 ? '0' : toTrimmed(order.trigger_percent),
+      size_percent: toTrimmed(order.size_percent),
     })),
   }
 
-  const lookback = breakoutLookbackHours.value.trim()
+  const lookback = toTrimmed(breakoutLookbackHours.value)
   if (lookback) config.breakout_lookback_hours = Number(lookback)
 
-  const emaFast = emaFastPeriod.value.trim()
+  const emaFast = toTrimmed(emaFastPeriod.value)
   if (emaFast) config.ema_fast_period = Number(emaFast)
 
-  const emaSlow = emaSlowPeriod.value.trim()
+  const emaSlow = toTrimmed(emaSlowPeriod.value)
   if (emaSlow) config.ema_slow_period = Number(emaSlow)
 
-  const trailingStop = trailingStopPercent.value.trim()
+  const trailingStop = toTrimmed(trailingStopPercent.value)
   if (trailingStop) config.trailing_stop_percent = trailingStop
 
-  const leverageValue = leverage.value.trim()
+  const leverageValue = toTrimmed(leverage.value)
   if (leverageValue) config.leverage = Number(leverageValue)
 
   return config
@@ -119,8 +124,8 @@ function validate(): boolean {
     previousTrigger = trigger
   }
 
-  const emaFastRaw = emaFastPeriod.value.trim()
-  const emaSlowRaw = emaSlowPeriod.value.trim()
+  const emaFastRaw = toTrimmed(emaFastPeriod.value)
+  const emaSlowRaw = toTrimmed(emaSlowPeriod.value)
   if (emaFastRaw && emaSlowRaw) {
     const emaFast = Number(emaFastRaw)
     const emaSlow = Number(emaSlowRaw)
