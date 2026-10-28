@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TakeProfitMode, type BotListItem } from '#shared/types/bot'
-import { botDirection, effectiveGridConfig, isInPosition, pnlTone } from '~/utils/botView'
+import { botDirection, effectiveGridConfig, isInPosition, isSpotBot, pnlTone } from '~/utils/botView'
 import { formatPercentValue, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
 import { baseCoinFromSymbol } from '~/utils/orderSize'
 import { parseTakeProfit } from '~/utils/takeProfit'
@@ -14,8 +14,9 @@ const { t, locale } = useI18n()
 
 const inPosition = computed(() => isInPosition(props.bot))
 const side = computed(() => props.bot.position_side ?? botDirection(props.bot))
-// OKX reports the size in contracts, Binance in coins
-const sizeInCoins = computed(() => props.bot.exchange !== 'OKX')
+const isSpot = computed(() => isSpotBot(props.bot))
+// OKX futures report the size in contracts, Binance in coins; spot bots always hold coins
+const sizeInCoins = computed(() => isSpot.value || props.bot.exchange !== 'OKX')
 const sizeUnit = computed(() => (sizeInCoins.value ? baseCoinFromSymbol(props.bot.symbol) ?? '' : t('bots.position_contracts')))
 const size = computed(() => Math.abs(props.bot.position_size ?? 0))
 
@@ -38,6 +39,8 @@ const frozen = computed(() => props.bot.lifecycle_status !== 'ACTIVE')
  * from the config the engine trades on. Stopping a bot cancels its orders, so there is no target then.
  */
 const takeProfitPrice = computed(() => {
+  // Spot DCA: the engine reports the price of its resting (or trailing activation) take profit
+  if (props.bot.bot_type === 'DCA_SPOT') return frozen.value ? null : props.bot.dca?.take_profit_price ?? null
   if (props.bot.bot_type !== 'GRID_FUTURES' || frozen.value) return null
   const entry = props.bot.entry_price
   if (entry == null || entry <= 0 || !size.value) return null
@@ -57,6 +60,7 @@ const emptyText = computed(() => {
   if (props.bot.lifecycle_status === 'STOPPED') return t('bots.position_none_stopped')
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return t('bots.position_none_waiting')
   if (props.bot.bot_type === 'TREND_FUTURES') return t('bots.trend_position_none')
+  if (props.bot.bot_type === 'DCA_SPOT') return t('bots.dca_position_none')
   return t('bots.position_none')
 })
 
@@ -82,7 +86,7 @@ const roe = computed(() => props.bot.pnl_percent)
           {{ bot.unrealized_pnl == null ? '—' : formatUsdt(bot.unrealized_pnl, locale, true) }}
         </dd>
       </div>
-      <div class="position-panel__stat">
+      <div v-if="!isSpot" class="position-panel__stat">
         <dt :title="$t('bots.position_roe_hint')">{{ $t('bots.position_roe') }}</dt>
         <dd class="position-panel__big" :class="`tone-${pnlTone(roe)}`">
           {{ roe == null ? '—' : formatPercentValue(roe, locale, true) }}

@@ -81,6 +81,8 @@ export function useBotActions(
   const confirmOpen = ref(false)
   const confirmLoading = ref(false)
   const pendingAction = ref<BotConfirmAction | null>(null)
+  /** The API message of the last failed confirm action, shown inside the still open dialog (e.g. a DCA close whose sell is not confirmed yet, or a busy bot). */
+  const confirmError = ref<string | null>(null)
   const takeProfitOpen = ref(false)
   const stopLossOpen = ref(false)
   const mixedGridOpen = ref(false)
@@ -91,7 +93,8 @@ export function useBotActions(
       case 'close':
         return {
           title: t('bots.confirm_close_title', { symbol }),
-          message: t('bots.confirm_close', { symbol }),
+          // Spot DCA sells only the coins it bought; there is no futures position to close
+          message: bot.value.bot_type === 'DCA_SPOT' ? t('bots.dca_confirm_close', { symbol }) : t('bots.confirm_close', { symbol }),
           confirmLabel: t('bots.action_close'),
           variant: 'primary',
         }
@@ -117,6 +120,7 @@ export function useBotActions(
   function openConfirm(action: BotConfirmAction) {
     if (isBusy.value) return
     pendingAction.value = action
+    confirmError.value = null
     confirmOpen.value = true
   }
 
@@ -124,6 +128,7 @@ export function useBotActions(
     if (confirmLoading.value) return
     confirmOpen.value = false
     pendingAction.value = null
+    confirmError.value = null
   }
 
   async function confirmAction() {
@@ -132,6 +137,7 @@ export function useBotActions(
 
     const id = bot.value.id
     confirmLoading.value = true
+    confirmError.value = null
     clearBotActionError(id)
 
     try {
@@ -147,7 +153,8 @@ export function useBotActions(
       confirmOpen.value = false
       pendingAction.value = null
     } catch {
-      // The error is shown next to the bot; the dialog stays open for a retry
+      // The backend message is shown in the dialog (and next to the bot); the dialog stays open for a retry
+      confirmError.value = getBotActionError(id) || t('bots.action_error')
       if (action === 'remove') options.onRemoving?.(false)
     } finally {
       confirmLoading.value = false
@@ -218,6 +225,7 @@ export function useBotActions(
     mixedOrdersCount,
     confirmOpen,
     confirmLoading,
+    confirmError,
     confirmCopy,
     takeProfitOpen,
     stopLossOpen,

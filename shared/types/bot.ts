@@ -485,7 +485,78 @@ export interface TrendChart {
   stop_history: TrendChartMarker[]
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig
+/**
+ * DCA_SPOT: classic spot DCA, long only, USDT pairs, no leverage. A market base order, then
+ * `safety_orders_count` limit buys below the base fill price, one take-profit sell from the average price.
+ * Decimals go as strings or numbers; the server stores them as strings.
+ */
+export interface DcaSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  /** Base (market) order, USDT, (0; 10 000 000]. */
+  base_order_usdt: string | number
+  /** First safety order, USDT, (0; 10 000 000]; the next ones grow by `volume_scale`. */
+  safety_order_usdt: string | number
+  /** 0–50. Server default: 5. */
+  safety_orders_count: number
+  /** Drop from the base fill price to safety order #1, %, (0; 50]. Server default: "1.5". */
+  price_deviation_percent: string | number
+  /** Each next step is the previous × this, [0.5; 5]. The deepest order must stay above −100 %. Server default: "1". */
+  step_scale: string | number
+  /** Each next safety order size is the previous × this, [0.5; 5]. Server default: "1". */
+  volume_scale: string | number
+  /** Take profit from the average price, %, (0; 100]. Server default: "1.5". */
+  take_profit_percent: string | number
+  /** null = fixed TP; else trailing distance from the high after the TP price is reached, (0; 50]. */
+  trailing_take_profit_percent: string | number | null
+  /** null = off; else (0; 100) below the average price, then the bot sells and stops. */
+  stop_loss_percent: string | number | null
+  /** Server default: true. */
+  auto_restart: boolean
+  /** Pause between cycles, 0–86400 s. Server default: 0. */
+  restart_delay_seconds: number
+}
+
+export type DcaSpotPhase = 'starting' | 'open' | 'waiting_restart' | 'stopped'
+
+/** State of one safety order of the current cycle. */
+export type DcaSafetyOrderState = 'filled' | 'open' | 'pending' | 'rejected' | 'canceled'
+
+export interface DcaSafetyOrderOut {
+  /** 1-based safety order number. */
+  index: number
+  price: number | null
+  /** Plain string on the server; the known values are `DcaSafetyOrderState`. */
+  state: DcaSafetyOrderState | string
+}
+
+/** `dca` field of a GET /bots item: DCA_SPOT only, `null` for other types. Decimals arrive as numbers. */
+export interface DcaSpotStatusOut {
+  /** Plain string on the server; the known values are `DcaSpotPhase`. */
+  phase: DcaSpotPhase | string
+  cycle_no: number
+  cycles_completed: number
+  base_price: number | null
+  avg_price: number | null
+  qty: number | null
+  invested_usdt: number | null
+  safety_filled: number
+  safety_total: number
+  next_safety_price: number | null
+  take_profit_price: number | null
+  stop_loss_price: number | null
+  trailing_active: boolean
+  trailing_high: number | null
+  realized_profit_usdt: number | null
+  last_cycle_profit_usdt: number | null
+  max_funds_usdt: number | null
+  /** When the next cycle starts (phase `waiting_restart`). */
+  restart_at: string | null
+  /** Per-order state of the current cycle's safety orders; missing on older servers. */
+  safety_orders?: DcaSafetyOrderOut[]
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -548,6 +619,8 @@ export interface BotListOut extends BotOut {
   recent_candles?: CandleOut[] | null
   /** TREND_FUTURES only: strategy state, side, R, stop; null for other types and in old caches. */
   trend?: TrendBotStatus | null
+  /** DCA_SPOT only: cycle, safety orders, average and TP price, profit; null for other types and in old caches. */
+  dca?: DcaSpotStatusOut | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -623,6 +696,15 @@ export type BotEventType =
   | 'trend_regime_changed'
   | 'trend_risk_pause'
   | 'trend_exchange_ready'
+  | 'dca_cycle_started'
+  | 'dca_cycle_closed'
+  | 'dca_entry_rejected'
+  | 'dca_safety_rejected'
+  | 'dca_safety_canceled'
+  | 'dca_take_profit_replaced'
+  | 'dca_take_profit_rejected'
+  | 'dca_finished'
+  | 'dca_stop_loss'
   | 'error'
 
 export interface BotEventOut {

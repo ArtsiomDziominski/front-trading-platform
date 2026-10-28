@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BotListItem } from '#shared/types/bot'
 import type { BotActions } from '~/composables/useBotActions'
-import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, supportedExchange, trendBotSide } from '~/utils/botView'
+import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, isSpotBot, supportedExchange, trendBotSide } from '~/utils/botView'
 import { formatDateTime } from '~/utils/formatNumber'
 
 /** Bot page header: identity, status and every action as a labelled button. */
@@ -17,6 +17,8 @@ const direction = computed(() => botDirection(props.bot))
 // A flat trend bot has no side until it enters
 const showDirection = computed(() => props.bot.bot_type !== 'TREND_FUTURES' || trendBotSide(props.bot) != null)
 const exchange = computed(() => supportedExchange(props.bot))
+// Spot bots only buy coins: a market badge instead of the side
+const isSpot = computed(() => isSpotBot(props.bot))
 const typeLabel = computed(() => {
   const key = BOT_TYPE_LABEL_KEYS[props.bot.bot_type]
   return key ? t(key) : props.bot.bot_type
@@ -40,7 +42,8 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         </button>
         <h1 class="bot-detail-header__symbol">{{ bot.symbol }}</h1>
         <BotExchangeBadge v-if="exchange" :exchange="exchange" size="md" />
-        <span v-if="showDirection" class="bot-detail-header__direction" :class="`bot-detail-header__direction--${direction.toLowerCase()}`">
+        <span v-if="isSpot" class="bot-detail-header__direction bot-detail-header__direction--spot">{{ $t('bots.market_badge_spot') }}</span>
+        <span v-else-if="showDirection" class="bot-detail-header__direction" :class="`bot-detail-header__direction--${direction.toLowerCase()}`">
           {{ direction }}
         </span>
         <span class="bot-detail-header__status" :class="`bot-detail-header__status--${status.tone}`">
@@ -93,7 +96,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         {{ $t('bots.stop_loss_edit') }}
         <span class="bot-detail-header__action-value">{{ actions.stopLossValue }}</span>
       </AppButton>
-      <UTooltip v-if="actions.canStop" :text="$t('bots.action_stop_hint')" :delay-duration="600">
+      <UTooltip v-if="actions.canStop" :text="isSpot ? $t('bots.dca_action_stop_hint') : $t('bots.action_stop_hint')" :delay-duration="600">
         <AppButton
           variant="secondary"
           size="sm"
@@ -237,6 +240,11 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
 .bot-detail-header__direction--short {
   border-color: var(--color-down-dim);
   color: var(--color-down);
+}
+
+.bot-detail-header__direction--spot {
+  border-color: rgb(196 181 253 / 45%);
+  color: var(--color-accent);
 }
 
 .bot-detail-header__status {
