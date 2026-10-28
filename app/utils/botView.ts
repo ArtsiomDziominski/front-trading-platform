@@ -32,14 +32,14 @@ export function effectiveGridConfig(
 }
 
 /**
- * Grid bots trade the configured direction; anti-martingale bots are long only; trend bots pick the side
+ * Grid bots trade the configured direction; anti-martingale and spot DCA bots are long only; trend bots pick the side
  * themselves (see `trendBotSide`), so for them this is the side of the open position, else LONG.
  * `position_side` is not used for grid bots: the server keeps the last side even when the position is flat.
  */
 export function botDirection(
   bot: Pick<BotListItem, 'bot_type' | 'config' | 'position_side' | 'cycle_state' | 'config_version' | 'lifecycle_status' | 'trend'>,
 ): BotDirection {
-  if (bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return 'LONG'
+  if (bot.bot_type === 'ANTI_MARTINGALE_FUTURES' || bot.bot_type === 'DCA_SPOT') return 'LONG'
   if (bot.bot_type === 'TREND_FUTURES') return trendBotSide(bot) ?? 'LONG'
   const direction = effectiveGridConfig(bot).direction
   if (direction === 'LONG' || direction === 'SHORT') return direction
@@ -51,6 +51,11 @@ export function trendBotSide(bot: Pick<BotListItem, 'bot_type' | 'trend' | 'life
   if (bot.bot_type !== 'TREND_FUTURES' || bot.lifecycle_status === 'CLOSED') return null
   const side = bot.trend?.side
   return side === 'LONG' || side === 'SHORT' ? side : null
+}
+
+/** Spot bots buy coins: no leverage, no liquidation, the market badge says "Spot". */
+export function isSpotBot(bot: Pick<BotListItem, 'bot_type'>): boolean {
+  return bot.bot_type === 'DCA_SPOT' || bot.bot_type === 'GRID_SPOT'
 }
 
 /**

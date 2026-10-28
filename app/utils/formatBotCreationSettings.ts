@@ -1,5 +1,6 @@
 import type { BotType } from '#shared/types/bot'
 import { BOT_TYPE_LABEL_KEYS } from '~/utils/botView'
+import { dcaMaxFundsUsdt, readDcaLadderParams } from '~/utils/dcaSpot'
 
 export type CreationSettingKey =
   | 'bot_type'
@@ -49,6 +50,17 @@ export type CreationSettingKey =
   | 'cooldown_bars'
   | 'daily_stop_pct'
   | 'monthly_stop_pct'
+  | 'base_order_usdt'
+  | 'safety_order_usdt'
+  | 'safety_orders_count'
+  | 'price_deviation_percent'
+  | 'step_scale'
+  | 'volume_scale'
+  | 'dca_take_profit_percent'
+  | 'trailing_take_profit_percent'
+  | 'dca_stop_loss_percent'
+  | 'dca_max_funds_usdt'
+  | 'restart_delay_seconds'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -103,6 +115,17 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'cooldown_bars',
   'daily_stop_pct',
   'monthly_stop_pct',
+  'base_order_usdt',
+  'safety_order_usdt',
+  'safety_orders_count',
+  'price_deviation_percent',
+  'step_scale',
+  'volume_scale',
+  'dca_max_funds_usdt',
+  'dca_take_profit_percent',
+  'trailing_take_profit_percent',
+  'dca_stop_loss_percent',
+  'restart_delay_seconds',
 ]
 
 const TREND_NUMERIC_KEYS = [
@@ -247,6 +270,26 @@ export function extractCreationHistorySettings(
     if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
   }
 
+  // Spot DCA: its TP / SL have their own meaning (from the average price, and the SL stops the bot), so own keys
+  if (payload.bot_type === 'DCA_SPOT') {
+    byKey.delete('take_profit_percent')
+    byKey.delete('stop_loss_percent')
+    set('base_order_usdt', readString(config.base_order_usdt))
+    set('safety_order_usdt', readString(config.safety_order_usdt))
+    set('safety_orders_count', readNumber(config.safety_orders_count))
+    set('price_deviation_percent', readString(config.price_deviation_percent))
+    set('step_scale', readString(config.step_scale))
+    set('volume_scale', readString(config.volume_scale))
+    const params = readDcaLadderParams(config)
+    if (params) set('dca_max_funds_usdt', Math.round(dcaMaxFundsUsdt(params) * 100) / 100)
+    set('dca_take_profit_percent', readString(config.take_profit_percent))
+    const trailing = readNumber(config.trailing_take_profit_percent)
+    set('trailing_take_profit_percent', trailing != null && trailing > 0 ? readString(config.trailing_take_profit_percent) : 'off')
+    const stopLoss = readNumber(config.stop_loss_percent)
+    set('dca_stop_loss_percent', stopLoss != null && stopLoss > 0 ? readString(config.stop_loss_percent) : 'off')
+    if (config.auto_restart !== false) set('restart_delay_seconds', readNumber(config.restart_delay_seconds))
+  }
+
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
     return row ? [row] : []
@@ -301,6 +344,17 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   cooldown_bars: 'bots.trend_field_cooldown_bars',
   daily_stop_pct: 'bots.trend_field_daily_stop_pct',
   monthly_stop_pct: 'bots.trend_field_monthly_stop_pct',
+  base_order_usdt: 'bots.dca_field_base_order',
+  safety_order_usdt: 'bots.dca_field_safety_order',
+  safety_orders_count: 'bots.dca_field_safety_count',
+  price_deviation_percent: 'bots.dca_field_deviation',
+  step_scale: 'bots.dca_field_step_scale',
+  volume_scale: 'bots.dca_field_volume_scale',
+  dca_take_profit_percent: 'bots.dca_field_take_profit',
+  trailing_take_profit_percent: 'bots.dca_field_trailing',
+  dca_stop_loss_percent: 'bots.dca_field_stop_loss',
+  dca_max_funds_usdt: 'bots.dca_max_funds',
+  restart_delay_seconds: 'bots.dca_field_restart_delay',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -339,6 +393,21 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       return `${setting.value} ATR`
     case 'volume_mult':
       return Number(setting.value) === 0 ? t('bots.trend_volume_filter_off') : `${setting.value}×`
+    case 'trailing_take_profit_percent':
+    case 'dca_stop_loss_percent':
+      return setting.value === 'off' ? t('bots.value_off') : `${setting.value}%`
+    case 'price_deviation_percent':
+    case 'dca_take_profit_percent':
+      return `${setting.value}%`
+    case 'step_scale':
+    case 'volume_scale':
+      return `${setting.value}×`
+    case 'base_order_usdt':
+    case 'safety_order_usdt':
+    case 'dca_max_funds_usdt':
+      return `${setting.value} USDT`
+    case 'restart_delay_seconds':
+      return t('bots.dca_seconds_value', { n: setting.value })
     case 'grid_step_percent':
     case 'initial_amount_percent':
     case 'take_profit_percent':

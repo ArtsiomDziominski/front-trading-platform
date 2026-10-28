@@ -48,6 +48,15 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   trend_regime_changed: 'bots.event_type_trend_regime_changed',
   trend_risk_pause: 'bots.event_type_trend_risk_pause',
   trend_exchange_ready: 'bots.event_type_trend_exchange_ready',
+  dca_cycle_started: 'bots.event_type_dca_cycle_started',
+  dca_cycle_closed: 'bots.event_type_dca_cycle_closed',
+  dca_entry_rejected: 'bots.event_type_dca_entry_rejected',
+  dca_safety_rejected: 'bots.event_type_dca_safety_rejected',
+  dca_safety_canceled: 'bots.event_type_dca_safety_canceled',
+  dca_take_profit_replaced: 'bots.event_type_dca_take_profit_replaced',
+  dca_take_profit_rejected: 'bots.event_type_dca_take_profit_rejected',
+  dca_finished: 'bots.event_type_dca_finished',
+  dca_stop_loss: 'bots.event_type_dca_stop_loss',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -89,6 +98,8 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
   reason: {
     take_profit: 'bots.event_reason_take_profit',
     stop_loss: 'bots.event_reason_stop_loss',
+    trailing_take_profit: 'bots.dca_reason_trailing_take_profit',
+    manual: 'bots.dca_reason_manual',
   },
   event_type: EVENT_TYPE_I18N_KEYS,
 }
@@ -124,6 +135,11 @@ export function antiMartingaleLegIndex(clientOrderId: unknown): number | null {
 
 function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined): string {
   const kind = typeof payload?.kind === 'string' ? normalizeBotEventType(payload.kind) : ''
+  // Spot DCA fills
+  if (kind === 'base') return 'bots.event_type_order_filled_dca_base'
+  if (kind === 'safety') return 'bots.event_type_order_filled_dca_safety'
+  if (kind === 'take_profit') return 'bots.event_type_order_filled_dca_take_profit'
+  if (kind === 'exit') return 'bots.event_type_order_filled_dca_exit'
   if (kind === 'entry') return 'bots.event_type_order_filled_entry'
   if (kind === 'addon') return 'bots.event_type_order_filled_addon'
   if (kind === 'order') {
@@ -200,6 +216,12 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type === 'trend_exit') return 'closed'
   if (type === 'trend_risk_pause') return 'error'
   if (type === 'trend_stop_moved' || type === 'trend_regime_changed' || type === 'trend_evaluated') return 'updated'
+  // Spot DCA events, before the substring rules below (`dca_take_profit_replaced` is not a close)
+  if (type === 'dca_cycle_started') return 'created'
+  if (type === 'dca_cycle_closed' || type === 'dca_stop_loss') return 'closed'
+  if (type === 'dca_finished') return 'stopped'
+  if (type === 'dca_entry_rejected' || type === 'dca_safety_rejected' || type === 'dca_take_profit_rejected') return 'error'
+  if (type === 'dca_safety_canceled' || type === 'dca_take_profit_replaced') return 'updated'
   if (
     type === 'order_filled'
     || type === 'active'

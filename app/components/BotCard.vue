@@ -7,11 +7,13 @@ import {
   botDirection,
   botStatusView,
   isInPosition,
+  isSpotBot,
   pnlTone,
   supportedExchange,
   trendBotSide,
 } from '~/utils/botView'
-import { formatPercentValue, formatUsdt } from '~/utils/formatNumber'
+import { dcaPhaseLabel, dcaPhaseTone } from '~/utils/dcaSpot'
+import { formatPercentValue, formatPrice, formatUsdt } from '~/utils/formatNumber'
 import { formatR, trendStateLabel, trendStateTone } from '~/utils/trend'
 
 /** Compact bot tile for the `/bots` list; every action sits in the «⋯» menu, the tile opens the bot page. */
@@ -64,6 +66,38 @@ const trendRows = computed(() => {
       tone: '',
     },
   ]
+})
+
+// Spot DCA bots: cycle state from `bot.dca`; spot has no side to show, the badge says "Spot" instead
+const isSpot = computed(() => isSpotBot(props.bot))
+const isDca = computed(() => props.bot.bot_type === 'DCA_SPOT')
+const dca = computed(() => (isDca.value ? props.bot.dca ?? null : null))
+const dcaRows = computed(() => {
+  const status = dca.value
+  if (!status) return []
+  const price = (value: number | null) => (value == null ? '—' : formatPrice(value, locale.value))
+  const usdt = (value: number | null, signed = false) => (value == null ? '—' : `${formatUsdt(value, locale.value, signed)} USDT`)
+  const rows: { key: string, label: string, value: string, tone: string }[] = []
+  if (status.phase === 'open') {
+    rows.push(
+      { key: 'safety', label: t('bots.dca_safety_filled'), value: `${status.safety_filled}/${status.safety_total}`, tone: '' },
+      { key: 'avg', label: t('bots.dca_avg_price'), value: price(status.avg_price), tone: '' },
+      {
+        key: 'tp',
+        label: status.trailing_active ? t('bots.dca_trailing_high') : t('bots.dca_tp_price'),
+        value: price(status.trailing_active ? status.trailing_high : status.take_profit_price),
+        tone: '',
+      },
+      { key: 'invested', label: t('bots.dca_invested'), value: usdt(status.invested_usdt), tone: '' },
+    )
+  }
+  rows.push({
+    key: 'realized',
+    label: t('bots.dca_realized_profit'),
+    value: usdt(status.realized_profit_usdt, true),
+    tone: `bot-tile__pnl--${pnlTone(status.realized_profit_usdt)}`,
+  })
+  return rows
 })
 
 type MenuItem = DropdownMenuItem & { value?: string }
@@ -174,7 +208,8 @@ const menuItems = computed<MenuItem[][]>(() => {
 
       <span class="bot-tile__spacer" />
 
-      <span v-if="showDirection" class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
+      <span v-if="isSpot" class="bot-tile__direction bot-tile__direction--spot">{{ $t('bots.market_badge_spot') }}</span>
+      <span v-else-if="showDirection" class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
         {{ direction }}
       </span>
 
@@ -214,6 +249,16 @@ const menuItems = computed<MenuItem[][]>(() => {
         <dt>{{ row.label }}</dt>
         <dd :class="row.tone">{{ row.value }}</dd>
       </div>
+      <div v-if="isDca" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${dcaPhaseTone(dca?.phase)}`">
+          {{ dca ? dcaPhaseLabel(t, dca.phase) : '—' }}<template v-if="dca && dca.cycle_no > 0"> · #{{ dca.cycle_no }}</template>
+        </dd>
+      </div>
+      <div v-for="row in dcaRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
+      </div>
       <div class="bot-tile__row">
         <dt>{{ $t('bots.pnl_usdt') }}</dt>
         <dd class="bot-tile__pnl" :class="`bot-tile__pnl--${pnlTone(pnl)}`">{{ pnlLabel }}</dd>
@@ -237,6 +282,7 @@ const menuItems = computed<MenuItem[][]>(() => {
       :bot="bot"
       :confirm-copy="actions.confirmCopy"
       :confirm-loading="actions.confirmLoading"
+      :confirm-error="actions.confirmError"
       :can-edit-grid-config="actions.canEditGridConfig"
       :can-edit-mixed-grid="actions.canEditMixedGrid"
       @confirm="actions.confirmAction"
@@ -376,6 +422,11 @@ const menuItems = computed<MenuItem[][]>(() => {
   color: var(--color-down);
 }
 
+.bot-tile__direction--spot {
+  border-color: rgb(196 181 253 / 45%);
+  color: var(--color-accent);
+}
+
 .bot-tile__menu {
   position: relative;
   z-index: 2;
@@ -480,6 +531,14 @@ const menuItems = computed<MenuItem[][]>(() => {
 
 .bot-tile__trend--pause {
   color: var(--color-warning);
+}
+
+.bot-tile__dca--live {
+  color: var(--color-up);
+}
+
+.bot-tile__dca--wait {
+  color: var(--color-accent);
 }
 
 .bot-tile__pnl--up {

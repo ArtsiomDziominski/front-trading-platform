@@ -1,8 +1,9 @@
-import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
+import { DCA_SERVER_DEFAULTS } from '~/utils/dcaSpot'
 import { TREND_SIGNAL_TIMEFRAMES, TREND_TREND_TIMEFRAMES } from '~/utils/trend'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
@@ -111,6 +112,48 @@ function parseTrendConfig(raw: unknown): TrendFuturesConfig | null {
   return result
 }
 
+/** Spot DCA: both sizes are required; other fields fall back to the server defaults. */
+function parseDcaSpotConfig(raw: unknown): DcaSpotConfig | null {
+  if (!raw || typeof raw !== 'object') return null
+
+  const config = raw as Record<string, unknown>
+  const symbol = asString(config.symbol).trim().toUpperCase()
+  if (symbol.length < 3) return null
+
+  const decimal = (key: string, fallback: number | null): string | null => {
+    const value = asString(config[key]).trim()
+    if (value && Number.isFinite(Number(value))) return value
+    return fallback == null ? null : String(fallback)
+  }
+  const integer = (key: string, fallback: number): number => {
+    const value = Number(config[key])
+    return config[key] != null && config[key] !== '' && Number.isInteger(value) ? value : fallback
+  }
+  const optionalPercent = (key: string): string | null => {
+    const value = decimal(key, null)
+    return value != null && Number(value) > 0 ? value : null
+  }
+
+  const baseOrder = decimal('base_order_usdt', null)
+  const safetyOrder = decimal('safety_order_usdt', null)
+  if (!baseOrder || !safetyOrder) return null
+
+  return {
+    symbol,
+    base_order_usdt: baseOrder,
+    safety_order_usdt: safetyOrder,
+    safety_orders_count: integer('safety_orders_count', DCA_SERVER_DEFAULTS.safety_orders_count),
+    price_deviation_percent: decimal('price_deviation_percent', DCA_SERVER_DEFAULTS.price_deviation_percent) ?? '',
+    step_scale: decimal('step_scale', DCA_SERVER_DEFAULTS.step_scale) ?? '',
+    volume_scale: decimal('volume_scale', DCA_SERVER_DEFAULTS.volume_scale) ?? '',
+    take_profit_percent: decimal('take_profit_percent', DCA_SERVER_DEFAULTS.take_profit_percent) ?? '',
+    trailing_take_profit_percent: optionalPercent('trailing_take_profit_percent'),
+    stop_loss_percent: optionalPercent('stop_loss_percent'),
+    auto_restart: typeof config.auto_restart === 'boolean' ? config.auto_restart : DCA_SERVER_DEFAULTS.auto_restart,
+    restart_delay_seconds: integer('restart_delay_seconds', DCA_SERVER_DEFAULTS.restart_delay_seconds),
+  }
+}
+
 function parseConfig(raw: unknown): GridFuturesConfig | null {
   if (!raw || typeof raw !== 'object') return null
 
@@ -180,7 +223,9 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
     ? parseAntiMartingaleConfig(payload.config)
     : botType === 'TREND_FUTURES'
       ? parseTrendConfig(payload.config)
-      : parseConfig(payload.config)
+      : botType === 'DCA_SPOT'
+        ? parseDcaSpotConfig(payload.config)
+        : parseConfig(payload.config)
   if (!config) return null
 
   return {

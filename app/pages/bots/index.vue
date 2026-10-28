@@ -406,6 +406,7 @@ onUnmounted(() => {
       :loading-label="$t('common.loading')"
       :loading="confirmLoading"
       :confirm-variant="confirmCopy.variant"
+      :error="confirmLoading ? null : bulkActionError"
       @confirm="confirmBulkAction"
       @cancel="closeBulkConfirm"
     />

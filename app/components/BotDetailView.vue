@@ -28,6 +28,7 @@ const actions = useBotActions(() => props.bot, {
 
 const isAntiMartingale = computed(() => props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES')
 const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
+const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
 const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
 </script>
 
@@ -66,6 +67,8 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
 
     <BotDetailTrend v-if="isTrend" :bot="bot" />
 
+    <BotDetailDcaSpot v-if="isDcaSpot" :bot="bot" />
+
     <div class="bot-detail-view__columns">
       <div class="bot-detail-view__main">
         <BotDetailGrid v-if="hasGridCycles" :bot="bot" :events="events" />
@@ -96,6 +99,7 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
       :bot="bot"
       :confirm-copy="actions.confirmCopy"
       :confirm-loading="actions.confirmLoading"
+      :confirm-error="actions.confirmError"
       :can-edit-grid-config="actions.canEditGridConfig"
       :can-edit-mixed-grid="actions.canEditMixedGrid"
       @confirm="actions.confirmAction"

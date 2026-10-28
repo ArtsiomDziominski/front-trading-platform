@@ -22,6 +22,7 @@ import {
   trendSideLabel,
   trendStopSourceLabel,
 } from '~/utils/trend'
+import { DCA_ORDER_KINDS, dcaExitReasonLabel, dcaTpReplacedReasonLabel } from '~/utils/dcaSpot'
 
 export type BotEventDetailTone = 'up' | 'down' | 'muted'
 
@@ -41,6 +42,18 @@ function text(payload: Payload, key: string): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
   return trimmed || null
+}
+
+/** `3725` → `1 ч 2 мин`; under a minute → seconds. */
+function formatDuration(seconds: number, t: Translate): string {
+  const total = Math.max(0, Math.round(seconds))
+  const days = Math.floor(total / 86_400)
+  const hours = Math.floor((total % 86_400) / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  if (days > 0) return t('bots.dca_duration_dh', { d: days, h: hours })
+  if (hours > 0) return t('bots.dca_duration_hm', { h: hours, m: minutes })
+  if (minutes > 0) return t('bots.dca_duration_m', { m: minutes })
+  return t('bots.dca_duration_s', { s: total })
 }
 
 function signTone(value: number): BotEventDetailTone | undefined {
@@ -97,8 +110,26 @@ export function botEventDetails(
     if (reason) details.push({ value: reason, tone: 'muted', note: true })
   }
 
+  const pushCycleNo = () => {
+    const cycle = num('cycle_no')
+    if (cycle != null) details.push({ value: t('bots.dca_cycle_no', { n: formatCount(cycle, locale) }) })
+  }
+  const pushDcaOrder = () => {
+    const index = num('index') ?? num('order_index')
+    if (index != null && index >= 1) details.push({ value: t('bots.dca_order_safety', { n: formatCount(index, locale) }) })
+  }
+
   switch (normalizeBotEventType(event.event_type)) {
     case 'order_filled': {
+      // Spot DCA fills carry `kind` and the order index instead of a side
+      const dcaKind = typeof payload.kind === 'string' && DCA_ORDER_KINDS.includes(payload.kind) ? payload.kind : null
+      if (dcaKind) {
+        if (dcaKind === 'safety') pushDcaOrder()
+        pushQuantity()
+        pushPrice('avg_price', 'bots.event_detail_price')
+        break
+      }
+
       const side = text(payload, 'side')
       if (side?.toLowerCase() === 'buy') details.push({ value: t('bots.event_detail_side_buy'), tone: 'up' })
       else if (side?.toLowerCase() === 'sell') details.push({ value: t('bots.event_detail_side_sell'), tone: 'down' })
@@ -334,12 +365,102 @@ export function botEventDetails(
       break
     }
 
+    case 'dca_cycle_started':
+      pushCycleNo()
+      pushPrice('base_price', 'bots.dca_base_price')
+      pushQuantity()
+      pushUsdt('base_order_usdt', 'bots.dca_field_base_order')
+      pushUsdt('max_funds_usdt', 'bots.dca_max_funds')
+      break
+
+    case 'dca_cycle_closed': {
+      pushCycleNo()
+      const reason = text(payload, 'reason')
+      if (reason) details.push({ label: t('bots.dca_event_reason'), value: dcaExitReasonLabel(t, reason) })
+      const profit = num('profit_usdt')
+      if (profit != null) details.push({ label: t('bots.dca_event_profit'), value: usdt(profit, true), tone: signTone(cents(profit)) })
+      const filled = num('safety_filled')
+      if (filled != null) details.push({ label: t('bots.dca_safety_filled'), value: formatCount(filled, locale) })
+      pushPrice('avg_price', 'bots.dca_avg_price')
+      pushPrice('exit_price', 'bots.event_detail_exit_price')
+      pushNumber('qty', 'bots.event_detail_quantity', formatQuantity)
+      // Coins below the exchange lot that the close could not sell stay on the spot account
+      const dust = num('dust_qty')
+      if (dust != null && dust > 0) {
+        details.push({ label: t('bots.dca_event_dust_qty'), value: formatQuantity(dust, locale), tone: 'muted' })
+      }
+      pushUsdt('fees_usdt', 'bots.event_detail_fees')
+      const duration = num('duration_sec')
+      if (duration != null) details.push({ label: t('bots.dca_event_duration'), value: formatDuration(duration, t) })
+      break
+    }
+
+    case 'dca_stop_loss':
+      pushPrice('price', 'bots.event_detail_price')
+      pushPrice('stop_loss_price', 'bots.dca_stop_loss_price')
+      pushPrice('avg_price', 'bots.dca_avg_price')
+      break
+
+    // `reason` is a code here; an unknown code shows nothing rather than raw English
+    case 'dca_take_profit_replaced': {
+      pushPrice('price', 'bots.dca_tp_price')
+      pushQuantity()
+      const reason = dcaTpReplacedReasonLabel(t, text(payload, 'reason'))
+      if (reason) details.push({ value: reason, tone: 'muted', note: true })
+      break
+    }
+
+    // Here `reason` is the engine's own sentence
+    case 'dca_take_profit_rejected':
+      pushPrice('price', 'bots.dca_tp_price')
+      pushQuantity()
+      pushReason()
+      break
+
+    // The engine's reason already names the order and the USDT needed / free
+    case 'dca_safety_canceled':
+    case 'dca_safety_rejected':
+      pushDcaOrder()
+      pushReason()
+      break
+
+    case 'dca_entry_rejected':
+      pushReason()
+      break
+
+    case 'dca_finished': {
+      pushCycleNo()
+      const reason = text(payload, 'reason')
+      if (reason) details.push({ label: t('bots.dca_event_reason'), value: dcaExitReasonLabel(t, reason) })
+      break
+    }
+
+    // Only a Spot DCA stop sends `coins_kept`: the bought coins stay on the spot account
+    case 'stopped':
+      if (payload.coins_kept === true) {
+        const kept = num('kept_qty')
+        if (kept != null && kept > 0) {
+          details.push({ label: t('bots.dca_event_kept_qty'), value: formatQuantity(kept, locale), tone: 'muted' })
+        }
+        const canceled = num('canceled_orders')
+        if (canceled != null && canceled > 0) {
+          details.push({ label: t('bots.dca_event_canceled_orders'), value: formatCount(canceled, locale) })
+        }
+      }
+      break
+
     // Take-profit and stop-loss closes already say so in the title.
-    case 'close_completed':
+    case 'close_completed': {
       if (!isStopLossClose(payload) && !isTakeProfitClose(payload) && payload.source === 'user') {
         details.push({ value: t('bots.event_detail_closed_manually'), tone: 'muted' })
       }
+      // Spot DCA only: what the close actually sold, or why it sold nothing
+      const skipped = text(payload, 'sell_skipped_reason')
+      if (skipped) details.push({ value: skipped, tone: 'down', note: true })
+      const sold = num('sold_qty')
+      if (sold != null && sold > 0) details.push({ label: t('bots.dca_event_sold_qty'), value: formatQuantity(sold, locale) })
       break
+    }
   }
 
   return details

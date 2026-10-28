@@ -80,7 +80,7 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
     titleKey: 'bots.catalog_dca',
     descKey: 'bots.catalog_dca_spot_desc',
     icon: 'i-lucide-layers',
-    available: false,
+    available: true,
   },
 ]
 
