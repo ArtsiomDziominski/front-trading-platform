@@ -14,6 +14,7 @@ import {
 } from '~/utils/botView'
 import { dcaPhaseLabel, dcaPhaseTone } from '~/utils/dcaSpot'
 import { recurringPhaseLabel, recurringPhaseTone } from '~/utils/recurringSpot'
+import { gridSpotPhaseLabel, gridSpotPhaseTone } from '~/utils/gridSpot'
 import { formatPercentValue, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
 import { formatR, trendStateLabel, trendStateTone } from '~/utils/trend'
 
@@ -112,6 +113,24 @@ const recurringRows = computed(() => {
     { key: 'qty', label: t('bots.recurring_qty'), value: status.qty == null ? '—' : `${formatQuantity(status.qty, locale.value)} ${coin}` },
     { key: 'avg', label: t('bots.dca_avg_price'), value: status.avg_price == null ? '—' : formatPrice(status.avg_price, locale.value) },
     { key: 'invested', label: t('bots.dca_invested'), value: status.invested_usdt == null ? '—' : `${formatUsdt(status.invested_usdt, locale.value)} USDT` },
+  ]
+})
+
+// Spot grid bots: round trips, profit and the grid's coins from `bot.grid_spot`
+const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
+const gridSpot = computed(() => (isGridSpot.value ? props.bot.grid_spot ?? null : null))
+const gridSpotRows = computed(() => {
+  const status = gridSpot.value
+  if (!status) return []
+  const coin = props.bot.symbol.replace(/USDT$/, '')
+  return [
+    {
+      key: 'profit',
+      label: t('bots.grid_spot_realized'),
+      value: status.realized_profit_usdt == null ? '—' : `${formatUsdt(status.realized_profit_usdt, locale.value, true)} USDT`,
+      tone: `bot-tile__pnl--${pnlTone(status.realized_profit_usdt)}`,
+    },
+    { key: 'qty', label: t('bots.grid_spot_held'), value: status.qty == null ? '—' : `${formatQuantity(status.qty, locale.value)} ${coin}`, tone: '' },
   ]
 })
 
@@ -275,6 +294,16 @@ const menuItems = computed<MenuItem[][]>(() => {
         <dd :class="`bot-tile__dca--${recurringPhaseTone(recurring?.phase)}`">
           {{ recurring ? recurringPhaseLabel(t, recurring.phase) : '—' }}<template v-if="recurring"> · {{ recurring.buys_done }}</template>
         </dd>
+      </div>
+      <div v-if="isGridSpot" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${gridSpotPhaseTone(gridSpot?.phase)}`">
+          {{ gridSpot ? gridSpotPhaseLabel(t, gridSpot.phase) : '—' }}<template v-if="gridSpot"> · {{ $t('bots.grid_spot_round_trips_n', { n: gridSpot.round_trips }) }}</template>
+        </dd>
+      </div>
+      <div v-for="row in gridSpotRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
       </div>
       <div v-for="row in recurringRows" :key="row.key" class="bot-tile__row">
         <dt>{{ row.label }}</dt>

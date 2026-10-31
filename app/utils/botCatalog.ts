@@ -71,7 +71,7 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
     titleKey: 'bots.catalog_grid',
     descKey: 'bots.catalog_grid_spot_desc',
     icon: 'i-lucide-grid-3x3',
-    available: false,
+    available: true,
   },
   {
     market: 'spot',

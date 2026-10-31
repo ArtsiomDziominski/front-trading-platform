@@ -132,6 +132,12 @@ export function botEventDetails(
         break
       }
 
+      // Spot grid fills: the cell number
+      if (typeof payload.kind === 'string' && payload.kind.startsWith('grid_spot_')) {
+        const cell = num('index')
+        if (cell != null) details.push({ value: t('bots.grid_spot_cell_no', { n: formatCount(cell, locale) }) })
+      }
+
       const side = text(payload, 'side')
       if (side?.toLowerCase() === 'buy') details.push({ value: t('bots.event_detail_side_buy'), tone: 'up' })
       else if (side?.toLowerCase() === 'sell') details.push({ value: t('bots.event_detail_side_sell'), tone: 'down' })
@@ -428,8 +434,42 @@ export function botEventDetails(
 
     case 'dca_entry_rejected':
     case 'recurring_buy_skipped':
+    case 'grid_spot_entry_rejected':
+    case 'grid_spot_order_rejected':
       pushReason()
       break
+
+    case 'grid_spot_started': {
+      pushPrice('price', 'bots.event_detail_price')
+      const cells = num('cells')
+      if (cells != null) details.push({ value: t('bots.grid_spot_cells_n', { n: formatCount(cells, locale) }) })
+      pushUsdt('funds_usdt', 'bots.grid_spot_preview_funds')
+      break
+    }
+
+    case 'grid_spot_round_trip': {
+      const cell = num('cell')
+      if (cell != null) details.push({ value: t('bots.grid_spot_cell_no', { n: formatCount(cell, locale) }) })
+      pushPrice('buy_price', 'bots.grid_spot_buy_price')
+      pushPrice('sell_price', 'bots.grid_spot_sell_price')
+      pushQuantity()
+      const profit = num('profit_usdt')
+      if (profit != null) details.push({ label: t('bots.grid_spot_profit'), value: usdt(profit, true), tone: profit >= 0 ? 'up' : 'down' })
+      break
+    }
+
+    case 'grid_spot_exit': {
+      const reason = text(payload, 'reason')
+      if (reason === 'stop_loss') details.push({ value: t('bots.grid_spot_exit_stop_loss'), tone: 'down' })
+      else if (reason === 'take_profit') details.push({ value: t('bots.grid_spot_exit_take_profit'), tone: 'up' })
+      else if (reason) details.push({ value: t('bots.grid_spot_exit_manual') })
+      pushNumber('sold_qty', 'bots.event_detail_quantity', formatQuantity)
+      const total = num('realized_profit_usdt')
+      if (total != null) details.push({ label: t('bots.grid_spot_realized'), value: usdt(total, true), tone: total >= 0 ? 'up' : 'down' })
+      const skipped = text(payload, 'sell_skipped_reason')
+      if (skipped) details.push({ value: skipped, tone: 'muted', note: true })
+      break
+    }
 
     case 'recurring_buy': {
       const n = num('n')

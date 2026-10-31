@@ -43,6 +43,8 @@ const takeProfitPrice = computed(() => {
   if (props.bot.bot_type === 'DCA_SPOT') return frozen.value ? null : props.bot.dca?.take_profit_price ?? null
   // A recurring-buy bot never sells: no target
   if (props.bot.bot_type === 'RECURRING_SPOT') return null
+  // Spot grid: every cell sells at its own level, the exits are prices in the grid panel
+  if (props.bot.bot_type === 'GRID_SPOT') return null
   if (props.bot.bot_type !== 'GRID_FUTURES' || frozen.value) return null
   const entry = props.bot.entry_price
   if (entry == null || entry <= 0 || !size.value) return null
@@ -64,6 +66,7 @@ const emptyText = computed(() => {
   if (props.bot.bot_type === 'TREND_FUTURES') return t('bots.trend_position_none')
   if (props.bot.bot_type === 'DCA_SPOT') return t('bots.dca_position_none')
   if (props.bot.bot_type === 'RECURRING_SPOT') return t('bots.recurring_position_none')
+  if (props.bot.bot_type === 'GRID_SPOT') return t('bots.grid_spot_position_none')
   return t('bots.position_none')
 })
 

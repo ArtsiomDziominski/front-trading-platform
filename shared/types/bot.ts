@@ -601,7 +601,65 @@ export interface RecurringSpotStatusOut {
   last_skip_reason: string | null
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig
+/**
+ * GRID_SPOT: spot grid, USDT pairs. `grid_count` cells between `lower_price` and `upper_price`: a cell rests a LIMIT
+ * BUY of `order_usdt` at its lower level, or holds the coins it bought and a LIMIT SELL one level higher. The cells
+ * above the start price get their coins with one market buy. Stop loss / take profit sell every coin of the grid
+ * and stop the bot. Decimals go as strings or numbers; the server stores strings.
+ */
+export interface GridSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  lower_price: string | number
+  /** > lower_price. */
+  upper_price: string | number
+  /** 2–150. Server default: 20. */
+  grid_count: number
+  /** One cell's buy, USDT. */
+  order_usdt: string | number
+  /** false — equal step in USDT, true — equal step in %. */
+  geometric: boolean
+  /** null = off; below lower_price. */
+  stop_loss_price: string | number | null
+  /** null = off; above upper_price. */
+  take_profit_price: string | number | null
+}
+
+export type GridSpotPhase = 'starting' | 'running' | 'exiting' | 'stopped'
+
+export interface GridSpotCellOut {
+  /** From 1, bottom up. */
+  index: number
+  buy_price: number | null
+  sell_price: number | null
+  side: 'buy' | 'sell'
+  /** open — the order rests on the book, waiting — waits for funds / a retry, rejected — below the exchange minimum. */
+  state: 'open' | 'waiting' | 'rejected'
+  qty: number | null
+}
+
+/** `grid_spot` field of a GET /bots item: GRID_SPOT only. Decimals arrive as numbers. */
+export interface GridSpotStatusOut {
+  phase: GridSpotPhase | string
+  round_trips: number
+  realized_profit_usdt: number | null
+  fees_usdt: number | null
+  qty: number | null
+  avg_price: number | null
+  cost_usdt: number | null
+  last_price: number | null
+  in_range: boolean | null
+  start_price: number | null
+  buy_orders: number
+  sell_orders: number
+  cells: GridSpotCellOut[]
+  stop_loss_price: number | null
+  take_profit_price: number | null
+  exit_reason: 'stop_loss' | 'take_profit' | 'manual' | null
+  entry_rejected_reason: string | null
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -668,6 +726,8 @@ export interface BotListOut extends BotOut {
   dca?: DcaSpotStatusOut | null
   /** RECURRING_SPOT only: buys, accumulated coins, next buy, budget; null for other types and in old caches. */
   recurring?: RecurringSpotStatusOut | null
+  /** GRID_SPOT only: phase, cells, round trips, profit, the grid's coins; null for other types and in old caches. */
+  grid_spot?: GridSpotStatusOut | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -755,6 +815,11 @@ export type BotEventType =
   | 'recurring_buy'
   | 'recurring_buy_skipped'
   | 'recurring_finished'
+  | 'grid_spot_started'
+  | 'grid_spot_entry_rejected'
+  | 'grid_spot_round_trip'
+  | 'grid_spot_order_rejected'
+  | 'grid_spot_exit'
   | 'error'
 
 export interface BotEventOut {
