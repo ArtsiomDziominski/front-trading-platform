@@ -1,6 +1,7 @@
 import type { BotType } from '#shared/types/bot'
 import { BOT_TYPE_LABEL_KEYS } from '~/utils/botView'
 import { dcaMaxFundsUsdt, readDcaLadderParams } from '~/utils/dcaSpot'
+import { recurringIntervalLabel } from '~/utils/recurringSpot'
 
 export type CreationSettingKey =
   | 'bot_type'
@@ -61,6 +62,11 @@ export type CreationSettingKey =
   | 'dca_stop_loss_percent'
   | 'dca_max_funds_usdt'
   | 'restart_delay_seconds'
+  | 'recurring_amount_usdt'
+  | 'recurring_interval_hours'
+  | 'recurring_dip_ma_period'
+  | 'recurring_dip_multiplier'
+  | 'recurring_max_total_usdt'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -126,6 +132,11 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'trailing_take_profit_percent',
   'dca_stop_loss_percent',
   'restart_delay_seconds',
+  'recurring_amount_usdt',
+  'recurring_interval_hours',
+  'recurring_dip_ma_period',
+  'recurring_dip_multiplier',
+  'recurring_max_total_usdt',
 ]
 
 const TREND_NUMERIC_KEYS = [
@@ -290,6 +301,16 @@ export function extractCreationHistorySettings(
     if (config.auto_restart !== false) set('restart_delay_seconds', readNumber(config.restart_delay_seconds))
   }
 
+  if (payload.bot_type === 'RECURRING_SPOT') {
+    set('recurring_amount_usdt', readString(config.amount_usdt))
+    set('recurring_interval_hours', readNumber(config.interval_hours))
+    const period = readNumber(config.dip_ma_period)
+    set('recurring_dip_ma_period', period != null && period > 0 ? period : 'off')
+    if (period != null && period > 0) set('recurring_dip_multiplier', readString(config.dip_multiplier))
+    const budget = readNumber(config.max_total_usdt)
+    set('recurring_max_total_usdt', budget != null && budget > 0 ? readString(config.max_total_usdt) : 'off')
+  }
+
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
     return row ? [row] : []
@@ -355,6 +376,11 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   dca_stop_loss_percent: 'bots.dca_field_stop_loss',
   dca_max_funds_usdt: 'bots.dca_max_funds',
   restart_delay_seconds: 'bots.dca_field_restart_delay',
+  recurring_amount_usdt: 'bots.recurring_field_amount',
+  recurring_interval_hours: 'bots.recurring_field_interval',
+  recurring_dip_ma_period: 'bots.recurring_field_ma_period',
+  recurring_dip_multiplier: 'bots.recurring_field_multiplier',
+  recurring_max_total_usdt: 'bots.recurring_field_budget',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -408,6 +434,16 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       return `${setting.value} USDT`
     case 'restart_delay_seconds':
       return t('bots.dca_seconds_value', { n: setting.value })
+    case 'recurring_amount_usdt':
+      return `${setting.value} USDT`
+    case 'recurring_max_total_usdt':
+      return setting.value === 'off' ? t('bots.recurring_no_limit') : `${setting.value} USDT`
+    case 'recurring_interval_hours':
+      return recurringIntervalLabel(t, Number(setting.value))
+    case 'recurring_dip_ma_period':
+      return setting.value === 'off' ? t('bots.value_off') : t('bots.recurring_days', { n: setting.value })
+    case 'recurring_dip_multiplier':
+      return `${setting.value}×`
     case 'grid_step_percent':
     case 'initial_amount_percent':
     case 'take_profit_percent':

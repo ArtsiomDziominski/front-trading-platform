@@ -94,7 +94,11 @@ export function useBotActions(
         return {
           title: t('bots.confirm_close_title', { symbol }),
           // Spot DCA sells only the coins it bought; there is no futures position to close
-          message: bot.value.bot_type === 'DCA_SPOT' ? t('bots.dca_confirm_close', { symbol }) : t('bots.confirm_close', { symbol }),
+          message: bot.value.bot_type === 'DCA_SPOT'
+            ? t('bots.dca_confirm_close', { symbol })
+            : bot.value.bot_type === 'RECURRING_SPOT'
+              ? t('bots.recurring_confirm_close', { symbol })
+              : t('bots.confirm_close', { symbol }),
           confirmLabel: t('bots.action_close'),
           variant: 'primary',
         }

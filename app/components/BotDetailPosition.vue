@@ -41,6 +41,8 @@ const frozen = computed(() => props.bot.lifecycle_status !== 'ACTIVE')
 const takeProfitPrice = computed(() => {
   // Spot DCA: the engine reports the price of its resting (or trailing activation) take profit
   if (props.bot.bot_type === 'DCA_SPOT') return frozen.value ? null : props.bot.dca?.take_profit_price ?? null
+  // A recurring-buy bot never sells: no target
+  if (props.bot.bot_type === 'RECURRING_SPOT') return null
   if (props.bot.bot_type !== 'GRID_FUTURES' || frozen.value) return null
   const entry = props.bot.entry_price
   if (entry == null || entry <= 0 || !size.value) return null
@@ -61,6 +63,7 @@ const emptyText = computed(() => {
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return t('bots.position_none_waiting')
   if (props.bot.bot_type === 'TREND_FUTURES') return t('bots.trend_position_none')
   if (props.bot.bot_type === 'DCA_SPOT') return t('bots.dca_position_none')
+  if (props.bot.bot_type === 'RECURRING_SPOT') return t('bots.recurring_position_none')
   return t('bots.position_none')
 })
 

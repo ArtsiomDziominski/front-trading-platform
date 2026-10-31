@@ -57,6 +57,9 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   dca_take_profit_rejected: 'bots.event_type_dca_take_profit_rejected',
   dca_finished: 'bots.event_type_dca_finished',
   dca_stop_loss: 'bots.event_type_dca_stop_loss',
+  recurring_buy: 'bots.event_type_recurring_buy',
+  recurring_buy_skipped: 'bots.event_type_recurring_buy_skipped',
+  recurring_finished: 'bots.event_type_recurring_finished',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -91,6 +94,7 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     grid_spot: 'bots.type_grid_spot',
     dca_futures: 'bots.type_dca_futures',
     dca_spot: 'bots.type_dca_spot',
+    recurring_spot: 'bots.type_recurring_spot',
     anti_martingale_futures: 'bots.type_anti_martingale_futures',
     trend_futures: 'bots.type_trend_futures',
     custom: 'bots.type_custom',
@@ -140,6 +144,7 @@ function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined
   if (kind === 'safety') return 'bots.event_type_order_filled_dca_safety'
   if (kind === 'take_profit') return 'bots.event_type_order_filled_dca_take_profit'
   if (kind === 'exit') return 'bots.event_type_order_filled_dca_exit'
+  if (kind === 'recurring_buy') return 'bots.event_type_order_filled_recurring'
   if (kind === 'entry') return 'bots.event_type_order_filled_entry'
   if (kind === 'addon') return 'bots.event_type_order_filled_addon'
   if (kind === 'order') {
@@ -222,6 +227,9 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type === 'dca_finished') return 'stopped'
   if (type === 'dca_entry_rejected' || type === 'dca_safety_rejected' || type === 'dca_take_profit_rejected') return 'error'
   if (type === 'dca_safety_canceled' || type === 'dca_take_profit_replaced') return 'updated'
+  if (type === 'recurring_buy') return 'created'
+  if (type === 'recurring_finished') return 'stopped'
+  if (type === 'recurring_buy_skipped') return 'error'
   if (
     type === 'order_filled'
     || type === 'active'
