@@ -6,6 +6,7 @@ export type BotType =
   | 'DCA_FUTURES'
   | 'DCA_SPOT'
   | 'RECURRING_SPOT'
+  | 'TREND_SPOT'
   | 'ANTI_MARTINGALE_FUTURES'
   | 'TREND_FUTURES'
   | 'CUSTOM'
@@ -659,7 +660,88 @@ export interface GridSpotStatusOut {
   entry_rejected_reason: string | null
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig
+/**
+ * TREND_SPOT: the trend bot's rules on a spot account — long only, no leverage, no exchange stop order (the engine
+ * sells at market when the last price reaches the stop). Every field but the symbol has a server default.
+ */
+export interface TrendSpotConfig {
+  symbol: string
+  signal_timeframe?: TrendSignalTimeframe
+  trend_timeframe?: TrendTrendTimeframe
+  /** 2–199, < ema_slow. */
+  ema_fast?: number
+  /** 3–200. */
+  ema_slow?: number
+  adx_period?: number
+  adx_min?: string | number
+  /** 2–60. */
+  atr_period?: number
+  /** 2–200. */
+  donchian_entry?: number
+  /** 2–200. */
+  donchian_exit?: number
+  volume_mult?: string | number
+  volume_sma_period?: number
+  risk_per_unit_pct?: string | number
+  stop_atr?: string | number
+  add_step_atr?: string | number
+  max_units?: number
+  trail_atr?: string | number
+  exit_on_regime_flip?: boolean
+  cooldown_bars?: number
+  /** Position ceiling, % of the capital, (0; 100]. Server default: "100". */
+  max_position_pct?: string | number
+  /** null = the free USDT on the first tick. */
+  capital_usdt?: string | number | null
+}
+
+export interface TrendSpotLastTrade {
+  trade_no: number | null
+  pnl_usdt: number | null
+  r: number | null
+  reason: string | null
+  units: number | null
+  entry_price: number | null
+  exit_price: number | null
+  closed_at: string | null
+}
+
+/** `trend_spot` field of a GET /bots item: TREND_SPOT only. Decimals arrive as numbers. */
+export interface TrendSpotStatusOut {
+  phase: 'flat' | 'in_position' | 'stopped' | string
+  state: string
+  regime: 'LONG' | 'SHORT' | null
+  adx: number | null
+  atr: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  close: number | null
+  entry_level: number | null
+  exit_level: number | null
+  decision_code: string | null
+  decision_reason: string | null
+  capital_usdt: number | null
+  realized_pnl_usdt: number | null
+  fees_usdt: number | null
+  trades: number
+  wins: number
+  units: number
+  max_units: number
+  qty: number | null
+  avg_price: number | null
+  cost_usdt: number | null
+  entry_price: number | null
+  stop_price: number | null
+  next_add_price: number | null
+  risk_usdt: number | null
+  current_r: number | null
+  distance_to_stop_pct: number | null
+  add_blocked_reason: string | null
+  cooldown_until: string | null
+  last_trade: TrendSpotLastTrade | null
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig | TrendSpotConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -728,6 +810,8 @@ export interface BotListOut extends BotOut {
   recurring?: RecurringSpotStatusOut | null
   /** GRID_SPOT only: phase, cells, round trips, profit, the grid's coins; null for other types and in old caches. */
   grid_spot?: GridSpotStatusOut | null
+  /** TREND_SPOT only: regime, decision, position, stop, next add-on, trades; null for other types and in old caches. */
+  trend_spot?: TrendSpotStatusOut | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -820,6 +904,11 @@ export type BotEventType =
   | 'grid_spot_round_trip'
   | 'grid_spot_order_rejected'
   | 'grid_spot_exit'
+  | 'trend_spot_entry'
+  | 'trend_spot_add'
+  | 'trend_spot_exit'
+  | 'trend_spot_waiting'
+  | 'trend_spot_entry_rejected'
   | 'error'
 
 export interface BotEventOut {

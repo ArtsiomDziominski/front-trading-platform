@@ -100,7 +100,9 @@ export function useBotActions(
               ? t('bots.recurring_confirm_close', { symbol })
               : bot.value.bot_type === 'GRID_SPOT'
                 ? t('bots.grid_spot_confirm_close', { symbol })
-                : t('bots.confirm_close', { symbol }),
+                : bot.value.bot_type === 'TREND_SPOT'
+                  ? t('bots.trend_spot_confirm_close', { symbol })
+                  : t('bots.confirm_close', { symbol }),
           confirmLabel: t('bots.action_close'),
           variant: 'primary',
         }

@@ -116,6 +116,29 @@ const recurringRows = computed(() => {
   ]
 })
 
+// Spot trend bots: state, units and R from `bot.trend_spot`
+const isTrendSpot = computed(() => props.bot.bot_type === 'TREND_SPOT')
+const trendSpot = computed(() => (isTrendSpot.value ? props.bot.trend_spot ?? null : null))
+const trendSpotRows = computed(() => {
+  const status = trendSpot.value
+  if (!status) return []
+  const rows = [
+    {
+      key: 'pnl',
+      label: t('bots.trend_spot_realized'),
+      value: status.realized_pnl_usdt == null ? '—' : `${formatUsdt(status.realized_pnl_usdt, locale.value, true)} USDT`,
+      tone: `bot-tile__pnl--${pnlTone(status.realized_pnl_usdt)}`,
+    },
+  ]
+  if (status.units > 0) {
+    rows.push(
+      { key: 'units', label: t('bots.trend_spot_units'), value: `${status.units} / ${status.max_units}`, tone: '' },
+      { key: 'r', label: t('bots.trend_spot_current_r'), value: formatR(status.current_r, locale.value), tone: `bot-tile__pnl--${pnlTone(status.current_r)}` },
+    )
+  }
+  return rows
+})
+
 // Spot grid bots: round trips, profit and the grid's coins from `bot.grid_spot`
 const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
 const gridSpot = computed(() => (isGridSpot.value ? props.bot.grid_spot ?? null : null))
@@ -294,6 +317,16 @@ const menuItems = computed<MenuItem[][]>(() => {
         <dd :class="`bot-tile__dca--${recurringPhaseTone(recurring?.phase)}`">
           {{ recurring ? recurringPhaseLabel(t, recurring.phase) : '—' }}<template v-if="recurring"> · {{ recurring.buys_done }}</template>
         </dd>
+      </div>
+      <div v-if="isTrendSpot" class="bot-tile__row">
+        <dt>{{ $t('bots.trend_state') }}</dt>
+        <dd :class="`bot-tile__trend--${trendStateTone(trendSpot?.state)}`">
+          {{ trendSpot ? (trendSpot.phase === 'stopped' ? $t('bots.grid_spot_phase_stopped') : trendStateLabel(t, trendSpot.state)) : '—' }}
+        </dd>
+      </div>
+      <div v-for="row in trendSpotRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
       </div>
       <div v-if="isGridSpot" class="bot-tile__row">
         <dt>{{ $t('bots.dca_phase') }}</dt>

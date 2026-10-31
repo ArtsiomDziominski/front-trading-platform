@@ -91,6 +91,15 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
     icon: 'i-lucide-calendar-clock',
     available: true,
   },
+  {
+    market: 'spot',
+    slug: 'trend',
+    botType: 'TREND_SPOT',
+    titleKey: 'bots.catalog_trend',
+    descKey: 'bots.catalog_trend_spot_desc',
+    icon: 'i-lucide-activity',
+    available: true,
+  },
 ]
 
 export function catalogEntriesFor(market: BotMarket): BotCatalogEntry[] {

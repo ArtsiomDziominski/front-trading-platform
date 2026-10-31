@@ -1,4 +1,4 @@
-import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, GridSpotConfig, RecurringSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, GridSpotConfig, RecurringSpotConfig, TrendSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
@@ -111,6 +111,18 @@ function parseTrendConfig(raw: unknown): TrendFuturesConfig | null {
   if (typeof config.exit_on_regime_flip === 'boolean') result.exit_on_regime_flip = config.exit_on_regime_flip
   if (typeof config.close_on_stop === 'boolean') result.close_on_stop = config.close_on_stop
 
+  return result
+}
+
+/** Spot trend: the futures trend fields without leverage / risk pauses, plus the position ceiling. */
+function parseTrendSpotConfig(raw: unknown): TrendSpotConfig | null {
+  const parsed = parseTrendConfig(raw)
+  if (!parsed) return null
+  const config = raw as Record<string, unknown>
+  const { daily_stop_pct: _daily, monthly_stop_pct: _monthly, max_notional_x: _notional, exchange_leverage: _leverage, close_on_stop: _close, ...rest } = parsed
+  const result: TrendSpotConfig = { ...rest }
+  const ceiling = asString(config.max_position_pct).trim()
+  if (ceiling && Number.isFinite(Number(ceiling))) result.max_position_pct = ceiling
   return result
 }
 
@@ -287,7 +299,9 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
           ? parseRecurringSpotConfig(payload.config)
           : botType === 'GRID_SPOT'
             ? parseGridSpotConfig(payload.config)
-            : parseConfig(payload.config)
+            : botType === 'TREND_SPOT'
+              ? parseTrendSpotConfig(payload.config)
+              : parseConfig(payload.config)
   if (!config) return null
 
   return {

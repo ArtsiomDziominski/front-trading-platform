@@ -73,6 +73,7 @@ export type CreationSettingKey =
   | 'grid_spot_geometric'
   | 'grid_spot_stop_loss'
   | 'grid_spot_take_profit'
+  | 'max_position_pct'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -149,6 +150,7 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'grid_spot_geometric',
   'grid_spot_stop_loss',
   'grid_spot_take_profit',
+  'max_position_pct',
 ]
 
 const TREND_NUMERIC_KEYS = [
@@ -285,6 +287,14 @@ export function extractCreationHistorySettings(
   set('trailing_stop_percent', readString(config.trailing_stop_percent))
   set('leverage', readNumber(config.leverage))
 
+  if (payload.bot_type === 'TREND_SPOT') {
+    set('signal_timeframe', readString(config.signal_timeframe))
+    set('trend_timeframe', readString(config.trend_timeframe))
+    for (const key of TREND_NUMERIC_KEYS) set(key, readString(config[key]))
+    set('max_position_pct', readString(config.max_position_pct))
+    if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
+  }
+
   if (payload.bot_type === 'TREND_FUTURES') {
     set('signal_timeframe', readString(config.signal_timeframe))
     set('trend_timeframe', readString(config.trend_timeframe))
@@ -412,6 +422,7 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   grid_spot_geometric: 'bots.grid_spot_field_geometric',
   grid_spot_stop_loss: 'bots.grid_spot_field_stop_loss',
   grid_spot_take_profit: 'bots.grid_spot_field_take_profit',
+  max_position_pct: 'bots.trend_spot_field_max_position_pct',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -477,6 +488,8 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       return `${setting.value}×`
     case 'grid_spot_order_usdt':
       return `${setting.value} USDT`
+    case 'max_position_pct':
+      return `${setting.value}%`
     case 'grid_spot_geometric':
       return setting.value === 'on' ? t('bots.grid_spot_geometric_on') : t('bots.grid_spot_geometric_off')
     case 'grid_spot_stop_loss':

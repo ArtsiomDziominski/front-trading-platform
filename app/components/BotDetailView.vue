@@ -31,6 +31,7 @@ const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
 const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
 const isRecurringSpot = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
 const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
+const isTrendSpot = computed(() => props.bot.bot_type === 'TREND_SPOT')
 const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
 </script>
 
@@ -74,6 +75,8 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
     <BotDetailRecurringSpot v-if="isRecurringSpot" :bot="bot" />
 
     <BotDetailGridSpot v-if="isGridSpot" :bot="bot" />
+
+    <BotDetailTrendSpot v-if="isTrendSpot" :bot="bot" />
 
     <div class="bot-detail-view__columns">
       <div class="bot-detail-view__main">
