@@ -5,6 +5,7 @@ export type BotType =
   | 'GRID_SPOT'
   | 'DCA_FUTURES'
   | 'DCA_SPOT'
+  | 'RECURRING_SPOT'
   | 'ANTI_MARTINGALE_FUTURES'
   | 'TREND_FUTURES'
   | 'CUSTOM'
@@ -556,7 +557,51 @@ export interface DcaSpotStatusOut {
   safety_orders?: DcaSafetyOrderOut[]
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig
+/**
+ * RECURRING_SPOT: recurring buy (accumulator), USDT pairs. A market buy of `amount_usdt` every `interval_hours`,
+ * × `dip_multiplier` while the price is below the moving average of `dip_ma_period` daily closes, until
+ * `max_total_usdt` is spent. The bot never sells. Decimals go as strings or numbers; the server stores strings.
+ */
+export interface RecurringSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  /** One buy, USDT, (0; 10 000 000]. */
+  amount_usdt: string | number
+  /** 1–8760 h. Server default: 24. */
+  interval_hours: number
+  /** null = off; else 2–200 daily closes. */
+  dip_ma_period: number | null
+  /** [1; 10]. Server default: "2". */
+  dip_multiplier: string | number
+  /** null = no limit; else ≥ amount_usdt. */
+  max_total_usdt: string | number | null
+}
+
+export type RecurringSpotPhase = 'active' | 'waiting_funds' | 'finished' | 'stopped'
+
+/** `recurring` field of a GET /bots item: RECURRING_SPOT only. Decimals arrive as numbers. */
+export interface RecurringSpotStatusOut {
+  /** Plain string on the server; the known values are `RecurringSpotPhase`. */
+  phase: RecurringSpotPhase | string
+  buys_done: number
+  qty: number | null
+  avg_price: number | null
+  invested_usdt: number | null
+  fees_usdt: number | null
+  budget_usdt: number | null
+  budget_left_usdt: number | null
+  next_buy_at: string | null
+  next_buy_usdt: number | null
+  last_buy_at: string | null
+  last_buy_price: number | null
+  last_buy_usdt: number | null
+  last_buy_dip: boolean
+  ma_price: number | null
+  dip_active: boolean
+  last_skip_reason: string | null
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -621,6 +666,8 @@ export interface BotListOut extends BotOut {
   trend?: TrendBotStatus | null
   /** DCA_SPOT only: cycle, safety orders, average and TP price, profit; null for other types and in old caches. */
   dca?: DcaSpotStatusOut | null
+  /** RECURRING_SPOT only: buys, accumulated coins, next buy, budget; null for other types and in old caches. */
+  recurring?: RecurringSpotStatusOut | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -705,6 +752,9 @@ export type BotEventType =
   | 'dca_take_profit_rejected'
   | 'dca_finished'
   | 'dca_stop_loss'
+  | 'recurring_buy'
+  | 'recurring_buy_skipped'
+  | 'recurring_finished'
   | 'error'
 
 export interface BotEventOut {

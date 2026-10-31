@@ -13,7 +13,8 @@ import {
   trendBotSide,
 } from '~/utils/botView'
 import { dcaPhaseLabel, dcaPhaseTone } from '~/utils/dcaSpot'
-import { formatPercentValue, formatPrice, formatUsdt } from '~/utils/formatNumber'
+import { recurringPhaseLabel, recurringPhaseTone } from '~/utils/recurringSpot'
+import { formatPercentValue, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
 import { formatR, trendStateLabel, trendStateTone } from '~/utils/trend'
 
 /** Compact bot tile for the `/bots` list; every action sits in the «⋯» menu, the tile opens the bot page. */
@@ -98,6 +99,20 @@ const dcaRows = computed(() => {
     tone: `bot-tile__pnl--${pnlTone(status.realized_profit_usdt)}`,
   })
   return rows
+})
+
+// Recurring-buy bots: accumulated coins and the next buy from `bot.recurring`
+const isRecurring = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
+const recurring = computed(() => (isRecurring.value ? props.bot.recurring ?? null : null))
+const recurringRows = computed(() => {
+  const status = recurring.value
+  if (!status) return []
+  const coin = props.bot.symbol.replace(/USDT$/, '')
+  return [
+    { key: 'qty', label: t('bots.recurring_qty'), value: status.qty == null ? '—' : `${formatQuantity(status.qty, locale.value)} ${coin}` },
+    { key: 'avg', label: t('bots.dca_avg_price'), value: status.avg_price == null ? '—' : formatPrice(status.avg_price, locale.value) },
+    { key: 'invested', label: t('bots.dca_invested'), value: status.invested_usdt == null ? '—' : `${formatUsdt(status.invested_usdt, locale.value)} USDT` },
+  ]
 })
 
 type MenuItem = DropdownMenuItem & { value?: string }
@@ -254,6 +269,16 @@ const menuItems = computed<MenuItem[][]>(() => {
         <dd :class="`bot-tile__dca--${dcaPhaseTone(dca?.phase)}`">
           {{ dca ? dcaPhaseLabel(t, dca.phase) : '—' }}<template v-if="dca && dca.cycle_no > 0"> · #{{ dca.cycle_no }}</template>
         </dd>
+      </div>
+      <div v-if="isRecurring" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${recurringPhaseTone(recurring?.phase)}`">
+          {{ recurring ? recurringPhaseLabel(t, recurring.phase) : '—' }}<template v-if="recurring"> · {{ recurring.buys_done }}</template>
+        </dd>
+      </div>
+      <div v-for="row in recurringRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd>{{ row.value }}</dd>
       </div>
       <div v-for="row in dcaRows" :key="row.key" class="bot-tile__row">
         <dt>{{ row.label }}</dt>

@@ -1,9 +1,10 @@
-import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, RecurringSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
 import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { DCA_SERVER_DEFAULTS } from '~/utils/dcaSpot'
+import { RECURRING_SERVER_DEFAULTS } from '~/utils/recurringSpot'
 import { TREND_SIGNAL_TIMEFRAMES, TREND_TREND_TIMEFRAMES } from '~/utils/trend'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
@@ -154,6 +155,31 @@ function parseDcaSpotConfig(raw: unknown): DcaSpotConfig | null {
   }
 }
 
+/** Recurring buy: the amount is required; other fields fall back to the server defaults. */
+function parseRecurringSpotConfig(raw: unknown): RecurringSpotConfig | null {
+  if (!raw || typeof raw !== 'object') return null
+  const config = raw as Record<string, unknown>
+  const symbol = asString(config.symbol).trim().toUpperCase()
+  if (symbol.length < 3) return null
+  const decimal = (key: string): string | null => {
+    const value = asString(config[key]).trim()
+    return value && Number.isFinite(Number(value)) ? value : null
+  }
+  const amount = decimal('amount_usdt')
+  if (!amount) return null
+  const interval = Number(config.interval_hours)
+  const period = Number(config.dip_ma_period)
+  const budget = decimal('max_total_usdt')
+  return {
+    symbol,
+    amount_usdt: amount,
+    interval_hours: Number.isInteger(interval) && interval > 0 ? interval : RECURRING_SERVER_DEFAULTS.interval_hours,
+    dip_ma_period: config.dip_ma_period != null && Number.isInteger(period) && period > 0 ? period : null,
+    dip_multiplier: decimal('dip_multiplier') ?? String(RECURRING_SERVER_DEFAULTS.dip_multiplier),
+    max_total_usdt: budget != null && Number(budget) > 0 ? budget : null,
+  }
+}
+
 function parseConfig(raw: unknown): GridFuturesConfig | null {
   if (!raw || typeof raw !== 'object') return null
 
@@ -225,7 +251,9 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
       ? parseTrendConfig(payload.config)
       : botType === 'DCA_SPOT'
         ? parseDcaSpotConfig(payload.config)
-        : parseConfig(payload.config)
+        : botType === 'RECURRING_SPOT'
+          ? parseRecurringSpotConfig(payload.config)
+          : parseConfig(payload.config)
   if (!config) return null
 
   return {

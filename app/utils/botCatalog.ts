@@ -82,6 +82,15 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
     icon: 'i-lucide-layers',
     available: true,
   },
+  {
+    market: 'spot',
+    slug: 'recurring',
+    botType: 'RECURRING_SPOT',
+    titleKey: 'bots.catalog_recurring',
+    descKey: 'bots.catalog_recurring_spot_desc',
+    icon: 'i-lucide-calendar-clock',
+    available: true,
+  },
 ]
 
 export function catalogEntriesFor(market: BotMarket): BotCatalogEntry[] {

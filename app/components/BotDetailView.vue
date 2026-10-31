@@ -29,6 +29,7 @@ const actions = useBotActions(() => props.bot, {
 const isAntiMartingale = computed(() => props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES')
 const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
 const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
+const isRecurringSpot = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
 const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
 </script>
 
@@ -68,6 +69,8 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
     <BotDetailTrend v-if="isTrend" :bot="bot" />
 
     <BotDetailDcaSpot v-if="isDcaSpot" :bot="bot" />
+
+    <BotDetailRecurringSpot v-if="isRecurringSpot" :bot="bot" />
 
     <div class="bot-detail-view__columns">
       <div class="bot-detail-view__main">

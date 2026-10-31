@@ -122,7 +122,9 @@ export function botEventDetails(
   switch (normalizeBotEventType(event.event_type)) {
     case 'order_filled': {
       // Spot DCA fills carry `kind` and the order index instead of a side
-      const dcaKind = typeof payload.kind === 'string' && DCA_ORDER_KINDS.includes(payload.kind) ? payload.kind : null
+      const dcaKind = typeof payload.kind === 'string' && (DCA_ORDER_KINDS.includes(payload.kind) || payload.kind === 'recurring_buy')
+        ? payload.kind
+        : null
       if (dcaKind) {
         if (dcaKind === 'safety') pushDcaOrder()
         pushQuantity()
@@ -425,8 +427,27 @@ export function botEventDetails(
       break
 
     case 'dca_entry_rejected':
+    case 'recurring_buy_skipped':
       pushReason()
       break
+
+    case 'recurring_buy': {
+      const n = num('n')
+      if (n != null) details.push({ value: t('bots.recurring_buy_no', { n: formatCount(n, locale) }) })
+      pushQuantity()
+      pushPrice('price', 'bots.event_detail_price')
+      pushUsdt('usdt', 'bots.recurring_field_amount')
+      if (payload.dip === true) details.push({ value: t('bots.recurring_dip_buy'), tone: 'up' })
+      break
+    }
+
+    case 'recurring_finished': {
+      const buys = num('buys_done')
+      if (buys != null) details.push({ value: t('bots.recurring_buys_n', { n: formatCount(buys, locale) }) })
+      pushUsdt('invested_usdt', 'bots.dca_invested')
+      pushNumber('qty', 'bots.recurring_qty', formatQuantity)
+      break
+    }
 
     case 'dca_finished': {
       pushCycleNo()
