@@ -36,3 +36,9 @@ shared/
 ```
 
 Keep application code in `app/`, backend-facing endpoints in `server/`, and reusable cross-runtime contracts in `shared/`.
+
+## Deployment
+
+Pushing to `main` deploys https://botinex.ru and pushing to `dev` deploys https://dev.botinex.ru through `.github/workflows/deploy.yml`.
+
+The build runs in GitHub Actions with the server's `.env`, then `.output` is sent to the server, where `scripts/ci-deploy.sh` (installed as `/usr/local/bin/ci-deploy`) swaps it in and rolls back if the container doesn't become healthy. Each target has its own SSH key, stored in the `server-prod` and `server-dev` GitHub environments and limited to that script.
