@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+
+env:
+  DEPLOY_TARGET: root@188.137.236.37
+
+jobs:
+  deploy:
+    if: github.ref_name == 'main' || github.ref_name == 'dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ${{ github.ref_name == 'main' && 'server-prod' || 'server-dev' }}
+      url: ${{ github.ref_name == 'main' && 'https://botinex.ru' || 'https://dev.botinex.ru' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # Locales and the site URL are fixed at build time, and the server's .env is their only source
+      - name: Load server env
+        run: ssh "$DEPLOY_TARGET" env > .env
+
+      - run: npm ci --no-audit --no-fund
+
+      - run: npm run build
+
+      - name: Upload and restart
+        run: tar -czf - -C .output . | ssh "$DEPLOY_TARGET" deploy "$GITHUB_SHA"
