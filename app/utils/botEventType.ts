@@ -60,6 +60,11 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   recurring_buy: 'bots.event_type_recurring_buy',
   recurring_buy_skipped: 'bots.event_type_recurring_buy_skipped',
   recurring_finished: 'bots.event_type_recurring_finished',
+  grid_spot_started: 'bots.event_type_grid_spot_started',
+  grid_spot_entry_rejected: 'bots.event_type_grid_spot_entry_rejected',
+  grid_spot_round_trip: 'bots.event_type_grid_spot_round_trip',
+  grid_spot_order_rejected: 'bots.event_type_grid_spot_order_rejected',
+  grid_spot_exit: 'bots.event_type_grid_spot_exit',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -145,6 +150,8 @@ function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined
   if (kind === 'take_profit') return 'bots.event_type_order_filled_dca_take_profit'
   if (kind === 'exit') return 'bots.event_type_order_filled_dca_exit'
   if (kind === 'recurring_buy') return 'bots.event_type_order_filled_recurring'
+  if (kind === 'grid_spot_buy' || kind === 'grid_spot_initial') return 'bots.event_type_order_filled_grid_spot_buy'
+  if (kind === 'grid_spot_sell' || kind === 'grid_spot_exit') return 'bots.event_type_order_filled_grid_spot_sell'
   if (kind === 'entry') return 'bots.event_type_order_filled_entry'
   if (kind === 'addon') return 'bots.event_type_order_filled_addon'
   if (kind === 'order') {
@@ -230,6 +237,9 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type === 'recurring_buy') return 'created'
   if (type === 'recurring_finished') return 'stopped'
   if (type === 'recurring_buy_skipped') return 'error'
+  if (type === 'grid_spot_started' || type === 'grid_spot_round_trip') return 'created'
+  if (type === 'grid_spot_exit') return 'stopped'
+  if (type === 'grid_spot_entry_rejected' || type === 'grid_spot_order_rejected') return 'error'
   if (
     type === 'order_filled'
     || type === 'active'

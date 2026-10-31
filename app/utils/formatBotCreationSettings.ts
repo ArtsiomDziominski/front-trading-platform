@@ -67,6 +67,12 @@ export type CreationSettingKey =
   | 'recurring_dip_ma_period'
   | 'recurring_dip_multiplier'
   | 'recurring_max_total_usdt'
+  | 'grid_spot_range'
+  | 'grid_spot_count'
+  | 'grid_spot_order_usdt'
+  | 'grid_spot_geometric'
+  | 'grid_spot_stop_loss'
+  | 'grid_spot_take_profit'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -137,6 +143,12 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'recurring_dip_ma_period',
   'recurring_dip_multiplier',
   'recurring_max_total_usdt',
+  'grid_spot_range',
+  'grid_spot_count',
+  'grid_spot_order_usdt',
+  'grid_spot_geometric',
+  'grid_spot_stop_loss',
+  'grid_spot_take_profit',
 ]
 
 const TREND_NUMERIC_KEYS = [
@@ -311,6 +323,19 @@ export function extractCreationHistorySettings(
     set('recurring_max_total_usdt', budget != null && budget > 0 ? readString(config.max_total_usdt) : 'off')
   }
 
+  if (payload.bot_type === 'GRID_SPOT') {
+    const lower = readString(config.lower_price)
+    const upper = readString(config.upper_price)
+    if (lower != null && upper != null) set('grid_spot_range', `${lower} – ${upper}`)
+    set('grid_spot_count', readNumber(config.grid_count))
+    set('grid_spot_order_usdt', readString(config.order_usdt))
+    set('grid_spot_geometric', config.geometric === true ? 'on' : 'off')
+    const sl = readNumber(config.stop_loss_price)
+    set('grid_spot_stop_loss', sl != null && sl > 0 ? readString(config.stop_loss_price) : 'off')
+    const tp = readNumber(config.take_profit_price)
+    set('grid_spot_take_profit', tp != null && tp > 0 ? readString(config.take_profit_price) : 'off')
+  }
+
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
     return row ? [row] : []
@@ -381,6 +406,12 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   recurring_dip_ma_period: 'bots.recurring_field_ma_period',
   recurring_dip_multiplier: 'bots.recurring_field_multiplier',
   recurring_max_total_usdt: 'bots.recurring_field_budget',
+  grid_spot_range: 'bots.grid_spot_group_range',
+  grid_spot_count: 'bots.grid_spot_field_count',
+  grid_spot_order_usdt: 'bots.grid_spot_field_order',
+  grid_spot_geometric: 'bots.grid_spot_field_geometric',
+  grid_spot_stop_loss: 'bots.grid_spot_field_stop_loss',
+  grid_spot_take_profit: 'bots.grid_spot_field_take_profit',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -444,6 +475,13 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       return setting.value === 'off' ? t('bots.value_off') : t('bots.recurring_days', { n: setting.value })
     case 'recurring_dip_multiplier':
       return `${setting.value}×`
+    case 'grid_spot_order_usdt':
+      return `${setting.value} USDT`
+    case 'grid_spot_geometric':
+      return setting.value === 'on' ? t('bots.grid_spot_geometric_on') : t('bots.grid_spot_geometric_off')
+    case 'grid_spot_stop_loss':
+    case 'grid_spot_take_profit':
+      return setting.value === 'off' ? t('bots.value_off') : String(setting.value)
     case 'grid_step_percent':
     case 'initial_amount_percent':
     case 'take_profit_percent':
