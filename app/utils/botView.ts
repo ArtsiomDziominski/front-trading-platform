@@ -13,6 +13,7 @@ export const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
   DCA_FUTURES: 'bots.type_dca_futures',
   DCA_SPOT: 'bots.type_dca_spot',
   RECURRING_SPOT: 'bots.type_recurring_spot',
+  TREND_SPOT: 'bots.type_trend_spot',
   ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
   TREND_FUTURES: 'bots.type_trend_futures',
   CUSTOM: 'bots.type_custom',
@@ -56,7 +57,7 @@ export function trendBotSide(bot: Pick<BotListItem, 'bot_type' | 'trend' | 'life
 
 /** Spot bots buy coins: no leverage, no liquidation, the market badge says "Spot". */
 export function isSpotBot(bot: Pick<BotListItem, 'bot_type'>): boolean {
-  return bot.bot_type === 'DCA_SPOT' || bot.bot_type === 'GRID_SPOT' || bot.bot_type === 'RECURRING_SPOT'
+  return bot.bot_type === 'DCA_SPOT' || bot.bot_type === 'GRID_SPOT' || bot.bot_type === 'RECURRING_SPOT' || bot.bot_type === 'TREND_SPOT'
 }
 
 /**

@@ -65,6 +65,11 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   grid_spot_round_trip: 'bots.event_type_grid_spot_round_trip',
   grid_spot_order_rejected: 'bots.event_type_grid_spot_order_rejected',
   grid_spot_exit: 'bots.event_type_grid_spot_exit',
+  trend_spot_entry: 'bots.event_type_trend_spot_entry',
+  trend_spot_add: 'bots.event_type_trend_spot_add',
+  trend_spot_exit: 'bots.event_type_trend_spot_exit',
+  trend_spot_waiting: 'bots.event_type_trend_spot_waiting',
+  trend_spot_entry_rejected: 'bots.event_type_trend_spot_entry_rejected',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -100,6 +105,7 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     dca_futures: 'bots.type_dca_futures',
     dca_spot: 'bots.type_dca_spot',
     recurring_spot: 'bots.type_recurring_spot',
+    trend_spot: 'bots.type_trend_spot',
     anti_martingale_futures: 'bots.type_anti_martingale_futures',
     trend_futures: 'bots.type_trend_futures',
     custom: 'bots.type_custom',
@@ -152,6 +158,8 @@ function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined
   if (kind === 'recurring_buy') return 'bots.event_type_order_filled_recurring'
   if (kind === 'grid_spot_buy' || kind === 'grid_spot_initial') return 'bots.event_type_order_filled_grid_spot_buy'
   if (kind === 'grid_spot_sell' || kind === 'grid_spot_exit') return 'bots.event_type_order_filled_grid_spot_sell'
+  if (kind === 'trend_spot_entry' || kind === 'trend_spot_add') return 'bots.event_type_order_filled_trend_spot_buy'
+  if (kind === 'trend_spot_exit') return 'bots.event_type_order_filled_trend_spot_sell'
   if (kind === 'entry') return 'bots.event_type_order_filled_entry'
   if (kind === 'addon') return 'bots.event_type_order_filled_addon'
   if (kind === 'order') {
@@ -239,6 +247,10 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type === 'recurring_buy_skipped') return 'error'
   if (type === 'grid_spot_started' || type === 'grid_spot_round_trip') return 'created'
   if (type === 'grid_spot_exit') return 'stopped'
+  if (type === 'trend_spot_entry' || type === 'trend_spot_add') return 'created'
+  if (type === 'trend_spot_exit') return 'stopped'
+  if (type === 'trend_spot_waiting') return 'updated'
+  if (type === 'trend_spot_entry_rejected') return 'error'
   if (type === 'grid_spot_entry_rejected' || type === 'grid_spot_order_rejected') return 'error'
   if (
     type === 'order_filled'

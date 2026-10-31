@@ -436,8 +436,37 @@ export function botEventDetails(
     case 'recurring_buy_skipped':
     case 'grid_spot_entry_rejected':
     case 'grid_spot_order_rejected':
+    case 'trend_spot_entry_rejected':
       pushReason()
       break
+
+    case 'trend_spot_waiting':
+      if (payload.reason_code === 'short_regime') details.push({ value: t('bots.trend_spot_reason_short_regime'), tone: 'muted', note: true })
+      else pushReason()
+      break
+
+    case 'trend_spot_entry':
+    case 'trend_spot_add': {
+      const unit = num('unit')
+      if (unit != null) details.push({ value: t('bots.trend_spot_unit_no', { n: formatCount(unit, locale) }) })
+      pushPrice('price', 'bots.event_detail_price')
+      pushQuantity()
+      pushUsdt('usdt', 'bots.dca_invested')
+      pushPrice('stop', 'bots.trend_spot_stop')
+      break
+    }
+
+    case 'trend_spot_exit': {
+      const reason = text(payload, 'reason')
+      if (reason) details.push({ value: trendExitReasonLabel(t, reason) })
+      pushPrice('price', 'bots.event_detail_price')
+      pushNumber('sold_qty', 'bots.event_detail_quantity', formatQuantity)
+      const pnl = num('pnl_usdt')
+      if (pnl != null) details.push({ label: t('bots.trend_spot_pnl'), value: usdt(pnl, true), tone: pnl >= 0 ? 'up' : 'down' })
+      const r = num('r')
+      if (r != null) details.push({ value: formatR(r, locale), tone: r >= 0 ? 'up' : 'down' })
+      break
+    }
 
     case 'grid_spot_started': {
       pushPrice('price', 'bots.event_detail_price')
