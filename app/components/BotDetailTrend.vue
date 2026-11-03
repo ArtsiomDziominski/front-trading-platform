@@ -19,7 +19,8 @@ import {
 
 /**
  * Trend part of the bot page: state plaque, 1H chart with EMA / channels / stop, stats, trades, decisions.
- * BILATERAL_FUTURES uses the same panels: the filter side instead of EMA / ADX, the filter line on the chart.
+ * BILATERAL_FUTURES uses the same panels: the filter side instead of EMA / ADX, the filter line on the chart,
+ * plus a backtest of the bot's settings on history.
  */
 const props = defineProps<{
   bot: BotListItem
@@ -358,6 +359,8 @@ const chartHint = computed(() => (bilateral.value
       :loaded="trades.loaded.value"
       :error="trades.error.value"
     />
+
+    <BotDetailBacktest v-if="bilateral" :bot="bot" />
 
     <BotDetailTrendDecisions
       :bot-id="bot.id"
