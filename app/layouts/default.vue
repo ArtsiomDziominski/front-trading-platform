@@ -3,6 +3,7 @@ const auth = useAuth()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const botsNavTo = computed(() => (auth.loggedIn.value ? '/bots' : '/bots/overview'))
 
@@ -27,11 +28,20 @@ const bottomNavItems = computed(() => [
   },
 ])
 
-const isMoreActive = computed(() => route.path.includes('/settings'))
+/** The list and every article: /blog/<slug> is not nested under /blog, so the router does not mark it. */
+const isBlogActive = computed(() => route.path.includes('/blog'))
+const isMoreActive = computed(() => route.path.includes('/settings') || isBlogActive.value)
 
 const moreMenuItems = computed(() => {
+  const blogItem = {
+    label: t('nav.blog'),
+    icon: 'i-lucide-newspaper',
+    to: localePath({ name: 'blog' }),
+  }
+
   if (auth.loggedIn.value) {
     return [
+      [blogItem],
       [
         {
           label: t('settings.title'),
@@ -54,6 +64,7 @@ const moreMenuItems = computed(() => {
   }
 
   return [
+    [blogItem],
     [
       {
         label: t('auth.login'),
@@ -103,6 +114,9 @@ onMounted(() => {
             </NuxtLink>
             <NuxtLink to="/exchanges">
               {{ $t('nav.exchanges') }}
+            </NuxtLink>
+            <NuxtLink :to="localePath({ name: 'blog' })" :class="{ 'router-link-active': isBlogActive }">
+              {{ $t('nav.blog') }}
             </NuxtLink>
           </nav>
         </div>

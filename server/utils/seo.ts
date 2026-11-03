@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE_CODES } from '#shared/types/locale'
 
 /** Public pages that belong in search results and in the sitemap. */
-export const INDEXABLE_PATHS = ['/', '/bots/overview', '/exchanges', '/auth/register', '/auth/login'] as const
+export const INDEXABLE_PATHS = ['/', '/bots/overview', '/exchanges', '/blog', '/auth/register', '/auth/login'] as const
 
 export function getSiteUrl(): string {
   const config = useRuntimeConfig()

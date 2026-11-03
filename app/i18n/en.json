@@ -4,6 +4,7 @@
     "bots": "Bots",
     "history": "History",
     "exchanges": "Exchanges",
+    "blog": "Blog",
     "more": "More"
   },
   "home": {
@@ -1391,6 +1392,27 @@
     "status_soon": "Coming soon",
     "connect": "Connect"
   },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "How Botinex strategies and bots work: indicator breakdowns, settings and results on history.",
+    "reading_minutes": "{n} min read",
+    "read": "Read",
+    "back": "All articles",
+    "updated": "updated {date}",
+    "source": "Original source",
+    "empty": "No articles yet.",
+    "load_error": "Could not load the articles.",
+    "article_error": "Could not load the article.",
+    "not_found": "Article not found",
+    "fallback_note": "There is no English translation yet, so the article is shown in its original language.",
+    "related_title": "How the strategy works",
+    "tags_label": "Tags",
+    "tags": {
+      "strategy": "strategy",
+      "indicator": "indicator",
+      "trend": "trend"
+    }
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Profile and account security",
@@ -1528,6 +1550,8 @@
     "overview_description": "Trading bots available on Botinex: Grid Futures and anti-martingale bots for Binance and OKX futures. How the strategies work and how to get started.",
     "exchanges_title": "Exchanges for trading bots: Binance and OKX",
     "exchanges_description": "Connect your Binance or OKX API keys to Botinex and run crypto trading bots. Keys are stored encrypted on the server.",
+    "blog_title": "Blog: trading strategies and bots",
+    "blog_description": "Breakdowns of the trading strategies and indicators behind Botinex bots: how they are computed, how they trade and how they did on history.",
     "login_description": "Sign in to Botinex, the crypto trading bot platform.",
     "register_description": "Create a Botinex account and launch your first crypto trading bot on Binance or OKX in minutes.",
     "org_description": "Botinex is a service for running automated crypto trading bots on Binance and OKX.",

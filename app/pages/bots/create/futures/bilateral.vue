@@ -51,6 +51,8 @@ const {
   >
     <UAlert v-if="pageError" color="error" variant="subtle" :title="pageError" />
 
+    <BotRelatedArticles bot-type="BILATERAL_FUTURES" />
+
     <BotBilateralFuturesForm
       ref="formRef"
       v-model:api-key-id="apiKeyId"
