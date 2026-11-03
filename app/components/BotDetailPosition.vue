@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TakeProfitMode, type BotListItem } from '#shared/types/bot'
-import { botDirection, effectiveGridConfig, isInPosition, isSpotBot, pnlTone } from '~/utils/botView'
+import { botDirection, effectiveGridConfig, isInPosition, isSpotBot, isTrendFuturesBot, pnlTone } from '~/utils/botView'
 import { formatPercentValue, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
 import { baseCoinFromSymbol } from '~/utils/orderSize'
 import { parseTakeProfit } from '~/utils/takeProfit'
@@ -65,7 +65,7 @@ const emptyText = computed(() => {
   if (props.bot.lifecycle_status === 'CLOSED') return t('bots.position_none_closed')
   if (props.bot.lifecycle_status === 'STOPPED') return t('bots.position_none_stopped')
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES') return t('bots.position_none_waiting')
-  if (props.bot.bot_type === 'TREND_FUTURES') return t('bots.trend_position_none')
+  if (isTrendFuturesBot(props.bot)) return t('bots.trend_position_none')
   if (props.bot.bot_type === 'DCA_SPOT') return t('bots.dca_position_none')
   if (props.bot.bot_type === 'RECURRING_SPOT') return t('bots.recurring_position_none')
   if (props.bot.bot_type === 'GRID_SPOT') return t('bots.grid_spot_position_none')

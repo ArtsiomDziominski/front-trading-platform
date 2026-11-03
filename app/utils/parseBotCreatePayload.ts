@@ -1,4 +1,4 @@
-import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BotCreate, DcaSpotConfig, GridSpotConfig, RecurringSpotConfig, TrendSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
+import type { AntiMartingaleFuturesConfig, AntiMartingaleOrderLevel, BilateralFuturesConfig, BilateralSignalTimeframe, BotCreate, DcaSpotConfig, GridSpotConfig, RecurringSpotConfig, TrendSpotConfig, GridDirection, GridFuturesConfig, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe, VolumeMode } from '#shared/types/bot'
 import { buildMixedGridPayload, isMixedConfig, parseMixedGrid } from '~/utils/mixedGrid'
 import { buildOrderSizePayload, parseOrderSize } from '~/utils/orderSize'
 import { buildStopLossPayload, parseStopLoss } from '~/utils/stopLoss'
@@ -7,6 +7,7 @@ import { DCA_SERVER_DEFAULTS } from '~/utils/dcaSpot'
 import { RECURRING_SERVER_DEFAULTS } from '~/utils/recurringSpot'
 import { GRID_SPOT_SERVER_DEFAULTS } from '~/utils/gridSpot'
 import { TREND_SIGNAL_TIMEFRAMES, TREND_TREND_TIMEFRAMES } from '~/utils/trend'
+import { BILATERAL_SIGNAL_TIMEFRAMES } from '~/utils/bilateral'
 
 const GRID_DIRECTIONS: GridDirection[] = ['LONG', 'SHORT']
 const VOLUME_MODES: VolumeMode[] = ['linear', 'exponential', 'fixed']
@@ -109,6 +110,51 @@ function parseTrendConfig(raw: unknown): TrendFuturesConfig | null {
     if (value && Number.isFinite(Number(value))) target[key] = value
   }
   if (typeof config.exit_on_regime_flip === 'boolean') result.exit_on_regime_flip = config.exit_on_regime_flip
+  if (typeof config.close_on_stop === 'boolean') result.close_on_stop = config.close_on_stop
+
+  return result
+}
+
+const BILATERAL_INTEGER_FIELDS = ['bf_window', 'atr_period', 'max_units', 'cooldown_bars', 'exchange_leverage'] as const
+
+const BILATERAL_DECIMAL_FIELDS = [
+  'bf_time_sigma',
+  'bf_range_sigma',
+  'bf_reversal',
+  'risk_per_unit_pct',
+  'stop_atr',
+  'add_step_atr',
+  'trail_atr',
+  'daily_stop_pct',
+  'monthly_stop_pct',
+  'max_notional_x',
+  'capital_usdt',
+] as const
+
+/** Only the fields BilateralFuturesConfig knows; anything the server would reject is dropped, not guessed. */
+function parseBilateralConfig(raw: unknown): BilateralFuturesConfig | null {
+  if (!raw || typeof raw !== 'object') return null
+
+  const config = raw as Record<string, unknown>
+  const symbol = asString(config.symbol).trim().toUpperCase()
+  if (symbol.length < 3) return null
+
+  const result: BilateralFuturesConfig = { symbol }
+  const target = result as unknown as Record<string, unknown>
+
+  if (BILATERAL_SIGNAL_TIMEFRAMES.includes(config.signal_timeframe as BilateralSignalTimeframe)) {
+    result.signal_timeframe = config.signal_timeframe as BilateralSignalTimeframe
+  }
+  for (const key of BILATERAL_INTEGER_FIELDS) {
+    if (config[key] == null || config[key] === '') continue
+    const value = Number(config[key])
+    if (Number.isFinite(value)) target[key] = value
+  }
+  for (const key of BILATERAL_DECIMAL_FIELDS) {
+    const value = asString(config[key]).trim()
+    if (value && Number.isFinite(Number(value))) target[key] = value
+  }
+  if (typeof config.bf_spike_rejection === 'boolean') result.bf_spike_rejection = config.bf_spike_rejection
   if (typeof config.close_on_stop === 'boolean') result.close_on_stop = config.close_on_stop
 
   return result
@@ -289,19 +335,17 @@ export function parseBotCreatePayload(payload: Record<string, unknown>): BotCrea
 
   const botType = payload.bot_type
 
-  const config = botType === 'ANTI_MARTINGALE_FUTURES'
-    ? parseAntiMartingaleConfig(payload.config)
-    : botType === 'TREND_FUTURES'
-      ? parseTrendConfig(payload.config)
-      : botType === 'DCA_SPOT'
-        ? parseDcaSpotConfig(payload.config)
-        : botType === 'RECURRING_SPOT'
-          ? parseRecurringSpotConfig(payload.config)
-          : botType === 'GRID_SPOT'
-            ? parseGridSpotConfig(payload.config)
-            : botType === 'TREND_SPOT'
-              ? parseTrendSpotConfig(payload.config)
-              : parseConfig(payload.config)
+  const parsers: Partial<Record<string, (raw: unknown) => BotCreate['config'] | null>> = {
+    ANTI_MARTINGALE_FUTURES: parseAntiMartingaleConfig,
+    TREND_FUTURES: parseTrendConfig,
+    BILATERAL_FUTURES: parseBilateralConfig,
+    DCA_SPOT: parseDcaSpotConfig,
+    RECURRING_SPOT: parseRecurringSpotConfig,
+    GRID_SPOT: parseGridSpotConfig,
+    TREND_SPOT: parseTrendSpotConfig,
+  }
+  const parser = (typeof botType === 'string' ? parsers[botType] : undefined) ?? parseConfig
+  const config = parser(payload.config)
   if (!config) return null
 
   return {

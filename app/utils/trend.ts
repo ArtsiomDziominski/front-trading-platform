@@ -1,7 +1,7 @@
 import type { TrendSignalTimeframe, TrendTrendTimeframe } from '#shared/types/bot'
 import { formatCount, formatDateTime, formatPercentValue, formatPrice, formatQuantity, toNumber } from '~/utils/formatNumber'
 
-/** TREND_FUTURES helpers: config defaults, state / reason / exit-reason labels, R formatting. */
+/** TREND_FUTURES helpers (BILATERAL_FUTURES shares the labels): config defaults, state / reason / exit-reason labels, R formatting. */
 
 type Translate = (key: string, params?: Record<string, unknown>) => string
 
@@ -177,6 +177,8 @@ const REASON_PARAMS: Record<string, string[]> = {
   cooldown: ['remaining'],
   risk_pause: ['until'],
   breakout: ['side', 'close', 'level', 'adx'],
+  filter_trend: ['side', 'filter', 'close'],
+  filter_flip: ['reverse_side', 'filter'],
   hold: [],
   channel: ['close', 'level'],
   regime_flip: ['ema_fast', 'ema_slow'],
@@ -187,10 +189,10 @@ const REASON_PARAMS: Record<string, string[]> = {
   not_started: [],
 }
 
-const PRICE_PARAMS = new Set(['close', 'level', 'ema_fast', 'ema_slow'])
+const PRICE_PARAMS = new Set(['close', 'level', 'ema_fast', 'ema_slow', 'filter'])
 
 function formatReasonParam(t: Translate, locale: string, name: string, value: unknown): string {
-  if (name === 'side') return trendSideLabel(t, typeof value === 'string' ? value.toUpperCase() : null)
+  if (name === 'side' || name === 'reverse_side') return trendSideLabel(t, typeof value === 'string' ? value.toUpperCase() : null)
   if (name === 'until' && typeof value === 'string') return formatDateTime(value, locale)
   const number = toNumber(value)
   if (number == null) return value == null ? '' : String(value)
@@ -211,14 +213,16 @@ export function trendReasonText(
   params: Record<string, unknown> | null | undefined,
   fallback?: string | null,
 ): string {
-  const required = code ? REASON_PARAMS[code] : undefined
   const values = params ?? {}
+  // BILATERAL_FUTURES reports its filter flip as `regime_flip` with the filter value instead of the EMAs
+  const messageCode = code === 'regime_flip' && values.filter != null ? 'filter_flip' : code
+  const required = messageCode ? REASON_PARAMS[messageCode] : undefined
   const complete = required?.every((name) => values[name] != null && values[name] !== '') ?? false
 
-  if (code && required && complete) {
+  if (messageCode && required && complete) {
     const named: Record<string, string> = {}
     for (const name of required) named[name] = formatReasonParam(t, locale, name, values[name])
-    return t(`bots.trend_reason_${code}`, named)
+    return t(`bots.trend_reason_${messageCode}`, named)
   }
   return fallback?.trim() || code || '—'
 }

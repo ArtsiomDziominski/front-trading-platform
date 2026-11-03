@@ -2,6 +2,7 @@
 import type { BotListItem, CandleOut } from '#shared/types/bot'
 import type { ChartLevel, ChartLine, ChartMarker } from '~/utils/candleChart'
 import { pnlTone, trendBotSide } from '~/utils/botView'
+import { BILATERAL_SETTLE_BARS, isBilateralBot, readBilateralConfig } from '~/utils/bilateral'
 import { formatCount, formatDateTime, formatPercentValue, formatPrice, formatUsdt } from '~/utils/formatNumber'
 import {
   formatR,
@@ -16,7 +17,10 @@ import {
   trendStopSourceLabel,
 } from '~/utils/trend'
 
-/** Trend part of the bot page: state plaque, 1H chart with EMA / channels / stop, stats, trades, decisions. */
+/**
+ * Trend part of the bot page: state plaque, 1H chart with EMA / channels / stop, stats, trades, decisions.
+ * BILATERAL_FUTURES uses the same panels: the filter side instead of EMA / ADX, the filter line on the chart.
+ */
 const props = defineProps<{
   bot: BotListItem
 }>()
@@ -24,6 +28,8 @@ const props = defineProps<{
 const { t, locale } = useI18n()
 
 const config = computed(() => readTrendConfig(props.bot.config))
+const bilateral = computed(() => isBilateralBot(props.bot))
+const bfConfig = computed(() => readBilateralConfig(props.bot.config))
 const status = computed(() => props.bot.trend ?? null)
 const side = computed(() => trendBotSide(props.bot))
 const inPosition = computed(() => side.value != null)
@@ -80,7 +86,12 @@ const adxLabel = computed(() => {
   return t('bots.trend_badge_adx_value', { adx: formatCount(adx, locale.value), min: formatCount(config.value.adx_min, locale.value) })
 })
 
-const sideways = computed(() => status.value?.adx != null && status.value.adx < config.value.adx_min)
+const sideways = computed(() => !bilateral.value && status.value?.adx != null && status.value.adx < config.value.adx_min)
+
+const warmupNote = computed(() => {
+  if (!bilateral.value || status.value?.state !== 'WARMUP') return null
+  return t('bots.bilateral_warmup_note', { bars: bfConfig.value.bf_window + BILATERAL_SETTLE_BARS, tf: bfConfig.value.signal_timeframe })
+})
 
 const stopSource = computed(() => trendStopSourceLabel(t, status.value?.stop_source))
 
@@ -122,6 +133,14 @@ const trendTimeframe = computed(() => chart.data.value?.trend_timeframe ?? confi
 
 const chartLines = computed<ChartLine[]>(() => {
   const points = chartSeries.value.points
+  if (bilateral.value) {
+    return [{
+      id: 'bf',
+      label: t('bots.bilateral_line_filter'),
+      values: points.map((point) => point.bf_value ?? null),
+      tone: 'warning',
+    }]
+  }
   const lines: ChartLine[] = [
     {
       id: 'ema-fast',
@@ -199,6 +218,20 @@ const chartMarkers = computed<ChartMarker[]>(() => {
 })
 
 const lastPoint = computed(() => chartSeries.value.points.at(-1) ?? null)
+
+const chartHint = computed(() => (bilateral.value
+  ? t('bots.bilateral_chart_hint', {
+      window: bfConfig.value.bf_window,
+      range: formatCount(bfConfig.value.bf_range_sigma, locale.value),
+      reversal: formatCount(bfConfig.value.bf_reversal, locale.value),
+    })
+  : t('bots.trend_chart_hint', {
+      fast: config.value.ema_fast,
+      slow: config.value.ema_slow,
+      tf: config.value.trend_timeframe,
+      entry: config.value.donchian_entry,
+      exit: config.value.donchian_exit,
+    })))
 </script>
 
 <template>
@@ -220,18 +253,26 @@ const lastPoint = computed(() => chartSeries.value.points.at(-1) ?? null)
         </div>
 
         <p v-if="pauseNote" class="trend-detail__pause" role="note">{{ pauseNote }}</p>
+        <p v-if="warmupNote" class="trend-detail__pause" role="note">{{ warmupNote }}</p>
 
         <dl class="trend-detail__stats">
-          <div class="trend-detail__stat">
-            <dt>{{ $t('bots.trend_badge_regime') }} ({{ config.trend_timeframe }})</dt>
+          <div v-if="bilateral" class="trend-detail__stat">
+            <dt>{{ $t('bots.bilateral_filter_side') }} ({{ bfConfig.signal_timeframe }})</dt>
             <dd :class="{ 'tone-up': status.regime === 'LONG', 'tone-down': status.regime === 'SHORT' }">{{ regimeLabel }}</dd>
-            <span class="trend-detail__sub">EMA {{ config.ema_fast }}/{{ config.ema_slow }}: {{ price(status.ema_fast) }} / {{ price(status.ema_slow) }}</span>
+            <span v-if="lastPoint?.bf_value != null" class="trend-detail__sub">{{ $t('bots.bilateral_filter_value', { value: price(lastPoint.bf_value) }) }}</span>
           </div>
-          <div class="trend-detail__stat">
-            <dt>ADX</dt>
-            <dd :class="{ 'tone-warning': sideways }">{{ adxLabel }}</dd>
-            <span v-if="sideways" class="trend-detail__sub">{{ $t('bots.trend_badge_sideways') }}</span>
-          </div>
+          <template v-else>
+            <div class="trend-detail__stat">
+              <dt>{{ $t('bots.trend_badge_regime') }} ({{ config.trend_timeframe }})</dt>
+              <dd :class="{ 'tone-up': status.regime === 'LONG', 'tone-down': status.regime === 'SHORT' }">{{ regimeLabel }}</dd>
+              <span class="trend-detail__sub">EMA {{ config.ema_fast }}/{{ config.ema_slow }}: {{ price(status.ema_fast) }} / {{ price(status.ema_slow) }}</span>
+            </div>
+            <div class="trend-detail__stat">
+              <dt>ADX</dt>
+              <dd :class="{ 'tone-warning': sideways }">{{ adxLabel }}</dd>
+              <span v-if="sideways" class="trend-detail__sub">{{ $t('bots.trend_badge_sideways') }}</span>
+            </div>
+          </template>
           <div class="trend-detail__stat">
             <dt>{{ $t('bots.trend_side') }}</dt>
             <dd :class="{ 'tone-up': side === 'LONG', 'tone-down': side === 'SHORT' }">{{ trendSideLabel(t, side) }}</dd>
@@ -301,9 +342,7 @@ const lastPoint = computed(() => chartSeries.value.points.at(-1) ?? null)
       <p v-else-if="chart.error.value" class="detail-panel__empty trend-detail__error" role="alert">{{ chart.error.value }}</p>
       <p v-else class="detail-panel__empty">{{ chart.loaded.value ? $t('bots.am_chart_empty') : $t('common.loading') }}</p>
 
-      <p class="detail-panel__hint">
-        {{ $t('bots.trend_chart_hint', { fast: config.ema_fast, slow: config.ema_slow, tf: config.trend_timeframe, entry: config.donchian_entry, exit: config.donchian_exit }) }}
-      </p>
+      <p class="detail-panel__hint">{{ chartHint }}</p>
     </section>
 
     <BotDetailTrendStats

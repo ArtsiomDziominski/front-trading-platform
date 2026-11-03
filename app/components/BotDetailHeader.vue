@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BotListItem } from '#shared/types/bot'
 import type { BotActions } from '~/composables/useBotActions'
-import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, isSpotBot, supportedExchange, trendBotSide } from '~/utils/botView'
+import { BOT_TYPE_LABEL_KEYS, botDirection, botStatusView, isSpotBot, isTrendFuturesBot, supportedExchange, trendBotSide } from '~/utils/botView'
 import { formatDateTime } from '~/utils/formatNumber'
 
 /** Bot page header: identity, status and every action as a labelled button. */
@@ -15,7 +15,7 @@ const { t, locale } = useI18n()
 const status = computed(() => botStatusView(props.bot))
 const direction = computed(() => botDirection(props.bot))
 // A flat trend bot has no side until it enters
-const showDirection = computed(() => props.bot.bot_type !== 'TREND_FUTURES' || trendBotSide(props.bot) != null)
+const showDirection = computed(() => !isTrendFuturesBot(props.bot) || trendBotSide(props.bot) != null)
 const exchange = computed(() => supportedExchange(props.bot))
 // Spot bots only buy coins: a market badge instead of the side
 const isSpot = computed(() => isSpotBot(props.bot))

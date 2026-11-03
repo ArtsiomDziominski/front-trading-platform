@@ -57,6 +57,15 @@ export const BOT_CATALOG: BotCatalogEntry[] = [
   },
   {
     market: 'futures',
+    slug: 'bilateral',
+    botType: 'BILATERAL_FUTURES',
+    titleKey: 'bots.catalog_bilateral',
+    descKey: 'bots.catalog_bilateral_futures_desc',
+    icon: 'i-lucide-waves',
+    available: true,
+  },
+  {
+    market: 'futures',
     slug: 'dca',
     botType: 'DCA_FUTURES',
     titleKey: 'bots.catalog_dca',

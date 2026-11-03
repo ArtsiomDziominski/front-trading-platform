@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { BotEventOut, BotListItem, CandleOut } from '#shared/types/bot'
+import { isTrendFuturesBot } from '~/utils/botView'
 
 /** Everything known about one bot, laid out for `/bots/:id`. */
 const props = defineProps<{
@@ -27,7 +28,7 @@ const actions = useBotActions(() => props.bot, {
 })
 
 const isAntiMartingale = computed(() => props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES')
-const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
+const isTrend = computed(() => isTrendFuturesBot(props.bot))
 const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
 const isRecurringSpot = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
 const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')

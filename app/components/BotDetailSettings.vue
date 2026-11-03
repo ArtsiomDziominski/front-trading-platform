@@ -7,6 +7,7 @@ import {
   type CreationSettingKey,
 } from '~/utils/formatBotCreationSettings'
 import { isMixedConfig } from '~/utils/mixedGrid'
+import { isTrendFuturesBot } from '~/utils/botView'
 
 /** Every saved setting of the bot, in the same wording as the create form. */
 const props = defineProps<{
@@ -74,7 +75,7 @@ const rows = computed<SettingRow[]>(() => {
   }
 
   // Trend bots: `capital_usdt: null` means the account balance taken when the bot started
-  if (props.bot.bot_type === 'TREND_FUTURES' && !settings.some((setting) => setting.key === 'capital_usdt')) {
+  if (isTrendFuturesBot(props.bot) && !settings.some((setting) => setting.key === 'capital_usdt')) {
     const index = result.findIndex((row) => row.key === 'max_units')
     const row = { key: 'capital_usdt', label: t('bots.trend_field_capital_usdt'), value: t('bots.trend_capital_from_balance') }
     if (index >= 0) result.splice(index + 1, 0, row)
