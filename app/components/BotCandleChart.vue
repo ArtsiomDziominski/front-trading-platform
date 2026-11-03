@@ -300,10 +300,22 @@ const markerLayer = computed(() => {
   return result
 })
 
-const legend = computed(() => [
-  ...props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: Boolean(line.dashed) })),
-  ...chartLevels.value.map(level => ({ id: `level-${level.id}`, label: level.label, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })),
-])
+const legend = computed(() => {
+  const items = props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: Boolean(line.dashed) }))
+  // Levels that share a `legend` (every grid order) get one entry
+  const grouped = new Set<string>()
+  for (const level of chartLevels.value) {
+    if (level.legend != null) {
+      const key = `${level.legend}|${level.tone}|${Boolean(level.dashed)}`
+      if (grouped.has(key)) continue
+      grouped.add(key)
+      items.push({ id: `group-${key}`, label: level.legend, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })
+      continue
+    }
+    items.push({ id: `level-${level.id}`, label: level.label, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })
+  }
+  return items
+})
 
 const selectedTime = ref<number | null>(null)
 /** Pointer y inside the plot; null when the candle was picked from the keyboard (the crosshair then sits on the close). */

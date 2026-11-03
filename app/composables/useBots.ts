@@ -5,7 +5,7 @@ import { buildTakeProfitPayload, parseTakeProfit } from '~/utils/takeProfit'
 import { buildBotsWebSocketUrl } from '~/utils/wsUrl'
 import type { ApiKeyOut } from '#shared/types/api-key'
 import type { BotWsMessage } from '#shared/types/bot-ws'
-import type { BotCreate, BotCreationLogOut, BotEventOut, BotHistoryFilters, BotHistoryQuery, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, HistoryClearResult, LiquidationCheckOut, LiquidationCheckRequest, TrendChart, TrendDecision, TrendDecisionsQuery, TrendMarket, TrendMarketQuery, TrendStats, TrendTrade } from '#shared/types/bot'
+import type { BotCreate, BotCreationLogOut, BotEventOut, BotHistoryFilters, BotHistoryQuery, BotLifecycleStatus, BotListItem, BotListOut, BotOut, BotsCloseAllResponse, BotsRemoveAllResponse, BotsStopAllResponse, GridChart, GridChartTimeframe, HistoryClearResult, LiquidationCheckOut, LiquidationCheckRequest, TrendChart, TrendDecision, TrendDecisionsQuery, TrendMarket, TrendMarketQuery, TrendStats, TrendTrade } from '#shared/types/bot'
 import { compactBotHistoryQuery } from '~/utils/botHistory'
 
 function normalizeBotConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -549,6 +549,11 @@ export const useBots = () => {
     })
   }
 
+  /** GRID_FUTURES: closed candles and the grid's orders waiting on the exchange. */
+  function fetchGridChart(botId: number, query: { timeframe?: GridChartTimeframe, limit?: number } = {}) {
+    return auth.authFetch<GridChart>(`${baseUrl}/bots/${botId}/grid-chart`, { query })
+  }
+
   /** Public market data (no API key needed): the badge on the trend create form. */
   function fetchMarketTrend(query: TrendMarketQuery) {
     return auth.authFetch<TrendMarket>(`${baseUrl}/market/trend`, { query })
@@ -603,6 +608,7 @@ export const useBots = () => {
     fetchTrendDecisions,
     fetchTrendStats,
     fetchTrendChart,
+    fetchGridChart,
     fetchMarketTrend,
     subscribeBotsUpdates,
     stopBot,

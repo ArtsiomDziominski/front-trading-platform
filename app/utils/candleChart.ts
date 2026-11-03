@@ -13,6 +13,8 @@ export interface ChartLevel {
   label: string
   tone: ChartTone
   dashed?: boolean
+  /** Legend entry shared by several levels (e.g. every grid order); defaults to `label`, one entry per level. */
+  legend?: string
 }
 
 /** Event glyph on the candle that contains `time` (ISO, any moment inside the candle). */

@@ -33,7 +33,8 @@ const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
 const isRecurringSpot = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
 const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
 const isTrendSpot = computed(() => props.bot.bot_type === 'TREND_SPOT')
-const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
+const isGridFutures = computed(() => props.bot.bot_type === 'GRID_FUTURES')
+const hasGridCycles = computed(() => isGridFutures.value && props.bot.cycle_state != null)
 </script>
 
 <template>
@@ -68,6 +69,8 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
       :events-loaded="eventsLoaded"
       :events-error="eventsError"
     />
+
+    <BotDetailGridChart v-if="isGridFutures" :bot="bot" :events="events" />
 
     <BotDetailTrend v-if="isTrend" :bot="bot" />
 

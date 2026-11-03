@@ -819,6 +819,31 @@ export interface CandleOut {
   close: number
 }
 
+/** GET /bots/{id}/grid-chart order: one of the current grid's orders waiting on the exchange. */
+export interface GridChartOrder {
+  kind: 'grid' | 'entry' | 'take_profit' | 'stop_loss' | string
+  /** Grid level from 1; null for take profit / stop loss. */
+  level: number | null
+  side: 'BUY' | 'SELL' | string
+  /** Limit price, or the trigger of a stop order. */
+  price: number | null
+  /** What is left to fill, in the exchange's order unit (coins on Binance, contracts on OKX). */
+  quantity: number | null
+  client_order_id: string
+}
+
+export type GridChartTimeframe = '15m' | '1h' | '4h'
+
+/** GET /bots/{id}/grid-chart: GRID_FUTURES only. */
+export interface GridChart {
+  symbol: string
+  timeframe: GridChartTimeframe | string
+  candles: CandleOut[]
+  orders: GridChartOrder[]
+  /** The exchange did not return the orders; the candles are still there. */
+  orders_error: string | null
+}
+
 export interface LiquidationCheckOut {
   liquidation_price: number
   avg_entry_price: number
