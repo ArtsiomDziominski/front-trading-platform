@@ -75,3 +75,10 @@ export function formatDateTime(value: string, locale: string): string {
   if (Number.isNaN(date.getTime())) return value
   return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(date)
 }
+
+/** A calendar date (YYYY-MM-DD) in words, e.g. "3 ноября 2026 г." / "November 3, 2026"; the raw value when it is not a date. */
+export function formatLongDate(value: string, locale: string): string {
+  const date = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date)
+}
