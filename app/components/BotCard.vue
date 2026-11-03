@@ -8,6 +8,7 @@ import {
   botStatusView,
   isInPosition,
   isSpotBot,
+  isTrendFuturesBot,
   pnlTone,
   supportedExchange,
   trendBotSide,
@@ -46,7 +47,7 @@ const pnl = computed(() => (isInPosition(props.bot) ? props.bot.unrealized_pnl :
 const pnlLabel = computed(() => (pnl.value == null ? '—' : formatUsdt(pnl.value, locale.value, true)))
 
 // Trend bots: strategy state from `bot.trend`; the position rows only while a side is open
-const isTrend = computed(() => props.bot.bot_type === 'TREND_FUTURES')
+const isTrend = computed(() => isTrendFuturesBot(props.bot))
 const trend = computed(() => (isTrend.value ? props.bot.trend ?? null : null))
 const trendSide = computed(() => trendBotSide(props.bot))
 const showDirection = computed(() => !isTrend.value || trendSide.value != null)

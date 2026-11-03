@@ -29,6 +29,11 @@ export type CreationSettingKey =
   | 'leverage'
   | 'signal_timeframe'
   | 'trend_timeframe'
+  | 'bf_window'
+  | 'bf_time_sigma'
+  | 'bf_range_sigma'
+  | 'bf_reversal'
+  | 'bf_spike_rejection'
   | 'risk_per_unit_pct'
   | 'max_units'
   | 'capital_usdt'
@@ -106,6 +111,11 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'leverage',
   'signal_timeframe',
   'trend_timeframe',
+  'bf_window',
+  'bf_time_sigma',
+  'bf_range_sigma',
+  'bf_reversal',
+  'bf_spike_rejection',
   'risk_per_unit_pct',
   'max_units',
   'capital_usdt',
@@ -172,6 +182,25 @@ const TREND_NUMERIC_KEYS = [
   'add_step_atr',
   'trail_atr',
   'cooldown_bars',
+  'daily_stop_pct',
+  'monthly_stop_pct',
+] as const satisfies readonly CreationSettingKey[]
+
+const BILATERAL_NUMERIC_KEYS = [
+  'bf_window',
+  'bf_time_sigma',
+  'bf_range_sigma',
+  'bf_reversal',
+  'atr_period',
+  'risk_per_unit_pct',
+  'stop_atr',
+  'max_units',
+  'add_step_atr',
+  'trail_atr',
+  'cooldown_bars',
+  'capital_usdt',
+  'exchange_leverage',
+  'max_notional_x',
   'daily_stop_pct',
   'monthly_stop_pct',
 ] as const satisfies readonly CreationSettingKey[]
@@ -295,6 +324,13 @@ export function extractCreationHistorySettings(
     if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
   }
 
+  if (payload.bot_type === 'BILATERAL_FUTURES') {
+    set('signal_timeframe', readString(config.signal_timeframe))
+    for (const key of BILATERAL_NUMERIC_KEYS) set(key, readString(config[key]))
+    if (typeof config.bf_spike_rejection === 'boolean') set('bf_spike_rejection', config.bf_spike_rejection)
+    if (typeof config.close_on_stop === 'boolean') set('close_on_stop', config.close_on_stop)
+  }
+
   if (payload.bot_type === 'TREND_FUTURES') {
     set('signal_timeframe', readString(config.signal_timeframe))
     set('trend_timeframe', readString(config.trend_timeframe))
@@ -378,6 +414,11 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   mixed_orders_summary: 'bots.mixed_orders_summary',
   signal_timeframe: 'bots.trend_field_signal_timeframe',
   trend_timeframe: 'bots.trend_field_trend_timeframe',
+  bf_window: 'bots.bilateral_field_bf_window',
+  bf_time_sigma: 'bots.bilateral_field_bf_time_sigma',
+  bf_range_sigma: 'bots.bilateral_field_bf_range_sigma',
+  bf_reversal: 'bots.bilateral_field_bf_reversal',
+  bf_spike_rejection: 'bots.bilateral_field_bf_spike_rejection',
   risk_per_unit_pct: 'bots.trend_field_risk_per_unit_pct',
   max_units: 'bots.trend_field_max_units',
   capital_usdt: 'bots.trend_field_capital_usdt',

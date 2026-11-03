@@ -16,6 +16,7 @@ export const BOT_TYPE_LABEL_KEYS: Record<BotType, string> = {
   TREND_SPOT: 'bots.type_trend_spot',
   ANTI_MARTINGALE_FUTURES: 'bots.type_anti_martingale_futures',
   TREND_FUTURES: 'bots.type_trend_futures',
+  BILATERAL_FUTURES: 'bots.type_bilateral_futures',
   CUSTOM: 'bots.type_custom',
 }
 
@@ -42,15 +43,23 @@ export function botDirection(
   bot: Pick<BotListItem, 'bot_type' | 'config' | 'position_side' | 'cycle_state' | 'config_version' | 'lifecycle_status' | 'trend'>,
 ): BotDirection {
   if (bot.bot_type === 'ANTI_MARTINGALE_FUTURES' || isSpotBot(bot)) return 'LONG'
-  if (bot.bot_type === 'TREND_FUTURES') return trendBotSide(bot) ?? 'LONG'
+  if (isTrendFuturesBot(bot)) return trendBotSide(bot) ?? 'LONG'
   const direction = effectiveGridConfig(bot).direction
   if (direction === 'LONG' || direction === 'SHORT') return direction
   return bot.position_side === 'SHORT' ? 'SHORT' : 'LONG'
 }
 
+/**
+ * Bots on the futures trend execution: TREND_FUTURES and BILATERAL_FUTURES share the `trend` status, trades,
+ * decisions, stats and chart read models.
+ */
+export function isTrendFuturesBot(bot: Pick<BotListItem, 'bot_type'>): boolean {
+  return bot.bot_type === 'TREND_FUTURES' || bot.bot_type === 'BILATERAL_FUTURES'
+}
+
 /** Side of a trend bot's open position; `null` when it is flat (it then has no direction of its own). */
 export function trendBotSide(bot: Pick<BotListItem, 'bot_type' | 'trend' | 'lifecycle_status'>): BotDirection | null {
-  if (bot.bot_type !== 'TREND_FUTURES' || bot.lifecycle_status === 'CLOSED') return null
+  if (!isTrendFuturesBot(bot) || bot.lifecycle_status === 'CLOSED') return null
   const side = bot.trend?.side
   return side === 'LONG' || side === 'SHORT' ? side : null
 }

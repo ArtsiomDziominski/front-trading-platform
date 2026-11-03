@@ -9,6 +9,7 @@ export type BotType =
   | 'TREND_SPOT'
   | 'ANTI_MARTINGALE_FUTURES'
   | 'TREND_FUTURES'
+  | 'BILATERAL_FUTURES'
   | 'CUSTOM'
 
 export type BotLifecycleStatus = 'ACTIVE' | 'STOPPED' | 'CLOSED'
@@ -241,6 +242,55 @@ export interface TrendFuturesConfig {
   close_on_stop?: boolean
 }
 
+export type BilateralSignalTimeframe = '1h' | '2h' | '4h' | '6h' | '12h' | '1d'
+
+/**
+ * BILATERAL_FUTURES: one pair, always in a position in the direction of the Bilateral Filter of the signal
+ * timeframe (closed candles only), reversed when the filter flips. Execution as TREND_FUTURES: risk sizing,
+ * exchange stop, trailing, capital protection. Every field but `symbol` is optional: the server fills its defaults.
+ */
+export interface BilateralFuturesConfig {
+  symbol: string
+  /** Server default: "12h". */
+  signal_timeframe?: BilateralSignalTimeframe
+  /** Filter window, candles (5–300). Server default: 40. */
+  bf_window?: number
+  /** Time kernel width, candles. Server default: "12". */
+  bf_time_sigma?: string | number
+  /** Price kernel width, × ATR. Server default: "1.5". */
+  bf_range_sigma?: string | number
+  /** Flip threshold, × the price kernel width. Server default: "1.5". */
+  bf_reversal?: string | number
+  /** Reference price = median of the last three closes. Server default: true. */
+  bf_spike_rejection?: boolean
+  /** Server default: 14. */
+  atr_period?: number
+  /** Risk of the position, % of the capital, (0; 10]. Server default: "2". */
+  risk_per_unit_pct?: string | number
+  /** Stop distance in ATR. Server default: "3". */
+  stop_atr?: string | number
+  /** 1–10; 1 = no pyramiding. Server default: 1. */
+  max_units?: number
+  /** Pyramid step in ATR. Server default: "1". */
+  add_step_atr?: string | number
+  /** Trailing stop distance in ATR; 50 = practically off. Server default: "50". */
+  trail_atr?: string | number
+  /** Candles without entries after a stop-out. Server default: 1. */
+  cooldown_bars?: number
+  /** 0 = off. Server default: "10". */
+  daily_stop_pct?: string | number
+  /** 0 = off. Server default: "35". */
+  monthly_stop_pct?: string | number
+  /** Position notional cap, × capital. Server default: "3". */
+  max_notional_x?: string | number
+  /** 1–125, set on the exchange by the bot (cross). Server default: 5. */
+  exchange_leverage?: number
+  /** null = the account USDT balance when the bot starts. */
+  capital_usdt?: string | number | null
+  /** Stopping the bot: true closes the position at market, false leaves it with its exchange stop. Server default: false. */
+  close_on_stop?: boolean
+}
+
 export type TrendState =
   | 'WARMUP'
   | 'WAITING_TREND'
@@ -259,6 +309,7 @@ export type TrendReasonCode =
   | 'cooldown'
   | 'risk_pause'
   | 'breakout'
+  | 'filter_trend'
   | 'hold'
   | 'channel'
   | 'regime_flip'
@@ -271,7 +322,7 @@ export type TrendExitReason = 'stop' | 'trail' | 'channel' | 'regime_flip' | 'ri
 
 export type TrendStopSource = 'initial' | 'pyramid' | 'trail'
 
-/** `trend` field of a GET /bots item: TREND_FUTURES only, `null` for other types. Decimals arrive as numbers. */
+/** `trend` field of a GET /bots item: TREND_FUTURES and BILATERAL_FUTURES (`regime` = filter side), `null` for other types. Decimals arrive as numbers. */
 export interface TrendBotStatus {
   /** Plain string on the server; the known values are `TrendState`. */
   state: string
@@ -462,6 +513,8 @@ export interface TrendChartPoint {
   entry_low: number | null
   exit_high: number | null
   exit_low: number | null
+  /** BILATERAL_FUTURES only: the filter value at this candle (EMAs and channels are null). */
+  bf_value?: number | null
 }
 
 /** entry | add | exit | stop_moved */
@@ -741,7 +794,7 @@ export interface TrendSpotStatusOut {
   last_trade: TrendSpotLastTrade | null
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig | TrendSpotConfig
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | BilateralFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig | TrendSpotConfig
 
 export interface BotCreate {
   api_key_id: number
