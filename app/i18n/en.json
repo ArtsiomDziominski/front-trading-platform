@@ -782,7 +782,7 @@
     "backtest_intro": "This bot's rules on past candles: the same entry, stop and reversal, with the current settings. An identical backtest is computed once a day, so running it again shows the saved result at once.",
     "backtest_intro_form": "The bot's rules on past candles with the settings in the form above: pair, timeframe, filter, risk, stop and trailing. An identical backtest is computed once a day, so running it again shows the saved result at once.",
     "backtest_timeframe": "Timeframe",
-    "backtest_timeframe_form": "Timeframe from the form",
+    "backtest_timeframe_form_hint": "Also changes the timeframe in the bot settings above",
     "backtest_period": "Period",
     "backtest_period_1m": "1 mo",
     "backtest_period_3m": "3 mo",

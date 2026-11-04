@@ -376,7 +376,7 @@ defineExpose({ applyPayload, scrollIntoView })
     </div>
   </BotCreateFormShell>
 
-  <BotDetailBacktest :source="backtestSource" />
+  <BotDetailBacktest v-model:timeframe="signalTimeframe" :source="backtestSource" />
 </template>
 
 <style scoped>
