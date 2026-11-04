@@ -8,7 +8,8 @@ import { formatR, trendExitReasonLabel } from '~/utils/trend'
 
 /**
  * Backtest panel of a BILATERAL_FUTURES bot (POST /backtests): the bot's current settings on history for a chosen
- * timeframe and period, or, on the create page, the form's settings (`source`, the timeframe comes from the form).
+ * timeframe and period, or, on the create page, the form's settings (`source`). There the timeframe switcher is the
+ * form's own field (`v-model:timeframe`): picking one here changes it in the form above too.
  * The server keeps the result, so the same choice comes back at once later; a change of the choice or of the
  * settings only looks up a saved result, a computation starts on "Run".
  */
@@ -18,6 +19,8 @@ const props = defineProps<{
   /** Instead of `bot`: the create form's settings; null while the form holds an invalid value. */
   source?: BacktestFormSource | null
 }>()
+/** Create page: the form's signal timeframe, two-way. */
+const formTimeframe = defineModel<BacktestTimeframe>('timeframe')
 
 const { t, locale } = useI18n()
 const { backtest, running, error, startedAt, run, lookup, reset } = useBacktest()
@@ -30,10 +33,16 @@ const headingId = computed(() => (props.bot ? `backtest-${props.bot.id}` : 'back
 const symbolLabel = computed(() => props.bot?.symbol ?? props.source?.symbol ?? '')
 const bfConfig = computed(() => readBilateralConfig(props.bot?.config ?? props.source?.config))
 const pickedTimeframe = ref<BacktestTimeframe>(bfConfig.value.signal_timeframe as BacktestTimeframe)
-/** The bot page lets the user try other timeframes; the create page follows the form. */
+/** The bot page tries other timeframes without touching the bot; the create page switches the form's timeframe. */
 const timeframe = computed<BacktestTimeframe>(() => (
-  formMode.value ? bfConfig.value.signal_timeframe as BacktestTimeframe : pickedTimeframe.value
+  formMode.value ? formTimeframe.value ?? bfConfig.value.signal_timeframe as BacktestTimeframe : pickedTimeframe.value
 ))
+
+function pickTimeframe(value: BacktestTimeframe) {
+  if (formMode.value) formTimeframe.value = value
+  else pickedTimeframe.value = value
+}
+
 const period = ref<BacktestPeriod>('1y')
 const capital = ref<number>(1000)
 const reinvest = ref(false)
@@ -231,27 +240,30 @@ const settingsUsed = computed(() => {
     <p class="detail-panel__hint">{{ formMode ? $t('bots.backtest_intro_form') : $t('bots.backtest_intro') }}</p>
 
     <div class="backtest__controls">
-      <div v-if="formMode" class="backtest__control">
-        <span class="backtest__label">{{ $t('bots.backtest_timeframe_form') }}</span>
-        <span class="backtest__group">
-          <span class="backtest__option backtest__option--static">{{ timeframe }}</span>
-        </span>
-      </div>
-      <div v-else class="backtest__control">
+      <div class="backtest__control">
         <span class="backtest__label">{{ $t('bots.backtest_timeframe') }}</span>
-        <div class="backtest__group" role="group" :aria-label="$t('bots.backtest_timeframe')">
-          <button
-            v-for="item in BILATERAL_SIGNAL_TIMEFRAMES"
-            :key="item"
-            type="button"
-            class="backtest__option"
-            :aria-pressed="timeframe === item"
-            :disabled="running"
-            @click="pickedTimeframe = item as BacktestTimeframe"
+        <UTooltip :text="$t('bots.backtest_timeframe_form_hint')" :disabled="!formMode" :delay-duration="200">
+          <div
+            class="backtest__group"
+            role="group"
+            :aria-label="$t('bots.backtest_timeframe')"
+            :aria-describedby="formMode ? 'backtest-form-timeframe-hint' : undefined"
           >
-            {{ item }}
-          </button>
-        </div>
+            <button
+              v-for="item in BILATERAL_SIGNAL_TIMEFRAMES"
+              :key="item"
+              type="button"
+              class="backtest__option"
+              :aria-pressed="timeframe === item"
+              :disabled="running"
+              @click="pickTimeframe(item as BacktestTimeframe)"
+            >
+              {{ item }}
+            </button>
+          </div>
+        </UTooltip>
+        <!-- No hover on a touch screen: the same hint as text there; always there for a screen reader -->
+        <span v-if="formMode" id="backtest-form-timeframe-hint" class="backtest__tf-note">{{ $t('bots.backtest_timeframe_form_hint') }}</span>
       </div>
       <div class="backtest__control">
         <span class="backtest__label">{{ $t('bots.backtest_period') }}</span>
@@ -478,15 +490,31 @@ const settingsUsed = computed(() => {
   opacity: 0.6;
 }
 
-.backtest__option--static {
-  background: rgb(255 255 255 / 10%);
-  color: var(--color-text);
-  cursor: default;
-}
-
 .backtest__option:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
+}
+
+.backtest__tf-note {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (hover: none) {
+  .backtest__tf-note {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    color: var(--color-text-muted);
+    font-size: 11.5px;
+    white-space: normal;
+  }
 }
 
 .backtest__capital {
