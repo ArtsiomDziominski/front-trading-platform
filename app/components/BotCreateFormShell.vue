@@ -18,6 +18,7 @@ const apiKeyId = defineModel<number | ''>('apiKeyId', { required: true })
 const symbol = defineModel<string>('symbol', { required: true })
 
 const formRef = ref<HTMLElement | null>(null)
+const appPath = useAppPath()
 
 const apiKeyIdModel = computed({
   get: (): number | undefined => (apiKeyId.value === '' ? undefined : apiKeyId.value),
@@ -86,7 +87,7 @@ defineExpose({ scrollIntoView })
           <AppButton
             v-if="createdBotId"
             variant="secondary"
-            to="/bots"
+            :to="appPath('/bots')"
           >
             {{ $t('bots.back_to_bots') }}
           </AppButton>

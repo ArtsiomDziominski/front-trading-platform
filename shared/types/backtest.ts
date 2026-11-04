@@ -23,6 +23,13 @@ export interface BacktestCreate {
   cached_only?: boolean
 }
 
+/** The create form's settings for a backtest without a bot. */
+export interface BacktestFormSource {
+  symbol: string
+  exchange: 'BINANCE' | 'OKX'
+  config: Record<string, unknown>
+}
+
 export interface BacktestSideStats {
   trades: number
   wins: number

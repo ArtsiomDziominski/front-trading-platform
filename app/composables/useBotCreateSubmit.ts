@@ -7,6 +7,7 @@ import type { BotCreate } from '#shared/types/bot'
 export function useBotCreateSubmit(onCreated: () => void) {
   const { t } = useI18n()
   const router = useRouter()
+const appPath = useAppPath()
   const { creating, createError, createBot } = useBots()
 
   const formError = ref('')
@@ -46,7 +47,7 @@ export function useBotCreateSubmit(onCreated: () => void) {
         return
       }
 
-      await router.push('/bots')
+      await router.push(appPath('/bots'))
     } catch (error) {
       if (handleError(error)) return
       formError.value = createError.value || t('bots.create_error')

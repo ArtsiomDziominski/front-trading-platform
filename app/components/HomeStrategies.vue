@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const auth = useAuth()
-const createTo = computed(() => (auth.loggedIn.value ? '/bots/create' : '/auth/register'))
+const appPath = useAppPath()
+const createTo = computed(() => appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register'))
 
 const tiles = computed(() => [
   {

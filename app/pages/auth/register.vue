@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 const router = useRouter()
 
 usePageSeo({
@@ -27,7 +28,7 @@ async function handleSubmit() {
   try {
     await auth.register(registerEmail, password.value, name.value || undefined)
     await browserCredentials.storeLogin(registerEmail, password.value)
-    await router.push('/')
+    await router.push(appPath('/'))
   } catch {
     formError.value = auth.error.value || t('auth.error_unknown')
   }
@@ -106,7 +107,7 @@ async function handleSubmit() {
         <div class="auth-links">
           <span class="auth-link-text">
             {{ $t('auth.register_have_account') }}
-            <NuxtLink to="/auth/login" class="auth-link">
+            <NuxtLink :to="appPath('/auth/login')" class="auth-link">
               {{ $t('auth.register_link_login') }}
             </NuxtLink>
           </span>

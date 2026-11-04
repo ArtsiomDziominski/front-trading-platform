@@ -251,7 +251,7 @@ export type BilateralSignalTimeframe = '1h' | '2h' | '4h' | '6h' | '12h' | '1d'
  */
 export interface BilateralFuturesConfig {
   symbol: string
-  /** Server default: "12h". */
+  /** Server default: "4h". */
   signal_timeframe?: BilateralSignalTimeframe
   /** Filter window, candles (5–300). Server default: 40. */
   bf_window?: number
@@ -275,6 +275,12 @@ export interface BilateralFuturesConfig {
   add_step_atr?: string | number
   /** Trailing stop distance in ATR; 50 = practically off. Server default: "50". */
   trail_atr?: string | number
+  /**
+   * After a trailing-stop exit: true — no new entry on the same side until the filter flips (state WAITING_FLIP);
+   * false — re-enter the same trend on the next candle. No effect without trailing. Server default: false (bots
+   * created before the field keep working as before); the create form sends true.
+   */
+  trail_wait_flip?: boolean
   /** Candles without entries after a stop-out. Server default: 1. */
   cooldown_bars?: number
   /** 0 = off. Server default: "10". */
@@ -298,6 +304,7 @@ export type TrendState =
   | 'IN_LONG'
   | 'IN_SHORT'
   | 'COOLDOWN'
+  | 'WAITING_FLIP'
   | 'PAUSED_RISK'
 
 export type TrendReasonCode =
@@ -307,6 +314,7 @@ export type TrendReasonCode =
   | 'no_breakout'
   | 'volume_low'
   | 'cooldown'
+  | 'wait_flip'
   | 'risk_pause'
   | 'breakout'
   | 'filter_trend'

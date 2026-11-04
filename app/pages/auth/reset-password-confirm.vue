@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 const route = useRoute()
 
 usePageSeo({
@@ -41,7 +42,7 @@ async function handleSubmit() {
           <AppButton
             class="mt-5 w-full justify-center"
             variant="secondary"
-            to="/auth/login"
+            :to="appPath('/auth/login')"
           >
             {{ $t('auth.register_link_login') }}
           </AppButton>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 
 const settingsLink = computed(() =>
-  auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+  appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
 )
 
-const ctaTo = computed(() => (auth.loggedIn.value ? '/bots/create' : '/auth/register'))
+const ctaTo = computed(() => appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register'))
 
 const steps = computed(() => [
   {
@@ -13,7 +14,7 @@ const steps = computed(() => [
     icon: 'i-lucide-user-plus',
     titleKey: 'home.step_1_title',
     descKey: 'home.step_1_desc',
-    to: '/auth/register',
+    to: appPath('/auth/register'),
   },
   {
     number: '02',
@@ -27,14 +28,14 @@ const steps = computed(() => [
     icon: 'i-lucide-bot',
     titleKey: 'home.step_3_title',
     descKey: 'home.step_3_desc',
-    to: auth.loggedIn.value ? '/bots/create' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/bots/create' : '/auth/login'),
   },
   {
     number: '04',
     icon: 'i-lucide-activity',
     titleKey: 'home.step_4_title',
     descKey: 'home.step_4_desc',
-    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
+    to: appPath(auth.loggedIn.value ? '/bots' : '/bots/overview'),
   },
 ])
 </script>

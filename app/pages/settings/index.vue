@@ -5,6 +5,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 const userSettings = useUserSettings()
 
 usePageSeo({
@@ -163,7 +164,7 @@ async function handlePasswordReset() {
               {{ $t('settings.send_password_reset') }}
             </AppButton>
 
-            <NuxtLink to="/auth/reset-password" class="settings-link">
+            <NuxtLink :to="appPath('/auth/reset-password')" class="settings-link">
               {{ $t('settings.reset_password_other_email') }}
             </NuxtLink>
           </div>

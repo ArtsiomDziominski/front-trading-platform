@@ -10,7 +10,8 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-const handleError = () => clearError({ redirect: '/' })
+const appPath = useAppPath()
+const handleError = () => clearError({ redirect: appPath('/') })
 </script>
 
 <template>

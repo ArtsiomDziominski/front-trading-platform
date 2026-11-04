@@ -30,7 +30,8 @@ const props = withDefaults(defineProps<{
 const { t, locale } = useI18n()
 const actions = useBotActions(() => props.bot)
 
-const detailPath = computed(() => `/bots/${props.bot.id}`)
+const appPath = useAppPath()
+const detailPath = computed(() => appPath(`/bots/${props.bot.id}`))
 const staggerDelay = computed(() => Math.min(props.index * 0.05, 0.3))
 const status = computed(() => botStatusView(props.bot))
 const direction = computed(() => botDirection(props.bot))
@@ -166,7 +167,7 @@ const menuItems = computed<MenuItem[][]>(() => {
   const groups: MenuItem[][] = [[
     { type: 'label', label: `${bot.symbol} · #${bot.id}` },
     { label: t('bots.menu_open'), icon: 'i-lucide-arrow-up-right', to: detailPath.value },
-    { label: t('bots.event_history_open'), icon: 'i-lucide-history', to: `/history?bot_id=${bot.id}` },
+    { label: t('bots.event_history_open'), icon: 'i-lucide-history', to: appPath(`/history?bot_id=${bot.id}`) },
   ]]
 
   if (actions.canEditGridConfig) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 
 usePageSeo({
   title: () => t('auth.reset_password_title'),
@@ -38,7 +39,7 @@ async function handleSubmit() {
           <AppButton
             class="mt-5 w-full justify-center"
             variant="secondary"
-            to="/auth/login"
+            :to="appPath('/auth/login')"
           >
             {{ $t('auth.register_link_login') }}
           </AppButton>
@@ -82,7 +83,7 @@ async function handleSubmit() {
           </form>
 
           <div class="auth-links">
-            <NuxtLink to="/auth/login" class="auth-link">
+            <NuxtLink :to="appPath('/auth/login')" class="auth-link">
               {{ $t('auth.register_link_login') }}
             </NuxtLink>
           </div>

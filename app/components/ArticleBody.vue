@@ -6,12 +6,7 @@ const props = defineProps<{
   blocks: ArticleBlock[]
 }>()
 
-const localePath = useLocalePath()
-
-/** `href` is an internal path from the API rather than a typed route, so it goes in as a plain path. */
-function ctaPath(href: string): string {
-  return localePath(href as Parameters<typeof localePath>[0])
-}
+const appPath = useAppPath()
 
 /** A plain number, signed amount or percent: "6", "+74 USDT", "−60 USDT", "12.5%". */
 const NUMBER_CELL = /^[+\-−]?\d[\d\s.,]*(?:%|\s?USDT)?$/
@@ -101,7 +96,7 @@ const layouts = computed(() => props.blocks.map((block) => (block.type === 'tabl
       </div>
 
       <div v-else-if="block.type === 'cta'" class="article-body__cta">
-        <AppButton :to="ctaPath(block.href)" trailing-icon="i-lucide-arrow-right">
+        <AppButton :to="appPath(block.href)" trailing-icon="i-lucide-arrow-right">
           {{ block.text }}
         </AppButton>
       </div>

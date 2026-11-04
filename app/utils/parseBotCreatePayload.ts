@@ -155,6 +155,7 @@ function parseBilateralConfig(raw: unknown): BilateralFuturesConfig | null {
     if (value && Number.isFinite(Number(value))) target[key] = value
   }
   if (typeof config.bf_spike_rejection === 'boolean') result.bf_spike_rejection = config.bf_spike_rejection
+  if (typeof config.trail_wait_flip === 'boolean') result.trail_wait_flip = config.trail_wait_flip
   if (typeof config.close_on_stop === 'boolean') result.close_on_stop = config.close_on_stop
 
   return result

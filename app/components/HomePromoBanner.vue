@@ -2,8 +2,9 @@
 const STORAGE_KEY = 'home-promo-dismissed'
 
 const auth = useAuth()
+const appPath = useAppPath()
 const visible = ref(false)
-const ctaTo = computed(() => (auth.loggedIn.value ? '/bots/create' : '/auth/register'))
+const ctaTo = computed(() => appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register'))
 
 function dismiss() {
   visible.value = false

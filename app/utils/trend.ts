@@ -106,6 +106,7 @@ const STATE_KEYS: Record<string, string> = {
   IN_LONG: 'bots.trend_state_in_long',
   IN_SHORT: 'bots.trend_state_in_short',
   COOLDOWN: 'bots.trend_state_cooldown',
+  WAITING_FLIP: 'bots.trend_state_waiting_flip',
   PAUSED_RISK: 'bots.trend_state_paused_risk',
 }
 
@@ -119,7 +120,7 @@ export function trendStateLabel(t: Translate, state: string | null | undefined):
 export function trendStateTone(state: string | null | undefined): 'long' | 'short' | 'wait' | 'pause' | 'muted' {
   if (state === 'IN_LONG') return 'long'
   if (state === 'IN_SHORT') return 'short'
-  if (state === 'WAITING_BREAKOUT') return 'wait'
+  if (state === 'WAITING_BREAKOUT' || state === 'WAITING_FLIP') return 'wait'
   if (state === 'COOLDOWN' || state === 'PAUSED_RISK') return 'pause'
   return 'muted'
 }
@@ -175,6 +176,7 @@ const REASON_PARAMS: Record<string, string[]> = {
   no_breakout: ['side', 'distance_pct', 'level'],
   volume_low: ['ratio', 'volume_mult'],
   cooldown: ['remaining'],
+  wait_flip: ['side'],
   risk_pause: ['until'],
   breakout: ['side', 'close', 'level', 'adx'],
   filter_trend: ['side', 'filter', 'close'],

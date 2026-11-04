@@ -8,7 +8,7 @@ export const BILATERAL_SIGNAL_TIMEFRAMES: BilateralSignalTimeframe[] = ['1h', '2
 
 /** Server defaults of `BilateralFuturesConfig` (python-trading-bot: docs/ru/frontend-bilateral-futures.md). */
 export const BILATERAL_DEFAULTS = {
-  signal_timeframe: '12h' as BilateralSignalTimeframe,
+  signal_timeframe: '4h' as BilateralSignalTimeframe,
   bf_window: 40,
   bf_time_sigma: 12,
   bf_range_sigma: 1.5,
@@ -20,6 +20,8 @@ export const BILATERAL_DEFAULTS = {
   max_units: 1,
   add_step_atr: 1,
   trail_atr: 50,
+  /** A saved config without the field behaves as `false`; the create form starts with `BILATERAL_FORM_TRAIL_WAIT_FLIP`. */
+  trail_wait_flip: false,
   cooldown_bars: 1,
   daily_stop_pct: 10,
   monthly_stop_pct: 35,
@@ -33,6 +35,17 @@ export type BilateralConfigView = typeof BILATERAL_DEFAULTS
 
 /** Candles the bot reads before it trusts the filter side: the window plus a settle window (server side). */
 export const BILATERAL_SETTLE_BARS = 300
+
+/** `trail_atr` at this value turns trailing off in practice: only a filter flip or the stop closes the position. */
+export const BILATERAL_TRAIL_OFF_ATR = 50
+
+/** New bots wait for a filter flip after a trailing exit; on the backtest that cut needless re-entries. */
+export const BILATERAL_FORM_TRAIL_WAIT_FLIP = true
+
+/** Trailing is on when `trail_atr` is below 50 ATR. */
+export function bilateralTrailOn(trailAtr: number | null | undefined): boolean {
+  return trailAtr != null && Number.isFinite(trailAtr) && trailAtr > 0 && trailAtr < BILATERAL_TRAIL_OFF_ATR
+}
 
 export function isBilateralBot(bot: { bot_type?: string | null }): boolean {
   return bot.bot_type === 'BILATERAL_FUTURES'
@@ -58,6 +71,7 @@ export function readBilateralConfig(config: Record<string, unknown> | null | und
     max_units: num('max_units', BILATERAL_DEFAULTS.max_units),
     add_step_atr: num('add_step_atr', BILATERAL_DEFAULTS.add_step_atr),
     trail_atr: num('trail_atr', BILATERAL_DEFAULTS.trail_atr),
+    trail_wait_flip: bool('trail_wait_flip', BILATERAL_DEFAULTS.trail_wait_flip),
     cooldown_bars: num('cooldown_bars', BILATERAL_DEFAULTS.cooldown_bars),
     daily_stop_pct: num('daily_stop_pct', BILATERAL_DEFAULTS.daily_stop_pct),
     monthly_stop_pct: num('monthly_stop_pct', BILATERAL_DEFAULTS.monthly_stop_pct),

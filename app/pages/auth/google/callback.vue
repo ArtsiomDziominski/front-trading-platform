@@ -3,6 +3,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
+const appPath = useAppPath()
 
 usePageSeo({
   title: () => t('auth.login_title'),
@@ -32,7 +33,7 @@ onMounted(async () => {
 
   try {
     await auth.completeGoogleLogin(code, redirectUri)
-    await router.replace('/bots')
+    await router.replace(appPath('/bots'))
   } catch {
     status.value = 'error'
     message.value = auth.error.value || t('auth.error_unknown')
@@ -52,7 +53,7 @@ onMounted(async () => {
           <AppButton
             variant="secondary"
             class="w-full justify-center"
-            to="/auth/login"
+            :to="appPath('/auth/login')"
           >
             {{ $t('auth.login_submit') }}
           </AppButton>

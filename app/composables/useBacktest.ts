@@ -116,10 +116,20 @@ export function useBacktest() {
     }
   }
 
+  /** Forget the shown result and any computation in flight (it keeps going on the server and is cached). */
+  function reset() {
+    stopPolling()
+    generation += 1
+    backtest.value = null
+    running.value = false
+    startedAt.value = null
+    error.value = null
+  }
+
   onScopeDispose(() => {
     generation += 1
     stopPolling()
   })
 
-  return { backtest, running, error, startedAt, run, lookup }
+  return { backtest, running, error, startedAt, run, lookup, reset }
 }

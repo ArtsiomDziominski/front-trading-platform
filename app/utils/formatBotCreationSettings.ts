@@ -1,4 +1,5 @@
 import type { BotType } from '#shared/types/bot'
+import { bilateralTrailOn } from '~/utils/bilateral'
 import { BOT_TYPE_LABEL_KEYS } from '~/utils/botView'
 import { dcaMaxFundsUsdt, readDcaLadderParams } from '~/utils/dcaSpot'
 import { recurringIntervalLabel } from '~/utils/recurringSpot'
@@ -52,6 +53,7 @@ export type CreationSettingKey =
   | 'stop_atr'
   | 'add_step_atr'
   | 'trail_atr'
+  | 'trail_wait_flip'
   | 'exit_on_regime_flip'
   | 'cooldown_bars'
   | 'daily_stop_pct'
@@ -328,6 +330,10 @@ export function extractCreationHistorySettings(
     set('signal_timeframe', readString(config.signal_timeframe))
     for (const key of BILATERAL_NUMERIC_KEYS) set(key, readString(config[key]))
     if (typeof config.bf_spike_rejection === 'boolean') set('bf_spike_rejection', config.bf_spike_rejection)
+    // Only matters with trailing on (below 50 ATR), like the checkbox in the form
+    if (typeof config.trail_wait_flip === 'boolean' && bilateralTrailOn(readNumber(config.trail_atr))) {
+      set('trail_wait_flip', config.trail_wait_flip)
+    }
     if (typeof config.close_on_stop === 'boolean') set('close_on_stop', config.close_on_stop)
   }
 
@@ -437,6 +443,7 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   stop_atr: 'bots.trend_field_stop_atr',
   add_step_atr: 'bots.trend_field_add_step_atr',
   trail_atr: 'bots.trend_field_trail_atr',
+  trail_wait_flip: 'bots.bilateral_field_trail_wait_flip',
   exit_on_regime_flip: 'bots.trend_field_exit_on_regime_flip',
   cooldown_bars: 'bots.trend_field_cooldown_bars',
   daily_stop_pct: 'bots.trend_field_daily_stop_pct',
@@ -486,6 +493,7 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
     case 'auto_restart':
     case 'close_on_stop':
     case 'exit_on_regime_flip':
+    case 'trail_wait_flip':
       return setting.value ? t('common.yes') : t('common.no')
     case 'risk_per_unit_pct':
     case 'daily_stop_pct':
