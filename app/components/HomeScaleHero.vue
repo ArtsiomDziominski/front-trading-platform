@@ -1,14 +1,15 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 
 const canvasRef = useTemplateRef<HTMLCanvasElement>('canvasRef')
 const visualRef = useTemplateRef<HTMLElement>('visualRef')
 
 const primaryCta = computed(() =>
   auth.loggedIn.value
-    ? { label: t('home.hero_cta_bots'), to: '/bots' }
-    : { label: t('home.hero_cta'), to: '/auth/register' },
+    ? { label: t('home.hero_cta_bots'), to: appPath('/bots') }
+    : { label: t('home.hero_cta'), to: appPath('/auth/register') },
 )
 
 let cleanup: (() => void) | null = null
@@ -175,7 +176,7 @@ onBeforeUnmount(() => {
             </AppButton>
             <NuxtLink
               class="scale-hero__text-link"
-              :to="auth.loggedIn.value ? '/bots/create' : '/bots/overview'"
+              :to="appPath(auth.loggedIn.value ? '/bots/create' : '/bots/overview')"
             >
               {{ $t('home.scale_hero_secondary') }}
               <UIcon name="i-lucide-arrow-up-right" />

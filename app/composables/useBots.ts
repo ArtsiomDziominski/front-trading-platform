@@ -53,6 +53,7 @@ export const useBots = () => {
   const config = useRuntimeConfig()
   const route = useRoute()
   const router = useRouter()
+const appPath = useAppPath()
   const toast = useToast()
   const baseUrl = config.public.apiBaseUrl
   const auth = useAuth()
@@ -147,7 +148,7 @@ export const useBots = () => {
       : 'Bot closed by stop-loss and removed from tracking'
 
     toast.add({ title, color: 'warning' })
-    router.replace('/bots')
+    router.replace(appPath('/bots'))
   }
 
   function applyBotFromOut(updated: BotOut) {

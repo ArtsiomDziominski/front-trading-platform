@@ -4,6 +4,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const appPath = useAppPath()
 const { market, type, selectedEntry, openSelected } = useBotTypePicker()
 
 usePageSeo({
@@ -21,7 +22,7 @@ usePageSeo({
           <h1 class="section-title">{{ $t('bots.create_modal_title') }}</h1>
           <p class="page-header__desc">{{ $t('bots.create_modal_desc') }}</p>
         </div>
-        <AppButton variant="secondary" to="/bots">
+        <AppButton variant="secondary" :to="appPath('/bots')">
           {{ $t('bots.back_to_bots') }}
         </AppButton>
       </div>

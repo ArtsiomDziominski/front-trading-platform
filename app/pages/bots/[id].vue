@@ -12,6 +12,7 @@ definePageMeta({
 
 const route = useRoute()
 const { t } = useI18n()
+const appPath = useAppPath()
 const {
   bots,
   loading,
@@ -114,7 +115,7 @@ onUnmounted(() => {
   <main class="page-section">
     <div class="container bot-detail">
       <div class="page-header">
-        <AppButton variant="secondary" size="sm" icon="i-lucide-arrow-left" to="/bots">
+        <AppButton variant="secondary" size="sm" icon="i-lucide-arrow-left" :to="appPath('/bots')">
           {{ $t('bots.back_to_bots') }}
         </AppButton>
       </div>
@@ -141,10 +142,10 @@ onUnmounted(() => {
       <UCard v-else-if="missing" class="empty-state text-center">
         <p class="empty-state__text">{{ $t('bots.stop_loss_not_found') }}</p>
         <div class="empty-state__actions">
-          <AppButton to="/bots">
+          <AppButton :to="appPath('/bots')">
             {{ $t('bots.back_to_bots') }}
           </AppButton>
-          <AppButton variant="secondary" :to="`/history?bot_id=${botId}`">
+          <AppButton variant="secondary" :to="appPath(`/history?bot_id=${botId}`)">
             {{ $t('bots.event_history_open') }}
           </AppButton>
         </div>

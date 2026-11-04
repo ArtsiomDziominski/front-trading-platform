@@ -3,7 +3,7 @@ import { formatLongDate } from '~/utils/formatNumber'
 
 const route = useRoute()
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
+const appPath = useAppPath()
 const config = useRuntimeConfig()
 const siteUrl = String(config.public.siteUrl).replace(/\/+$/, '')
 
@@ -36,7 +36,7 @@ useSeoMeta({
 const structuredData = computed(() => {
   const value = article.value
   if (!value) return null
-  const url = `${siteUrl}${localePath({ name: 'blog-slug', params: { slug: value.slug } })}`
+  const url = `${siteUrl}${appPath(`/blog/${value.slug}`)}`
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -70,7 +70,7 @@ useHead(() => ({
 <template>
   <main class="page-section">
     <div class="container article-container">
-      <NuxtLink :to="localePath({ name: 'blog' })" class="article-back">
+      <NuxtLink :to="appPath('/blog')" class="article-back">
         <UIcon name="i-lucide-arrow-left" class="article-back__icon" aria-hidden="true" />
         {{ $t('blog.back') }}
       </NuxtLink>

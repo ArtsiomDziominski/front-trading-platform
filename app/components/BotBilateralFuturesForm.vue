@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import type { BacktestFormSource } from '#shared/types/backtest'
 import type { BilateralFuturesConfig, BilateralSignalTimeframe, BotCreate, BotListItem } from '#shared/types/bot'
-import { BILATERAL_DEFAULTS, BILATERAL_SETTLE_BARS, BILATERAL_SIGNAL_TIMEFRAMES } from '~/utils/bilateral'
+import {
+  BILATERAL_DEFAULTS,
+  BILATERAL_FORM_TRAIL_WAIT_FLIP,
+  BILATERAL_SETTLE_BARS,
+  BILATERAL_SIGNAL_TIMEFRAMES,
+  bilateralTrailOn,
+} from '~/utils/bilateral'
 
-/** Create form of BILATERAL_FUTURES: the filter, the risk of the position, the stop and capital protection. */
+/**
+ * Create form of BILATERAL_FUTURES: the filter, the risk of the position, the stop and capital protection.
+ * Below it, a backtest of the settings as they stand in the form.
+ */
 const props = defineProps<{
   apiKeys: ApiKeyOut[]
   showCloneNotice?: boolean
@@ -102,6 +112,7 @@ const symbol = ref('BTCUSDT')
 const values = reactive<Record<NumericKey, string>>(emptyValues())
 const signalTimeframe = ref<BilateralSignalTimeframe>(BILATERAL_DEFAULTS.signal_timeframe)
 const spikeRejection = ref(BILATERAL_DEFAULTS.bf_spike_rejection)
+const trailWaitFlip = ref(BILATERAL_FORM_TRAIL_WAIT_FLIP)
 const closeOnStop = ref(BILATERAL_DEFAULTS.close_on_stop)
 const advancedOpen = ref(false)
 
@@ -124,6 +135,12 @@ function normalizeDecimal(raw: string): string {
   return raw.trim().replace(',', '.')
 }
 
+/** The checkbox only matters with trailing on: an empty field means the server default, 50 (off). */
+const trailOn = computed(() => {
+  const raw = normalizeDecimal(values.trail_atr)
+  return bilateralTrailOn(raw ? Number(raw) : BILATERAL_DEFAULTS.trail_atr)
+})
+
 const warmupNote = computed(() => {
   const window = Number(normalizeDecimal(values.bf_window)) || BILATERAL_DEFAULTS.bf_window
   return t('bots.bilateral_warmup_note', { bars: window + BILATERAL_SETTLE_BARS, tf: signalTimeframe.value })
@@ -136,6 +153,7 @@ function buildConfig(): BilateralFuturesConfig {
     symbol: symbol.value.trim().toUpperCase(),
     signal_timeframe: signalTimeframe.value,
     bf_spike_rejection: spikeRejection.value,
+    trail_wait_flip: trailWaitFlip.value,
     close_on_stop: closeOnStop.value,
   }
   const target = config as unknown as Record<string, unknown>
@@ -233,11 +251,33 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   Object.assign(values, next)
   signalTimeframe.value = config.signal_timeframe ?? BILATERAL_DEFAULTS.signal_timeframe
   spikeRejection.value = config.bf_spike_rejection ?? BILATERAL_DEFAULTS.bf_spike_rejection
+  // A bot saved before the setting existed re-enters after a trailing exit: the clone keeps that
+  trailWaitFlip.value = config.trail_wait_flip ?? BILATERAL_DEFAULTS.trail_wait_flip
   closeOnStop.value = config.close_on_stop ?? BILATERAL_DEFAULTS.close_on_stop
 
   resetSubmitState()
   return true
 }
+
+// --- Backtest of the form's settings ---
+
+/** Candles come from the exchange of the chosen API key (public market data); OKX when there is none. */
+const backtestExchange = computed<BacktestFormSource['exchange']>(() => {
+  const key = props.apiKeys.find((item) => item.id === apiKeyId.value) ?? props.apiKeys[0]
+  return key?.exchange === 'BINANCE' ? 'BINANCE' : 'OKX'
+})
+
+/** The settings as the server would get them on submit; null while a field is invalid. */
+const backtestSource = computed<BacktestFormSource | null>(() => {
+  const symbolValue = symbol.value.trim().toUpperCase()
+  if (symbolValue.length < 3 || !normalizeDecimal(values.risk_per_unit_pct)) return null
+  if (ALL_FIELDS.some((field) => validateField(field) != null)) return null
+  return {
+    symbol: symbolValue,
+    exchange: backtestExchange.value,
+    config: buildConfig() as unknown as Record<string, unknown>,
+  }
+})
 
 function scrollIntoView() {
   shellRef.value?.scrollIntoView()
@@ -326,9 +366,17 @@ defineExpose({ applyPayload, scrollIntoView })
           :label="$t('bots.bilateral_field_bf_spike_rejection')"
           :description="$t('bots.bilateral_hint_bf_spike_rejection')"
         />
+        <UCheckbox
+          v-if="group.titleKey === 'bots.bilateral_group_position' && trailOn"
+          v-model="trailWaitFlip"
+          :label="$t('bots.bilateral_field_trail_wait_flip')"
+          :description="$t('bots.bilateral_hint_trail_wait_flip')"
+        />
       </fieldset>
     </div>
   </BotCreateFormShell>
+
+  <BotDetailBacktest :source="backtestSource" />
 </template>
 
 <style scoped>

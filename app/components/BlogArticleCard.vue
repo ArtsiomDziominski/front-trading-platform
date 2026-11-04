@@ -9,7 +9,7 @@ const props = defineProps<{
 }>()
 
 const { t, te, locale } = useI18n()
-const localePath = useLocalePath()
+const appPath = useAppPath()
 
 const date = computed(() => formatLongDate(props.article.published_at, locale.value))
 const tags = computed(() => props.article.tags.map((tag) => (te(`blog.tags.${tag}`) ? t(`blog.tags.${tag}`) : tag)))
@@ -17,7 +17,7 @@ const tags = computed(() => props.article.tags.map((tag) => (te(`blog.tags.${tag
 
 <template>
   <NuxtLink
-    :to="localePath({ name: 'blog-slug', params: { slug: article.slug } })"
+    :to="appPath(`/blog/${article.slug}`)"
     class="article-card"
     :class="{ 'article-card--compact': compact }"
   >

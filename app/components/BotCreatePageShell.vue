@@ -8,6 +8,7 @@ defineProps<{
 }>()
 
 const slots = useSlots()
+const appPath = useAppPath()
 const hasSidebar = computed(() => Boolean(slots.sidebar))
 </script>
 
@@ -19,7 +20,7 @@ const hasSidebar = computed(() => Boolean(slots.sidebar))
           <p class="page-header__eyebrow">{{ marketLabel }}</p>
           <h1 class="section-title">{{ title }}</h1>
         </div>
-        <AppButton variant="secondary" size="sm" icon="i-lucide-arrow-left" to="/bots" class="page-header__back">
+        <AppButton variant="secondary" size="sm" icon="i-lucide-arrow-left" :to="appPath('/bots')" class="page-header__back">
           {{ $t('bots.back_to_bots') }}
         </AppButton>
       </div>
@@ -30,7 +31,7 @@ const hasSidebar = computed(() => Boolean(slots.sidebar))
 
       <UCard v-else-if="!hasApiKeys" class="empty-keys-card text-center">
         <p class="empty-keys-card__desc mb-4">{{ $t('bots.no_api_keys') }}</p>
-        <AppButton to="/settings#api-keys">
+        <AppButton :to="appPath('/settings#api-keys')">
           {{ $t('bots.manage_api_keys') }}
         </AppButton>
       </UCard>

@@ -1,30 +1,31 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 
 const metrics = computed(() => [
   {
     icon: 'i-lucide-building-2',
     valueKey: 'home.trust_1_value',
     labelKey: 'home.trust_1_label',
-    to: '/exchanges',
+    to: appPath('/exchanges'),
   },
   {
     icon: 'i-lucide-layers',
     valueKey: 'home.trust_2_value',
     labelKey: 'home.trust_2_label',
-    to: auth.loggedIn.value ? '/bots/create' : '/auth/register',
+    to: appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register'),
   },
   {
     icon: 'i-lucide-shield',
     valueKey: 'home.trust_3_value',
     labelKey: 'home.trust_3_label',
-    to: auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
   },
   {
     icon: 'i-lucide-activity',
     valueKey: 'home.trust_4_value',
     labelKey: 'home.trust_4_label',
-    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
+    to: appPath(auth.loggedIn.value ? '/bots' : '/bots/overview'),
   },
 ] as const)
 </script>

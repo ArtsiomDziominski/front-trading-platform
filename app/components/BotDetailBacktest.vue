@@ -1,28 +1,39 @@
 <script setup lang="ts">
-import type { BacktestCreate, BacktestPeriod, BacktestTimeframe, BacktestTrade } from '#shared/types/backtest'
+import type { BacktestCreate, BacktestFormSource, BacktestPeriod, BacktestTimeframe, BacktestTrade } from '#shared/types/backtest'
 import type { BotListItem } from '#shared/types/bot'
-import { BILATERAL_SIGNAL_TIMEFRAMES, readBilateralConfig } from '~/utils/bilateral'
+import { BILATERAL_SIGNAL_TIMEFRAMES, bilateralTrailOn, readBilateralConfig } from '~/utils/bilateral'
 import { pnlTone } from '~/utils/botView'
 import { formatCount, formatDateTime, formatPercentValue, formatPrice, formatUsdt } from '~/utils/formatNumber'
 import { formatR, trendExitReasonLabel } from '~/utils/trend'
 
 /**
- * Backtest panel of a BILATERAL_FUTURES bot: the bot's current settings on history for a chosen timeframe and
- * period (POST /backtests). The server keeps the result, so the same choice comes back at once later; picking
- * a timeframe / period only looks up a saved result, a computation starts on "Run".
+ * Backtest panel of a BILATERAL_FUTURES bot (POST /backtests): the bot's current settings on history for a chosen
+ * timeframe and period, or, on the create page, the form's settings (`source`, the timeframe comes from the form).
+ * The server keeps the result, so the same choice comes back at once later; a change of the choice or of the
+ * settings only looks up a saved result, a computation starts on "Run".
  */
 const props = defineProps<{
-  bot: BotListItem
+  /** The user's bot: pair, exchange (from its API key) and saved config. */
+  bot?: BotListItem
+  /** Instead of `bot`: the create form's settings; null while the form holds an invalid value. */
+  source?: BacktestFormSource | null
 }>()
 
 const { t, locale } = useI18n()
-const { backtest, running, error, startedAt, run, lookup } = useBacktest()
+const { backtest, running, error, startedAt, run, lookup, reset } = useBacktest()
 
 const PERIODS: BacktestPeriod[] = ['1m', '3m', '6m', '1y', '2y']
 const TRADES_COLLAPSED = 20
 
-const bfConfig = computed(() => readBilateralConfig(props.bot.config))
-const timeframe = ref<BacktestTimeframe>(bfConfig.value.signal_timeframe as BacktestTimeframe)
+const formMode = computed(() => !props.bot)
+const headingId = computed(() => (props.bot ? `backtest-${props.bot.id}` : 'backtest-form'))
+const symbolLabel = computed(() => props.bot?.symbol ?? props.source?.symbol ?? '')
+const bfConfig = computed(() => readBilateralConfig(props.bot?.config ?? props.source?.config))
+const pickedTimeframe = ref<BacktestTimeframe>(bfConfig.value.signal_timeframe as BacktestTimeframe)
+/** The bot page lets the user try other timeframes; the create page follows the form. */
+const timeframe = computed<BacktestTimeframe>(() => (
+  formMode.value ? bfConfig.value.signal_timeframe as BacktestTimeframe : pickedTimeframe.value
+))
 const period = ref<BacktestPeriod>('1y')
 const capital = ref<number>(1000)
 const reinvest = ref(false)
@@ -30,37 +41,60 @@ const showAllTrades = ref(false)
 
 const capitalValid = computed(() => Number.isFinite(capital.value) && capital.value > 0 && capital.value <= 10_000_000)
 
-function request(): BacktestCreate {
-  return {
-    bot_id: props.bot.id,
+/** The request for the current choice; null while the form's settings are invalid. */
+function request(): BacktestCreate | null {
+  const common = {
     timeframe: timeframe.value,
     period: period.value,
     capital_usdt: capital.value,
     reinvest: reinvest.value,
   }
+  if (props.bot) return { bot_id: props.bot.id, ...common }
+  const source = props.source
+  if (!source) return null
+  return { bot_type: 'BILATERAL_FUTURES', symbol: source.symbol, exchange: source.exchange, config: source.config, ...common }
 }
+
+const canRun = computed(() => capitalValid.value && (props.bot != null || props.source != null))
 
 function start() {
-  if (!capitalValid.value || running.value) return
+  const body = request()
+  if (!body || !capitalValid.value || running.value) return
   showAllTrades.value = false
-  void run(request())
+  void run(body)
 }
 
-// A new choice (or new bot settings) shows the saved result for it, if there is one
+function lookupNow() {
+  const body = request()
+  if (!body) {
+    reset()  // the form is being edited into an invalid state: an old result would not match it
+    return
+  }
+  void lookup(body)
+}
+
+// A new choice (or new settings) shows the saved result for it, if there is one
 let lookupTimer: ReturnType<typeof setTimeout> | null = null
 watch(
-  () => [timeframe.value, period.value, capital.value, reinvest.value, props.bot.config_version].join('|'),
+  () => [
+    timeframe.value,
+    period.value,
+    capital.value,
+    reinvest.value,
+    props.bot?.config_version ?? '',
+    props.source ? JSON.stringify(props.source) : props.bot ? '' : 'invalid',
+  ].join('|'),
   () => {
     if (lookupTimer) clearTimeout(lookupTimer)
     if (!capitalValid.value) return
     lookupTimer = setTimeout(() => {
       lookupTimer = null
-      void lookup(request())
+      lookupNow()
     }, 400)
   },
 )
 onMounted(() => {
-  void lookup(request())
+  lookupNow()
 })
 onScopeDispose(() => {
   if (lookupTimer) clearTimeout(lookupTimer)
@@ -173,27 +207,37 @@ const assumptions = computed(() => {
 const settingsUsed = computed(() => {
   const config = (done.value?.params?.config ?? {}) as Record<string, string | number | boolean | null>
   if (!done.value) return ''
-  return t('bots.backtest_settings_used', {
+  const base = t('bots.backtest_settings_used', {
     risk: config.risk_per_unit_pct ?? '—',
     stop: config.stop_atr ?? '—',
     window: config.bf_window ?? '—',
     reversal: config.bf_reversal ?? '—',
   })
+  const trail = Number(config.trail_atr)
+  if (!bilateralTrailOn(trail)) return base
+  const key = config.trail_wait_flip === true ? 'bots.backtest_settings_trail_wait' : 'bots.backtest_settings_trail'
+  return `${base}, ${t(key, { trail: config.trail_atr })}`
 })
 </script>
 
 <template>
-  <section class="detail-panel backtest" :aria-labelledby="`backtest-${bot.id}`">
+  <section class="detail-panel backtest" :class="{ 'backtest--form': formMode }" :aria-labelledby="headingId">
     <div class="detail-panel__head">
-      <h2 :id="`backtest-${bot.id}`" class="detail-panel__title">{{ $t('bots.backtest_title') }}</h2>
+      <h2 :id="headingId" class="detail-panel__title">{{ $t('bots.backtest_title') }}</h2>
       <span v-if="done" class="detail-panel__note">
         <template v-if="done.cached">{{ $t('bots.backtest_cached') }} · </template>{{ computedAt ? $t('bots.backtest_computed_at', { time: computedAt }) : '' }}
       </span>
     </div>
-    <p class="detail-panel__hint">{{ $t('bots.backtest_intro') }}</p>
+    <p class="detail-panel__hint">{{ formMode ? $t('bots.backtest_intro_form') : $t('bots.backtest_intro') }}</p>
 
     <div class="backtest__controls">
-      <div class="backtest__control">
+      <div v-if="formMode" class="backtest__control">
+        <span class="backtest__label">{{ $t('bots.backtest_timeframe_form') }}</span>
+        <span class="backtest__group">
+          <span class="backtest__option backtest__option--static">{{ timeframe }}</span>
+        </span>
+      </div>
+      <div v-else class="backtest__control">
         <span class="backtest__label">{{ $t('bots.backtest_timeframe') }}</span>
         <div class="backtest__group" role="group" :aria-label="$t('bots.backtest_timeframe')">
           <button
@@ -203,7 +247,7 @@ const settingsUsed = computed(() => {
             class="backtest__option"
             :aria-pressed="timeframe === item"
             :disabled="running"
-            @click="timeframe = item as BacktestTimeframe"
+            @click="pickedTimeframe = item as BacktestTimeframe"
           >
             {{ item }}
           </button>
@@ -237,7 +281,7 @@ const settingsUsed = computed(() => {
         color="primary"
         icon="i-lucide-play"
         :loading="running"
-        :disabled="running || !capitalValid"
+        :disabled="running || !canRun"
         @click="start"
       >
         {{ $t('bots.backtest_run') }}
@@ -280,7 +324,7 @@ const settingsUsed = computed(() => {
           <span class="backtest__sub">{{ $t('bots.backtest_drawdown_sub', { pct: percent(summary.max_drawdown_pct), closed: usdt(summary.closed_max_drawdown_usdt) }) }}</span>
         </div>
         <div class="backtest__cell">
-          <dt>{{ $t('bots.backtest_hold', { symbol: done?.symbol ?? bot.symbol }) }}</dt>
+          <dt>{{ $t('bots.backtest_hold', { symbol: done?.symbol ?? symbolLabel }) }}</dt>
           <dd :class="`tone-${pnlTone(summary.buy_hold_pct)}`">{{ percent(summary.buy_hold_pct, true) }}</dd>
           <span class="backtest__sub">{{ price(summary.price_start) }} → {{ price(summary.price_end) }}</span>
         </div>
@@ -311,7 +355,7 @@ const settingsUsed = computed(() => {
 
       <div v-if="result.equity.length > 1" class="backtest__block">
         <h3 class="backtest__subtitle">{{ $t('bots.backtest_equity_title') }}</h3>
-        <BotBacktestEquityChart :points="result.equity" :height="220" :aria-label="$t('bots.backtest_equity_aria', { symbol: done?.symbol ?? bot.symbol })" />
+        <BotBacktestEquityChart :points="result.equity" :height="220" :aria-label="$t('bots.backtest_equity_aria', { symbol: done?.symbol ?? symbolLabel })" />
       </div>
 
       <div v-if="months.length" class="backtest__block">
@@ -378,7 +422,8 @@ const settingsUsed = computed(() => {
       <p v-if="result.open_position" class="detail-panel__hint">{{ $t('bots.backtest_open_end', { side: result.open_position.side }) }}</p>
       <p class="detail-panel__hint">{{ settingsUsed }}. {{ assumptions }}</p>
     </template>
-    <p v-else-if="!running && !error" class="detail-panel__empty">{{ $t('bots.backtest_empty') }}</p>
+    <p v-else-if="formMode && !source" class="detail-panel__empty">{{ $t('bots.backtest_form_invalid') }}</p>
+    <p v-else-if="!running && !error" class="detail-panel__empty">{{ formMode ? $t('bots.backtest_empty_form') : $t('bots.backtest_empty') }}</p>
   </section>
 </template>
 
@@ -431,6 +476,12 @@ const settingsUsed = computed(() => {
 .backtest__option:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+.backtest__option--static {
+  background: rgb(255 255 255 / 10%);
+  color: var(--color-text);
+  cursor: default;
 }
 
 .backtest__option:focus-visible {
@@ -620,6 +671,25 @@ const settingsUsed = computed(() => {
 
 .tone-down {
   color: var(--color-down);
+}
+
+/* The create page is a narrow column: two cells per row read better there */
+.backtest--form .backtest__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ...and the trades table fits it when cells may wrap (a date over two lines) instead of scrolling sideways.
+   Phones keep the card layout from main.css. */
+@media (min-width: 641px) {
+  .backtest--form .detail-table {
+    font-size: 0.8rem;
+  }
+
+  .backtest--form .detail-table th,
+  .backtest--form .detail-table td {
+    padding-inline: 6px;
+    white-space: normal;
+  }
 }
 
 @media (max-width: 900px) {

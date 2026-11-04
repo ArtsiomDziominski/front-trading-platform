@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 const router = useRouter()
 const config = useRuntimeConfig()
 
@@ -53,7 +54,7 @@ async function handleSubmit() {
   try {
     await auth.login(loginEmail, loginPassword)
     await browserCredentials.storeLogin(loginEmail, loginPassword)
-    await router.push('/bots')
+    await router.push(appPath('/bots'))
   } catch {
     formError.value = auth.error.value || t('auth.error_unknown')
   }
@@ -71,7 +72,7 @@ async function handleGoogleLogin() {
 }
 
 function handleTelegramSuccess() {
-  router.push('/bots')
+  router.push(appPath('/bots'))
 }
 
 function handleTelegramError(message: string) {
@@ -162,12 +163,12 @@ function handleTelegramError(message: string) {
         </div>
 
         <div class="auth-links">
-          <NuxtLink to="/auth/reset-password" class="auth-link">
+          <NuxtLink :to="appPath('/auth/reset-password')" class="auth-link">
             {{ $t('auth.login_forgot_password') }}
           </NuxtLink>
           <span class="auth-link-text">
             {{ $t('auth.login_no_account') }}
-            <NuxtLink to="/auth/register" class="auth-link">
+            <NuxtLink :to="appPath('/auth/register')" class="auth-link">
               {{ $t('auth.login_link_register') }}
             </NuxtLink>
           </span>

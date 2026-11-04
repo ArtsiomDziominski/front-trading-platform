@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 </script>
 
 <template>
@@ -15,7 +16,7 @@ const auth = useAuth()
         <AppButton
           variant="inverse"
           size="lg"
-          :to="auth.loggedIn.value ? '/bots/create' : '/auth/register'"
+          :to="appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register')"
         >
           {{ $t('home.cta_button') }}
         </AppButton>
@@ -23,7 +24,7 @@ const auth = useAuth()
           v-if="!auth.loggedIn.value"
           variant="ghost"
           size="lg"
-          to="/auth/login"
+          :to="appPath('/auth/login')"
         >
           {{ $t('home.cta_login') }}
         </AppButton>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 
 const settingsLink = computed(() =>
-  auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+  appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
 )
 
 const exchanges = [

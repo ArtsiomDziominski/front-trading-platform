@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
+const appPath = useAppPath()
 
 const status = computed(() => botStatusView(props.bot))
 const direction = computed(() => botDirection(props.bot))
@@ -137,7 +138,7 @@ const createdLabel = computed(() => formatDateTime(props.bot.created_at, locale.
         variant="secondary"
         size="sm"
         icon="i-lucide-history"
-        :to="`/history?bot_id=${bot.id}`"
+        :to="appPath(`/history?bot_id=${bot.id}`)"
       >
         {{ $t('bots.event_history_open') }}
       </AppButton>

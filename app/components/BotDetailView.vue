@@ -19,11 +19,12 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const appPath = useAppPath()
 
 const actions = useBotActions(() => props.bot, {
   onRemoving: (value) => emit('removing', value),
   onRemoved: async () => {
-    await router.replace('/bots')
+    await router.replace(appPath('/bots'))
   },
 })
 

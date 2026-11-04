@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 
 type VisualType = 'bots' | 'strategies' | 'exchanges' | 'security' | 'telegram' | 'market'
 type GlowTone = 'violet' | 'blue' | 'cyan' | 'magenta' | 'indigo' | 'sky'
@@ -10,7 +11,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_bots_title',
     descKey: 'home.scale_feature_bots_desc',
     linkKey: 'home.scale_learn_more',
-    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
+    to: appPath(auth.loggedIn.value ? '/bots' : '/bots/overview'),
     visual: 'bots' as VisualType,
     tone: 'violet' as GlowTone,
     reverse: false,
@@ -20,7 +21,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_strategies_title',
     descKey: 'home.scale_feature_strategies_desc',
     linkKey: 'home.scale_learn_more',
-    to: auth.loggedIn.value ? '/bots/create' : '/auth/register',
+    to: appPath(auth.loggedIn.value ? '/bots/create' : '/auth/register'),
     visual: 'strategies' as VisualType,
     tone: 'blue' as GlowTone,
     reverse: true,
@@ -30,7 +31,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_exchanges_title',
     descKey: 'home.scale_feature_exchanges_desc',
     linkKey: 'home.scale_learn_more',
-    to: '/exchanges',
+    to: appPath('/exchanges'),
     visual: 'exchanges' as VisualType,
     tone: 'cyan' as GlowTone,
     reverse: false,
@@ -40,7 +41,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_security_title',
     descKey: 'home.scale_feature_security_desc',
     linkKey: 'home.scale_learn_more',
-    to: auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
     visual: 'security' as VisualType,
     tone: 'magenta' as GlowTone,
     reverse: true,
@@ -50,7 +51,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_telegram_title',
     descKey: 'home.scale_feature_telegram_desc',
     linkKey: 'home.scale_learn_more',
-    to: auth.loggedIn.value ? '/settings#telegram' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings#telegram' : '/auth/login'),
     visual: 'telegram' as VisualType,
     tone: 'indigo' as GlowTone,
     reverse: false,
@@ -60,7 +61,7 @@ const features = computed(() => [
     titleKey: 'home.scale_feature_market_title',
     descKey: 'home.scale_feature_market_desc',
     linkKey: 'home.scale_learn_more',
-    to: auth.loggedIn.value ? '/bots' : '/bots/overview',
+    to: appPath(auth.loggedIn.value ? '/bots' : '/bots/overview'),
     visual: 'market' as VisualType,
     tone: 'sky' as GlowTone,
     reverse: true,

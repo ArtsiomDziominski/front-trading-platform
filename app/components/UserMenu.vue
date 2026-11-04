@@ -2,6 +2,7 @@
 const auth = useAuth()
 const { t } = useI18n()
 const router = useRouter()
+const appPath = useAppPath()
 
 const displayName = computed(() => {
   const u = auth.user.value
@@ -29,9 +30,9 @@ const menuItems = computed(() => [
     },
   ],
   [
-    { label: t('settings.title'), to: '/settings' },
-    { label: t('nav.bots'), to: '/bots' },
-    { label: t('nav.history'), to: '/history' },
+    { label: t('settings.title'), to: appPath('/settings') },
+    { label: t('nav.bots'), to: appPath('/bots') },
+    { label: t('nav.history'), to: appPath('/history') },
   ],
   [
     {
@@ -39,7 +40,7 @@ const menuItems = computed(() => [
       color: 'error' as const,
       onSelect: () => {
         auth.logout()
-        router.push('/')
+        router.push(appPath('/'))
       },
     },
   ],
