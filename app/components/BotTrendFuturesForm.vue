@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import { isTradingExchange } from '#shared/utils/exchange-images'
 import type { BotCreate, BotListItem, TrendFuturesConfig, TrendSignalTimeframe, TrendTrendTimeframe } from '#shared/types/bot'
 import {
   TREND_DEFAULTS,
@@ -246,7 +247,7 @@ function validate(): boolean {
   if (!validateBase(apiKeyId.value, symbol.value)) return false
 
   const apiKey = props.apiKeys.find((item) => item.id === apiKeyId.value)
-  if (apiKey && apiKey.exchange !== 'BINANCE' && apiKey.exchange !== 'OKX') {
+  if (apiKey && !isTradingExchange(apiKey.exchange)) {
     formError.value = t('bots.trend_error_exchange')
     return false
   }

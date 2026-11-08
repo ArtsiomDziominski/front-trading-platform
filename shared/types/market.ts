@@ -6,7 +6,7 @@ export interface MarketSummaryItem {
 }
 
 
-export type SpotPriceExchange = 'BINANCE' | 'OKX'
+export type SpotPriceExchange = 'BINANCE' | 'OKX' | 'BYBIT'
 
 /** GET /api/spot-price: last spot price of a USDT pair from the exchange's public API. */
 export interface SpotPrice {

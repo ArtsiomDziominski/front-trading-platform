@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import { isTradingExchange } from '#shared/utils/exchange-images'
 import type { BotCreate, TrendSignalTimeframe, TrendSpotConfig, TrendTrendTimeframe } from '#shared/types/bot'
 import { TREND_SPOT_DEFAULTS as TREND_DEFAULTS } from '~/utils/trendSpot'
 import {
@@ -123,7 +124,7 @@ const {
 } = useBotCreateSubmit(() => emit('created'))
 
 const shellRef = ref<{ scrollIntoView: () => void } | null>(null)
-const spotKeys = computed(() => props.apiKeys.filter((key) => key.exchange === 'BINANCE' || key.exchange === 'OKX'))
+const spotKeys = computed(() => props.apiKeys.filter((key) => isTradingExchange(key.exchange)))
 const presetTitleId = useId()
 
 const signalItems = TREND_SIGNAL_TIMEFRAMES.map((value) => ({ label: value, value }))
@@ -223,7 +224,7 @@ function validate(): boolean {
   if (!validateBase(apiKeyId.value, symbol.value)) return false
 
   const apiKey = props.apiKeys.find((item) => item.id === apiKeyId.value)
-  if (apiKey && apiKey.exchange !== 'BINANCE' && apiKey.exchange !== 'OKX') {
+  if (apiKey && !isTradingExchange(apiKey.exchange)) {
     formError.value = t('bots.trend_error_exchange')
     return false
   }
@@ -278,7 +279,7 @@ async function handleSubmit() {
 function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
   if (payload.bot_type !== 'TREND_SPOT') return false
 
-  const keyExists = keys.some((key) => key.id === payload.api_key_id && (key.exchange === 'BINANCE' || key.exchange === 'OKX'))
+  const keyExists = keys.some((key) => key.id === payload.api_key_id && isTradingExchange(key.exchange))
   apiKeyId.value = keyExists ? payload.api_key_id : ''
 
   const config = payload.config as TrendSpotConfig

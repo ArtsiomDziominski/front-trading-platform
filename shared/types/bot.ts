@@ -462,7 +462,7 @@ export interface TrendStats {
   open_trade: TrendTrade | null
 }
 
-export type TrendMarketExchange = 'BINANCE' | 'OKX'
+export type TrendMarketExchange = 'BINANCE' | 'OKX' | 'BYBIT'
 
 export interface TrendMarketQuery {
   exchange: TrendMarketExchange

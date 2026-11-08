@@ -2,6 +2,7 @@ import type { SpotPrice, SpotPriceExchange } from '~~/shared/types/market'
 
 const BINANCE_TICKER_URL = 'https://api.binance.com/api/v3/ticker/price'
 const OKX_TICKER_URL = 'https://www.okx.com/api/v5/market/ticker'
+const BYBIT_TICKER_URL = 'https://api.bybit.com/v5/market/tickers'
 
 /** USDT spot pairs only; anything else is never sent to the exchange. */
 export const SPOT_SYMBOL_PATTERN = /^[A-Z0-9]{2,20}USDT$/
@@ -14,6 +15,11 @@ interface BinanceTickerPrice {
 interface OkxTickerResponse {
   code: string
   data?: { instId: string, last: string }[]
+}
+
+interface BybitTickerResponse {
+  retCode: number
+  result?: { list?: { symbol: string, lastPrice: string }[] }
 }
 
 function positivePrice(raw: string | undefined): number | null {
@@ -31,6 +37,16 @@ export async function fetchSpotPrice(exchange: SpotPriceExchange, symbol: string
     })
     // OKX answers 200 with code 51001 for an unknown instrument
     const price = response.code === '0' ? positivePrice(response.data?.[0]?.last) : null
+    return price == null ? null : { exchange, symbol, price }
+  }
+
+  if (exchange === 'BYBIT') {
+    const response = await $fetch<BybitTickerResponse>(BYBIT_TICKER_URL, {
+      query: { category: 'spot', symbol },
+      headers: { Accept: 'application/json' },
+    })
+    // Bybit answers 200 with retCode 10001 for an unknown symbol
+    const price = response.retCode === 0 ? positivePrice(response.result?.list?.[0]?.lastPrice) : null
     return price == null ? null : { exchange, symbol, price }
   }
 

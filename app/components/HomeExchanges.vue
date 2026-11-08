@@ -17,7 +17,7 @@ const exchanges = [
     name: 'Bybit',
     descKey: 'exchanges.bybit_desc',
     exchange: 'BYBIT' as const,
-    active: false,
+    active: true,
   },
   {
     name: 'OKX',

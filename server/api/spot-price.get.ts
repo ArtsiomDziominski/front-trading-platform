@@ -1,9 +1,14 @@
 import type { SpotPriceExchange } from '~~/shared/types/market'
 import { fetchSpotPrice, SPOT_SYMBOL_PATTERN } from '~~/server/utils/spotPrice'
 
+function spotPriceExchange(raw: unknown): SpotPriceExchange {
+  const value = String(raw ?? '').toUpperCase()
+  return value === 'OKX' || value === 'BYBIT' ? value : 'BINANCE'
+}
+
 function readQuery(event: Parameters<typeof getQuery>[0]): { exchange: SpotPriceExchange, symbol: string } {
   const query = getQuery(event)
-  const exchange: SpotPriceExchange = String(query.exchange ?? '').toUpperCase() === 'OKX' ? 'OKX' : 'BINANCE'
+  const exchange = spotPriceExchange(query.exchange)
   const symbol = String(query.symbol ?? '').trim().toUpperCase()
   if (!SPOT_SYMBOL_PATTERN.test(symbol)) {
     throw createError({ statusCode: 400, statusMessage: 'symbol must be a USDT pair like BTCUSDT' })
