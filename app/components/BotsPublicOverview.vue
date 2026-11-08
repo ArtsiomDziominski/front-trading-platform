@@ -102,7 +102,7 @@ const capabilities = [
 const exchanges = [
   { name: 'Binance', exchange: 'BINANCE' as const, active: true, descKey: 'exchanges.binance_desc' },
   { name: 'OKX', exchange: 'OKX' as const, active: true, descKey: 'exchanges.okx_desc' },
-  { name: 'Bybit', exchange: 'BYBIT' as const, active: false, descKey: 'exchanges.bybit_desc' },
+  { name: 'Bybit', exchange: 'BYBIT' as const, active: true, descKey: 'exchanges.bybit_desc' },
 ]
 </script>
 

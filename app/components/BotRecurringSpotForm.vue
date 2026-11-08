@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import { TRADING_EXCHANGES, exchangeDisplayName } from '#shared/utils/exchange-images'
 import type { BotCreate, RecurringSpotConfig } from '#shared/types/bot'
 import { DCA_TYPICAL_MIN_ORDER_USDT } from '~/utils/dcaSpot'
 import { formatCount, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
@@ -27,7 +28,7 @@ const apiKeyId = defineModel<number | ''>('apiKeyId', { required: true })
 
 type FieldKey = 'amount_usdt' | 'interval_hours' | 'dip_ma_period' | 'dip_multiplier' | 'max_total_usdt'
 
-const SUPPORTED_EXCHANGES: ApiKeyOut['exchange'][] = ['BINANCE', 'OKX']
+const SUPPORTED_EXCHANGES: ApiKeyOut['exchange'][] = [...TRADING_EXCHANGES]
 
 const symbol = ref(RECURRING_FORM_DEFAULTS.symbol)
 const values = reactive<Record<FieldKey, string>>(defaultValues())
@@ -72,7 +73,7 @@ function parsed(key: FieldKey): number | null {
   return Number.isFinite(value) ? value : null
 }
 
-// --- API keys: Binance and OKX only ---
+// --- API keys: Binance, OKX and Bybit only ---
 
 const spotKeys = computed(() => props.apiKeys.filter((key) => SUPPORTED_EXCHANGES.includes(key.exchange)))
 const selectedKey = computed(() => props.apiKeys.find((key) => key.id === apiKeyId.value))
@@ -201,7 +202,7 @@ const priceNote = computed(() => {
       ? ''
       : t('bots.dca_preview_price_now', {
           price: formatPrice(currentPrice.value, locale.value),
-          exchange: spotPrice.data.value?.exchange === 'OKX' ? 'OKX' : 'Binance',
+          exchange: exchangeDisplayName(spotPrice.data.value?.exchange ?? 'BINANCE'),
         })
     default: return t('bots.dca_preview_price_idle')
   }

@@ -10,7 +10,7 @@ export interface BacktestCreate {
   bot_id?: number
   /** Without `bot_id`: pair, exchange and bot config (e.g. from the create form). */
   symbol?: string
-  exchange?: 'BINANCE' | 'OKX'
+  exchange?: 'BINANCE' | 'OKX' | 'BYBIT'
   config?: Record<string, unknown>
   /** Default: the config's signal_timeframe. */
   timeframe?: BacktestTimeframe
@@ -26,7 +26,7 @@ export interface BacktestCreate {
 /** The create form's settings for a backtest without a bot. */
 export interface BacktestFormSource {
   symbol: string
-  exchange: 'BINANCE' | 'OKX'
+  exchange: 'BINANCE' | 'OKX' | 'BYBIT'
   config: Record<string, unknown>
 }
 

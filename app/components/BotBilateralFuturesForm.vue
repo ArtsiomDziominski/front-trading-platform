@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import { isTradingExchange } from '#shared/utils/exchange-images'
 import type { BacktestFormSource } from '#shared/types/backtest'
 import type { BilateralFuturesConfig, BilateralSignalTimeframe, BotCreate, BotListItem } from '#shared/types/bot'
 import {
@@ -196,7 +197,7 @@ function validate(): boolean {
   if (!validateBase(apiKeyId.value, symbol.value)) return false
 
   const apiKey = props.apiKeys.find((item) => item.id === apiKeyId.value)
-  if (apiKey && apiKey.exchange !== 'BINANCE' && apiKey.exchange !== 'OKX') {
+  if (apiKey && !isTradingExchange(apiKey.exchange)) {
     formError.value = t('bots.trend_error_exchange')
     return false
   }
@@ -264,7 +265,7 @@ function applyPayload(payload: BotCreate, keys: ApiKeyOut[]): boolean {
 /** Candles come from the exchange of the chosen API key (public market data); OKX when there is none. */
 const backtestExchange = computed<BacktestFormSource['exchange']>(() => {
   const key = props.apiKeys.find((item) => item.id === apiKeyId.value) ?? props.apiKeys[0]
-  return key?.exchange === 'BINANCE' ? 'BINANCE' : 'OKX'
+  return key?.exchange === 'BINANCE' || key?.exchange === 'BYBIT' ? key.exchange : 'OKX'
 })
 
 /** The settings as the server would get them on submit; null while a field is invalid. */

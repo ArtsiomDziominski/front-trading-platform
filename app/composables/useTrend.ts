@@ -1,5 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue'
 import type { TrendMarket, TrendMarketExchange, TrendMarketQuery } from '#shared/types/bot'
+import { isTradingExchange } from '#shared/utils/exchange-images'
 import { parseApiError } from '~/utils/parseApiError'
 
 const DEBOUNCE_MS = 600
@@ -63,7 +64,7 @@ export function useTrend(query: MaybeRefOrGetter<(Omit<TrendMarketQuery, 'exchan
       status.value = 'idle'
       return
     }
-    if (value.exchange !== 'BINANCE' && value.exchange !== 'OKX') {
+    if (!isTradingExchange(value.exchange)) {
       data.value = null
       status.value = 'unsupported'
       return

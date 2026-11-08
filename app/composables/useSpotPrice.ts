@@ -27,7 +27,7 @@ export function useSpotPrice(query: MaybeRefOrGetter<{ exchange: string, symbol:
     if (!value) return null
     const symbol = value.symbol.trim().toUpperCase()
     if (!SYMBOL_PATTERN.test(symbol)) return null
-    const exchange: SpotPriceExchange = value.exchange === 'OKX' ? 'OKX' : 'BINANCE'
+    const exchange: SpotPriceExchange = value.exchange === 'OKX' || value.exchange === 'BYBIT' ? value.exchange : 'BINANCE'
     return { exchange, symbol }
   })
 

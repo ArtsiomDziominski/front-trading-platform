@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiKeyOut } from '#shared/types/api-key'
+import { TRADING_EXCHANGES, exchangeDisplayName } from '#shared/utils/exchange-images'
 import type { BotCreate, DcaSpotConfig } from '#shared/types/bot'
 import {
   buildDcaConfig,
@@ -38,7 +39,7 @@ type FieldKey =
   | 'stop_loss_percent'
   | 'restart_delay_seconds'
 
-const SUPPORTED_EXCHANGES: ApiKeyOut['exchange'][] = ['BINANCE', 'OKX']
+const SUPPORTED_EXCHANGES: ApiKeyOut['exchange'][] = [...TRADING_EXCHANGES]
 /** The ladder table shows this many rows until «show all» is pressed: 50 safety orders are a long list on a phone. */
 const LADDER_PREVIEW_ROWS = 7
 
@@ -92,12 +93,12 @@ function parsed(key: FieldKey): number | null {
   return Number.isFinite(value) ? value : null
 }
 
-// --- API keys: spot DCA runs on Binance and OKX only ---
+// --- API keys: spot DCA runs on Binance, OKX and Bybit only ---
 
 const spotKeys = computed(() => props.apiKeys.filter((key) => SUPPORTED_EXCHANGES.includes(key.exchange)))
 const selectedKey = computed(() => props.apiKeys.find((key) => key.id === apiKeyId.value))
 
-// The page preselects the only key the user has, even if it is not a Binance / OKX one
+// The page preselects the only key the user has, even if it is not a Binance / OKX / Bybit one
 watch(() => [apiKeyId.value, spotKeys.value.length] as const, ([id]) => {
   if (id === '') {
     const onlyKey = spotKeys.value.length === 1 ? spotKeys.value[0] : undefined
@@ -235,7 +236,7 @@ const priceNote = computed(() => {
       ? ''
       : t('bots.dca_preview_price_now', {
           price: formatPrice(currentPrice.value, locale.value),
-          exchange: spotPrice.data.value?.exchange === 'OKX' ? 'OKX' : 'Binance',
+          exchange: exchangeDisplayName(spotPrice.data.value?.exchange ?? 'BINANCE'),
         })
     default: return t('bots.dca_preview_price_idle')
   }

@@ -32,7 +32,8 @@ usePageSeo({
             name="Bybit"
             :description="$t('exchanges.bybit_desc')"
             exchange="BYBIT"
-            :active="false"
+            :active="true"
+            :to="settingsLink"
           />
           <ExchangeCard
             name="OKX"
