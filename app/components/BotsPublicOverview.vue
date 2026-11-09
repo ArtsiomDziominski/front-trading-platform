@@ -3,6 +3,7 @@ useHomeSmoothScroll()
 
 const trackRef = useTemplateRef<HTMLElement>('trackRef')
 const { progress } = useHomeHeroScroll(trackRef)
+const appPath = useAppPath()
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -101,7 +102,7 @@ const capabilities = [
 const exchanges = [
   { name: 'Binance', exchange: 'BINANCE' as const, active: true, descKey: 'exchanges.binance_desc' },
   { name: 'OKX', exchange: 'OKX' as const, active: true, descKey: 'exchanges.okx_desc' },
-  { name: 'Bybit', exchange: 'BYBIT' as const, active: false, descKey: 'exchanges.bybit_desc' },
+  { name: 'Bybit', exchange: 'BYBIT' as const, active: true, descKey: 'exchanges.bybit_desc' },
 ]
 </script>
 
@@ -149,14 +150,14 @@ const exchanges = [
                 <AppButton
                   variant="inverse"
                   size="lg"
-                  to="/auth/register"
+                  :to="appPath('/auth/register')"
                 >
                   {{ $t('bots.public_cta_register') }}
                 </AppButton>
                 <AppButton
                   variant="ghost"
                   size="lg"
-                  to="/auth/login"
+                  :to="appPath('/auth/login')"
                 >
                   {{ $t('auth.login') }}
                 </AppButton>
@@ -325,14 +326,14 @@ const exchanges = [
               <AppButton
                 variant="inverse"
                 size="lg"
-                to="/auth/register"
+                :to="appPath('/auth/register')"
               >
                 {{ $t('bots.public_cta_register') }}
               </AppButton>
               <AppButton
                 variant="ghost"
                 size="lg"
-                to="/auth/login"
+                :to="appPath('/auth/login')"
               >
                 {{ $t('auth.login') }}
               </AppButton>

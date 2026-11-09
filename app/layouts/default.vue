@@ -3,12 +3,13 @@ const auth = useAuth()
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const appPath = useAppPath()
 
-const botsNavTo = computed(() => (auth.loggedIn.value ? '/bots' : '/bots/overview'))
+const botsNavTo = computed(() => appPath(auth.loggedIn.value ? '/bots' : '/bots/overview'))
 
 const bottomNavItems = computed(() => [
   {
-    to: '/',
+    to: appPath('/'),
     label: t('nav.home'),
     icon: 'i-lucide-house',
     isActive: route.path === '/' || route.path === '/en',
@@ -20,23 +21,32 @@ const bottomNavItems = computed(() => [
     isActive: route.path.startsWith('/bots') || route.path.includes('/bots'),
   },
   {
-    to: '/history',
+    to: appPath('/history'),
     label: t('nav.history'),
     icon: 'i-lucide-history',
     isActive: route.path.includes('/history'),
   },
 ])
 
-const isMoreActive = computed(() => route.path.includes('/settings'))
+/** The list and every article: /blog/<slug> is not nested under /blog, so the router does not mark it. */
+const isBlogActive = computed(() => route.path.includes('/blog'))
+const isMoreActive = computed(() => route.path.includes('/settings') || isBlogActive.value)
 
 const moreMenuItems = computed(() => {
+  const blogItem = {
+    label: t('nav.blog'),
+    icon: 'i-lucide-newspaper',
+    to: appPath('/blog'),
+  }
+
   if (auth.loggedIn.value) {
     return [
+      [blogItem],
       [
         {
           label: t('settings.title'),
           icon: 'i-lucide-settings',
-          to: '/settings',
+          to: appPath('/settings'),
         },
       ],
       [
@@ -46,7 +56,7 @@ const moreMenuItems = computed(() => {
           color: 'error' as const,
           onSelect: () => {
             auth.logout()
-            router.push('/')
+            router.push(appPath('/'))
           },
         },
       ],
@@ -54,16 +64,17 @@ const moreMenuItems = computed(() => {
   }
 
   return [
+    [blogItem],
     [
       {
         label: t('auth.login'),
         icon: 'i-lucide-log-in',
-        to: '/auth/login',
+        to: appPath('/auth/login'),
       },
       {
         label: t('auth.register'),
         icon: 'i-lucide-user-plus',
-        to: '/auth/register',
+        to: appPath('/auth/register'),
       },
     ],
   ]
@@ -82,7 +93,7 @@ onMounted(() => {
       <div class="container site-header__inner">
         <NuxtLink
           class="brand"
-          to="/"
+          :to="appPath('/')"
         >
           Bot Platform
         </NuxtLink>
@@ -92,17 +103,20 @@ onMounted(() => {
             class="nav"
             aria-label="Основная навигация"
           >
-            <NuxtLink to="/">
+            <NuxtLink :to="appPath('/')">
               {{ $t('nav.home') }}
             </NuxtLink>
             <NuxtLink :to="botsNavTo">
               {{ $t('nav.bots') }}
             </NuxtLink>
-            <NuxtLink to="/history">
+            <NuxtLink :to="appPath('/history')">
               {{ $t('nav.history') }}
             </NuxtLink>
-            <NuxtLink to="/exchanges">
+            <NuxtLink :to="appPath('/exchanges')">
               {{ $t('nav.exchanges') }}
+            </NuxtLink>
+            <NuxtLink :to="appPath('/blog')" :class="{ 'router-link-active': isBlogActive }">
+              {{ $t('nav.blog') }}
             </NuxtLink>
           </nav>
         </div>
@@ -113,7 +127,7 @@ onMounted(() => {
             <LangSwitcher />
             <AppButton
               size="sm"
-              to="/auth/register"
+              :to="appPath('/auth/register')"
             >
               {{ $t('home.hero_cta') }}
             </AppButton>

@@ -4,6 +4,7 @@ import { botCreatePath, findCatalogEntry, type BotMarket } from '~/utils/botCata
 export function useBotTypePicker() {
   const market = ref<BotMarket>('futures')
   const type = ref<string | null>(null)
+const appPath = useAppPath()
 
   const selectedEntry = computed(() => {
     if (!type.value) return undefined
@@ -20,7 +21,7 @@ export function useBotTypePicker() {
   async function openSelected(): Promise<boolean> {
     const entry = selectedEntry.value
     if (!entry) return false
-    await navigateTo(botCreatePath(entry))
+    await navigateTo(appPath(botCreatePath(entry)))
     return true
   }
 

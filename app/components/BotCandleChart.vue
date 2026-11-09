@@ -217,6 +217,7 @@ const lineLayer = computed(() => {
   return props.lines.map(line => ({
     id: line.id,
     color: CHART_TONE_COLORS[line.tone],
+    dashed: Boolean(line.dashed),
     d: linePath(line.values, scale.count, index => (index + 0.5) * scale.slot, value => priceToY(scale, value)),
   }))
 })
@@ -299,10 +300,22 @@ const markerLayer = computed(() => {
   return result
 })
 
-const legend = computed(() => [
-  ...props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: false })),
-  ...chartLevels.value.map(level => ({ id: `level-${level.id}`, label: level.label, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })),
-])
+const legend = computed(() => {
+  const items = props.lines.map(line => ({ id: `line-${line.id}`, label: line.label, color: CHART_TONE_COLORS[line.tone], dashed: Boolean(line.dashed) }))
+  // Levels that share a `legend` (every grid order) get one entry
+  const grouped = new Set<string>()
+  for (const level of chartLevels.value) {
+    if (level.legend != null) {
+      const key = `${level.legend}|${level.tone}|${Boolean(level.dashed)}`
+      if (grouped.has(key)) continue
+      grouped.add(key)
+      items.push({ id: `group-${key}`, label: level.legend, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })
+      continue
+    }
+    items.push({ id: `level-${level.id}`, label: level.label, color: CHART_TONE_COLORS[level.tone], dashed: Boolean(level.dashed) })
+  }
+  return items
+})
 
 const selectedTime = ref<number | null>(null)
 /** Pointer y inside the plot; null when the candle was picked from the keyboard (the crosshair then sits on the close). */
@@ -615,6 +628,7 @@ onBeforeUnmount(() => {
             v-for="line in lineLayer"
             :key="line.id"
             class="candle-chart__line"
+            :class="{ 'candle-chart__line--dashed': line.dashed }"
             :d="line.d"
             :style="{ stroke: line.color }"
           />
@@ -864,6 +878,12 @@ onBeforeUnmount(() => {
   stroke-width: 1.25;
   stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.candle-chart__line--dashed {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.8;
 }
 
 .candle-chart__level {

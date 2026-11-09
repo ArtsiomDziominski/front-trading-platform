@@ -16,6 +16,7 @@ const FILTER_STATUSES: Record<Exclude<BotFilterKey, 'all'>, BotLifecycleStatus[]
 }
 
 const { t } = useI18n()
+const appPath = useAppPath()
 const isDesktop = useMediaQuery('(min-width: 641px)', { ssrWidth: 1024 })
 const {
   bots,
@@ -94,12 +95,12 @@ const pageActionItems = computed(() => [
     {
       label: t('bots.event_history_open'),
       icon: 'i-lucide-history',
-      to: '/history',
+      to: appPath('/history'),
     },
     {
       label: t('bots.manage_api_keys'),
       icon: 'i-lucide-key-round',
-      to: '/settings#api-keys',
+      to: appPath('/settings#api-keys'),
     },
   ],
 ])
@@ -387,7 +388,7 @@ onUnmounted(() => {
           <AppButton @click="createOpen = true">
             {{ $t('bots.create_first') }}
           </AppButton>
-          <AppButton variant="secondary" to="/settings#api-keys">
+          <AppButton variant="secondary" :to="appPath('/settings#api-keys')">
             {{ $t('bots.add_api_keys') }}
           </AppButton>
         </div>
@@ -406,6 +407,7 @@ onUnmounted(() => {
       :loading-label="$t('common.loading')"
       :loading="confirmLoading"
       :confirm-variant="confirmCopy.variant"
+      :error="confirmLoading ? null : bulkActionError"
       @confirm="confirmBulkAction"
       @cancel="closeBulkConfirm"
     />

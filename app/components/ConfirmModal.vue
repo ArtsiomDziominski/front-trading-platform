@@ -9,10 +9,13 @@ const props = withDefaults(defineProps<{
   loadingLabel?: string
   loading?: boolean
   confirmVariant?: 'primary' | 'danger'
+  /** An error from the last confirm attempt, shown under the message. */
+  error?: string | null
 }>(), {
   loading: false,
   confirmVariant: 'primary',
   loadingLabel: '...',
+  error: null,
 })
 
 const emit = defineEmits<{
@@ -41,6 +44,14 @@ function onCancel() {
       <p class="text-muted text-sm leading-relaxed">
         {{ message }}
       </p>
+      <UAlert
+        v-if="error"
+        color="error"
+        variant="subtle"
+        :title="error"
+        class="mt-3"
+        role="alert"
+      />
     </template>
 
     <template #footer>

@@ -7,6 +7,7 @@ import {
   type CreationSettingKey,
 } from '~/utils/formatBotCreationSettings'
 import { isMixedConfig } from '~/utils/mixedGrid'
+import { isTrendFuturesBot } from '~/utils/botView'
 
 /** Every saved setting of the bot, in the same wording as the create form. */
 const props = defineProps<{
@@ -71,6 +72,14 @@ const rows = computed<SettingRow[]>(() => {
       { key: 'take_profit', label: t('bots.take_profit_edit'), value: props.takeProfitValue },
       { key: 'stop_loss', label: t('bots.stop_loss_edit'), value: props.stopLossValue },
     )
+  }
+
+  // Trend bots: `capital_usdt: null` means the account balance taken when the bot started
+  if (isTrendFuturesBot(props.bot) && !settings.some((setting) => setting.key === 'capital_usdt')) {
+    const index = result.findIndex((row) => row.key === 'max_units')
+    const row = { key: 'capital_usdt', label: t('bots.trend_field_capital_usdt'), value: t('bots.trend_capital_from_balance') }
+    if (index >= 0) result.splice(index + 1, 0, row)
+    else result.push(row)
   }
 
   if (props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES' && config.leverage != null) {

@@ -2,7 +2,7 @@
 definePageMeta({
   middleware: [
     function redirectBotHistory(to) {
-      return navigateTo({ path: '/history', query: to.query }, { redirectCode: 301 })
+      return navigateTo({ path: useAppPath()('/history'), query: to.query }, { redirectCode: 301 })
     },
   ],
 })

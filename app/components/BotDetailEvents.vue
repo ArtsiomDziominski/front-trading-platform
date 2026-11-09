@@ -14,6 +14,7 @@ const emit = defineEmits<{
   retry: []
 }>()
 
+const appPath = useAppPath()
 const PAGE = 15
 const shown = ref(PAGE)
 const visible = computed(() => props.events.slice(0, shown.value))
@@ -27,7 +28,7 @@ watch(() => props.botId, () => {
   <section class="detail-panel" :aria-labelledby="`events-title-${botId}`">
     <div class="detail-panel__head">
       <h2 :id="`events-title-${botId}`" class="detail-panel__title">{{ $t('bots.detail_events') }}</h2>
-      <NuxtLink :to="`/history?bot_id=${botId}`" class="detail-events__all">
+      <NuxtLink :to="appPath(`/history?bot_id=${botId}`)" class="detail-events__all">
         {{ $t('bots.detail_events_all') }}
       </NuxtLink>
     </div>

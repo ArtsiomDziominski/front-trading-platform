@@ -7,6 +7,7 @@ defineProps<{
   bot: BotListItem
   confirmCopy: BotConfirmCopy
   confirmLoading: boolean
+  confirmError: string | null
   canEditGridConfig: boolean
   canEditMixedGrid: boolean
 }>()
@@ -31,6 +32,7 @@ const mixedGridOpen = defineModel<boolean>('mixedGridOpen', { required: true })
     :cancel-label="$t('common.cancel')"
     :loading-label="$t('common.loading')"
     :loading="confirmLoading"
+    :error="confirmError"
     :confirm-variant="confirmCopy.variant"
     @confirm="emit('confirm')"
     @cancel="emit('cancel')"

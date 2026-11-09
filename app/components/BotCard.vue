@@ -7,10 +7,17 @@ import {
   botDirection,
   botStatusView,
   isInPosition,
+  isSpotBot,
+  isTrendFuturesBot,
   pnlTone,
   supportedExchange,
+  trendBotSide,
 } from '~/utils/botView'
-import { formatUsdt } from '~/utils/formatNumber'
+import { dcaPhaseLabel, dcaPhaseTone } from '~/utils/dcaSpot'
+import { recurringPhaseLabel, recurringPhaseTone } from '~/utils/recurringSpot'
+import { gridSpotPhaseLabel, gridSpotPhaseTone } from '~/utils/gridSpot'
+import { formatPercentValue, formatPrice, formatQuantity, formatUsdt } from '~/utils/formatNumber'
+import { formatR, trendStateLabel, trendStateTone } from '~/utils/trend'
 
 /** Compact bot tile for the `/bots` list; every action sits in the «⋯» menu, the tile opens the bot page. */
 const props = withDefaults(defineProps<{
@@ -23,7 +30,8 @@ const props = withDefaults(defineProps<{
 const { t, locale } = useI18n()
 const actions = useBotActions(() => props.bot)
 
-const detailPath = computed(() => `/bots/${props.bot.id}`)
+const appPath = useAppPath()
+const detailPath = computed(() => appPath(`/bots/${props.bot.id}`))
 const staggerDelay = computed(() => Math.min(props.index * 0.05, 0.3))
 const status = computed(() => botStatusView(props.bot))
 const direction = computed(() => botDirection(props.bot))
@@ -39,6 +47,118 @@ const hasError = computed(() => props.bot.engine_state === 'ERROR')
 const pnl = computed(() => (isInPosition(props.bot) ? props.bot.unrealized_pnl : null))
 const pnlLabel = computed(() => (pnl.value == null ? '—' : formatUsdt(pnl.value, locale.value, true)))
 
+// Trend bots: strategy state from `bot.trend`; the position rows only while a side is open
+const isTrend = computed(() => isTrendFuturesBot(props.bot))
+const trend = computed(() => (isTrend.value ? props.bot.trend ?? null : null))
+const trendSide = computed(() => trendBotSide(props.bot))
+const showDirection = computed(() => !isTrend.value || trendSide.value != null)
+const trendRows = computed(() => {
+  const status = trend.value
+  if (!status || !trendSide.value) return []
+  return [
+    { key: 'units', label: t('bots.trend_units'), value: `${status.units}/${status.max_units}`, tone: '' },
+    {
+      key: 'r',
+      label: t('bots.trend_current_r'),
+      value: formatR(status.current_r, locale.value),
+      tone: `bot-tile__pnl--${pnlTone(status.current_r)}`,
+    },
+    {
+      key: 'stop',
+      label: t('bots.trend_distance_to_stop'),
+      value: status.distance_to_stop_pct == null ? '—' : formatPercentValue(status.distance_to_stop_pct, locale.value),
+      tone: '',
+    },
+  ]
+})
+
+// Spot DCA bots: cycle state from `bot.dca`; spot has no side to show, the badge says "Spot" instead
+const isSpot = computed(() => isSpotBot(props.bot))
+const isDca = computed(() => props.bot.bot_type === 'DCA_SPOT')
+const dca = computed(() => (isDca.value ? props.bot.dca ?? null : null))
+const dcaRows = computed(() => {
+  const status = dca.value
+  if (!status) return []
+  const price = (value: number | null) => (value == null ? '—' : formatPrice(value, locale.value))
+  const usdt = (value: number | null, signed = false) => (value == null ? '—' : `${formatUsdt(value, locale.value, signed)} USDT`)
+  const rows: { key: string, label: string, value: string, tone: string }[] = []
+  if (status.phase === 'open') {
+    rows.push(
+      { key: 'safety', label: t('bots.dca_safety_filled'), value: `${status.safety_filled}/${status.safety_total}`, tone: '' },
+      { key: 'avg', label: t('bots.dca_avg_price'), value: price(status.avg_price), tone: '' },
+      {
+        key: 'tp',
+        label: status.trailing_active ? t('bots.dca_trailing_high') : t('bots.dca_tp_price'),
+        value: price(status.trailing_active ? status.trailing_high : status.take_profit_price),
+        tone: '',
+      },
+      { key: 'invested', label: t('bots.dca_invested'), value: usdt(status.invested_usdt), tone: '' },
+    )
+  }
+  rows.push({
+    key: 'realized',
+    label: t('bots.dca_realized_profit'),
+    value: usdt(status.realized_profit_usdt, true),
+    tone: `bot-tile__pnl--${pnlTone(status.realized_profit_usdt)}`,
+  })
+  return rows
+})
+
+// Recurring-buy bots: accumulated coins and the next buy from `bot.recurring`
+const isRecurring = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
+const recurring = computed(() => (isRecurring.value ? props.bot.recurring ?? null : null))
+const recurringRows = computed(() => {
+  const status = recurring.value
+  if (!status) return []
+  const coin = props.bot.symbol.replace(/USDT$/, '')
+  return [
+    { key: 'qty', label: t('bots.recurring_qty'), value: status.qty == null ? '—' : `${formatQuantity(status.qty, locale.value)} ${coin}` },
+    { key: 'avg', label: t('bots.dca_avg_price'), value: status.avg_price == null ? '—' : formatPrice(status.avg_price, locale.value) },
+    { key: 'invested', label: t('bots.dca_invested'), value: status.invested_usdt == null ? '—' : `${formatUsdt(status.invested_usdt, locale.value)} USDT` },
+  ]
+})
+
+// Spot trend bots: state, units and R from `bot.trend_spot`
+const isTrendSpot = computed(() => props.bot.bot_type === 'TREND_SPOT')
+const trendSpot = computed(() => (isTrendSpot.value ? props.bot.trend_spot ?? null : null))
+const trendSpotRows = computed(() => {
+  const status = trendSpot.value
+  if (!status) return []
+  const rows = [
+    {
+      key: 'pnl',
+      label: t('bots.trend_spot_realized'),
+      value: status.realized_pnl_usdt == null ? '—' : `${formatUsdt(status.realized_pnl_usdt, locale.value, true)} USDT`,
+      tone: `bot-tile__pnl--${pnlTone(status.realized_pnl_usdt)}`,
+    },
+  ]
+  if (status.units > 0) {
+    rows.push(
+      { key: 'units', label: t('bots.trend_spot_units'), value: `${status.units} / ${status.max_units}`, tone: '' },
+      { key: 'r', label: t('bots.trend_spot_current_r'), value: formatR(status.current_r, locale.value), tone: `bot-tile__pnl--${pnlTone(status.current_r)}` },
+    )
+  }
+  return rows
+})
+
+// Spot grid bots: round trips, profit and the grid's coins from `bot.grid_spot`
+const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
+const gridSpot = computed(() => (isGridSpot.value ? props.bot.grid_spot ?? null : null))
+const gridSpotRows = computed(() => {
+  const status = gridSpot.value
+  if (!status) return []
+  const coin = props.bot.symbol.replace(/USDT$/, '')
+  return [
+    {
+      key: 'profit',
+      label: t('bots.grid_spot_realized'),
+      value: status.realized_profit_usdt == null ? '—' : `${formatUsdt(status.realized_profit_usdt, locale.value, true)} USDT`,
+      tone: `bot-tile__pnl--${pnlTone(status.realized_profit_usdt)}`,
+    },
+    { key: 'qty', label: t('bots.grid_spot_held'), value: status.qty == null ? '—' : `${formatQuantity(status.qty, locale.value)} ${coin}`, tone: '' },
+  ]
+})
+
 type MenuItem = DropdownMenuItem & { value?: string }
 
 const menuItems = computed<MenuItem[][]>(() => {
@@ -47,7 +167,7 @@ const menuItems = computed<MenuItem[][]>(() => {
   const groups: MenuItem[][] = [[
     { type: 'label', label: `${bot.symbol} · #${bot.id}` },
     { label: t('bots.menu_open'), icon: 'i-lucide-arrow-up-right', to: detailPath.value },
-    { label: t('bots.event_history_open'), icon: 'i-lucide-history', to: `/history?bot_id=${bot.id}` },
+    { label: t('bots.event_history_open'), icon: 'i-lucide-history', to: appPath(`/history?bot_id=${bot.id}`) },
   ]]
 
   if (actions.canEditGridConfig) {
@@ -147,7 +267,8 @@ const menuItems = computed<MenuItem[][]>(() => {
 
       <span class="bot-tile__spacer" />
 
-      <span class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
+      <span v-if="isSpot" class="bot-tile__direction bot-tile__direction--spot">{{ $t('bots.market_badge_spot') }}</span>
+      <span v-else-if="showDirection" class="bot-tile__direction" :class="`bot-tile__direction--${direction.toLowerCase()}`">
         {{ direction }}
       </span>
 
@@ -179,6 +300,54 @@ const menuItems = computed<MenuItem[][]>(() => {
           {{ $t(status.labelKey) }}
         </dd>
       </div>
+      <div v-if="isTrend" class="bot-tile__row">
+        <dt>{{ $t('bots.trend_state') }}</dt>
+        <dd :class="`bot-tile__trend--${trendStateTone(trend?.state)}`">{{ trend ? trendStateLabel(t, trend.state) : '—' }}</dd>
+      </div>
+      <div v-for="row in trendRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
+      </div>
+      <div v-if="isDca" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${dcaPhaseTone(dca?.phase)}`">
+          {{ dca ? dcaPhaseLabel(t, dca.phase) : '—' }}<template v-if="dca && dca.cycle_no > 0"> · #{{ dca.cycle_no }}</template>
+        </dd>
+      </div>
+      <div v-if="isRecurring" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${recurringPhaseTone(recurring?.phase)}`">
+          {{ recurring ? recurringPhaseLabel(t, recurring.phase) : '—' }}<template v-if="recurring"> · {{ recurring.buys_done }}</template>
+        </dd>
+      </div>
+      <div v-if="isTrendSpot" class="bot-tile__row">
+        <dt>{{ $t('bots.trend_state') }}</dt>
+        <dd :class="`bot-tile__trend--${trendStateTone(trendSpot?.state)}`">
+          {{ trendSpot ? (trendSpot.phase === 'stopped' ? $t('bots.grid_spot_phase_stopped') : trendStateLabel(t, trendSpot.state)) : '—' }}
+        </dd>
+      </div>
+      <div v-for="row in trendSpotRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
+      </div>
+      <div v-if="isGridSpot" class="bot-tile__row">
+        <dt>{{ $t('bots.dca_phase') }}</dt>
+        <dd :class="`bot-tile__dca--${gridSpotPhaseTone(gridSpot?.phase)}`">
+          {{ gridSpot ? gridSpotPhaseLabel(t, gridSpot.phase) : '—' }}<template v-if="gridSpot"> · {{ $t('bots.grid_spot_round_trips_n', { n: gridSpot.round_trips }) }}</template>
+        </dd>
+      </div>
+      <div v-for="row in gridSpotRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
+      </div>
+      <div v-for="row in recurringRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd>{{ row.value }}</dd>
+      </div>
+      <div v-for="row in dcaRows" :key="row.key" class="bot-tile__row">
+        <dt>{{ row.label }}</dt>
+        <dd :class="row.tone">{{ row.value }}</dd>
+      </div>
       <div class="bot-tile__row">
         <dt>{{ $t('bots.pnl_usdt') }}</dt>
         <dd class="bot-tile__pnl" :class="`bot-tile__pnl--${pnlTone(pnl)}`">{{ pnlLabel }}</dd>
@@ -202,6 +371,7 @@ const menuItems = computed<MenuItem[][]>(() => {
       :bot="bot"
       :confirm-copy="actions.confirmCopy"
       :confirm-loading="actions.confirmLoading"
+      :confirm-error="actions.confirmError"
       :can-edit-grid-config="actions.canEditGridConfig"
       :can-edit-mixed-grid="actions.canEditMixedGrid"
       @confirm="actions.confirmAction"
@@ -341,6 +511,11 @@ const menuItems = computed<MenuItem[][]>(() => {
   color: var(--color-down);
 }
 
+.bot-tile__direction--spot {
+  border-color: rgb(196 181 253 / 45%);
+  color: var(--color-accent);
+}
+
 .bot-tile__menu {
   position: relative;
   z-index: 2;
@@ -434,6 +609,26 @@ const menuItems = computed<MenuItem[][]>(() => {
   }
 }
 
+
+.bot-tile__trend--long {
+  color: var(--color-up);
+}
+
+.bot-tile__trend--short {
+  color: var(--color-down);
+}
+
+.bot-tile__trend--pause {
+  color: var(--color-warning);
+}
+
+.bot-tile__dca--live {
+  color: var(--color-up);
+}
+
+.bot-tile__dca--wait {
+  color: var(--color-accent);
+}
 
 .bot-tile__pnl--up {
   color: var(--color-up);

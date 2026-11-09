@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { BotEventOut, BotListItem, CandleOut } from '#shared/types/bot'
+import { isTrendFuturesBot } from '~/utils/botView'
 
 /** Everything known about one bot, laid out for `/bots/:id`. */
 const props = defineProps<{
@@ -18,16 +19,23 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const appPath = useAppPath()
 
 const actions = useBotActions(() => props.bot, {
   onRemoving: (value) => emit('removing', value),
   onRemoved: async () => {
-    await router.replace('/bots')
+    await router.replace(appPath('/bots'))
   },
 })
 
 const isAntiMartingale = computed(() => props.bot.bot_type === 'ANTI_MARTINGALE_FUTURES')
-const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && props.bot.cycle_state != null)
+const isTrend = computed(() => isTrendFuturesBot(props.bot))
+const isDcaSpot = computed(() => props.bot.bot_type === 'DCA_SPOT')
+const isRecurringSpot = computed(() => props.bot.bot_type === 'RECURRING_SPOT')
+const isGridSpot = computed(() => props.bot.bot_type === 'GRID_SPOT')
+const isTrendSpot = computed(() => props.bot.bot_type === 'TREND_SPOT')
+const isGridFutures = computed(() => props.bot.bot_type === 'GRID_FUTURES')
+const hasGridCycles = computed(() => isGridFutures.value && props.bot.cycle_state != null)
 </script>
 
 <template>
@@ -63,6 +71,18 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
       :events-error="eventsError"
     />
 
+    <BotDetailGridChart v-if="isGridFutures" :bot="bot" :events="events" />
+
+    <BotDetailTrend v-if="isTrend" :bot="bot" />
+
+    <BotDetailDcaSpot v-if="isDcaSpot" :bot="bot" />
+
+    <BotDetailRecurringSpot v-if="isRecurringSpot" :bot="bot" />
+
+    <BotDetailGridSpot v-if="isGridSpot" :bot="bot" />
+
+    <BotDetailTrendSpot v-if="isTrendSpot" :bot="bot" />
+
     <div class="bot-detail-view__columns">
       <div class="bot-detail-view__main">
         <BotDetailGrid v-if="hasGridCycles" :bot="bot" :events="events" />
@@ -93,6 +113,7 @@ const hasGridCycles = computed(() => props.bot.bot_type === 'GRID_FUTURES' && pr
       :bot="bot"
       :confirm-copy="actions.confirmCopy"
       :confirm-loading="actions.confirmLoading"
+      :confirm-error="actions.confirmError"
       :can-edit-grid-config="actions.canEditGridConfig"
       :can-edit-mixed-grid="actions.canEditMixedGrid"
       @confirm="actions.confirmAction"

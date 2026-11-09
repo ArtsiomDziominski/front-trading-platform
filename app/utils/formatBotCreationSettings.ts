@@ -1,5 +1,8 @@
 import type { BotType } from '#shared/types/bot'
+import { bilateralTrailOn } from '~/utils/bilateral'
 import { BOT_TYPE_LABEL_KEYS } from '~/utils/botView'
+import { dcaMaxFundsUsdt, readDcaLadderParams } from '~/utils/dcaSpot'
+import { recurringIntervalLabel } from '~/utils/recurringSpot'
 
 export type CreationSettingKey =
   | 'bot_type'
@@ -25,6 +28,59 @@ export type CreationSettingKey =
   | 'ema_slow_period'
   | 'trailing_stop_percent'
   | 'leverage'
+  | 'signal_timeframe'
+  | 'trend_timeframe'
+  | 'bf_window'
+  | 'bf_time_sigma'
+  | 'bf_range_sigma'
+  | 'bf_reversal'
+  | 'bf_spike_rejection'
+  | 'risk_per_unit_pct'
+  | 'max_units'
+  | 'capital_usdt'
+  | 'exchange_leverage'
+  | 'max_notional_x'
+  | 'close_on_stop'
+  | 'ema_fast'
+  | 'ema_slow'
+  | 'adx_period'
+  | 'adx_min'
+  | 'atr_period'
+  | 'donchian_entry'
+  | 'donchian_exit'
+  | 'volume_mult'
+  | 'volume_sma_period'
+  | 'stop_atr'
+  | 'add_step_atr'
+  | 'trail_atr'
+  | 'trail_wait_flip'
+  | 'exit_on_regime_flip'
+  | 'cooldown_bars'
+  | 'daily_stop_pct'
+  | 'monthly_stop_pct'
+  | 'base_order_usdt'
+  | 'safety_order_usdt'
+  | 'safety_orders_count'
+  | 'price_deviation_percent'
+  | 'step_scale'
+  | 'volume_scale'
+  | 'dca_take_profit_percent'
+  | 'trailing_take_profit_percent'
+  | 'dca_stop_loss_percent'
+  | 'dca_max_funds_usdt'
+  | 'restart_delay_seconds'
+  | 'recurring_amount_usdt'
+  | 'recurring_interval_hours'
+  | 'recurring_dip_ma_period'
+  | 'recurring_dip_multiplier'
+  | 'recurring_max_total_usdt'
+  | 'grid_spot_range'
+  | 'grid_spot_count'
+  | 'grid_spot_order_usdt'
+  | 'grid_spot_geometric'
+  | 'grid_spot_stop_loss'
+  | 'grid_spot_take_profit'
+  | 'max_position_pct'
 
 export interface CreationHistorySetting {
   key: CreationSettingKey
@@ -55,7 +111,101 @@ const SETTING_ORDER: CreationSettingKey[] = [
   'ema_slow_period',
   'trailing_stop_percent',
   'leverage',
+  'signal_timeframe',
+  'trend_timeframe',
+  'bf_window',
+  'bf_time_sigma',
+  'bf_range_sigma',
+  'bf_reversal',
+  'bf_spike_rejection',
+  'risk_per_unit_pct',
+  'max_units',
+  'capital_usdt',
+  'exchange_leverage',
+  'max_notional_x',
+  'close_on_stop',
+  'ema_fast',
+  'ema_slow',
+  'adx_period',
+  'adx_min',
+  'atr_period',
+  'donchian_entry',
+  'donchian_exit',
+  'volume_mult',
+  'volume_sma_period',
+  'stop_atr',
+  'add_step_atr',
+  'trail_atr',
+  'exit_on_regime_flip',
+  'cooldown_bars',
+  'daily_stop_pct',
+  'monthly_stop_pct',
+  'base_order_usdt',
+  'safety_order_usdt',
+  'safety_orders_count',
+  'price_deviation_percent',
+  'step_scale',
+  'volume_scale',
+  'dca_max_funds_usdt',
+  'dca_take_profit_percent',
+  'trailing_take_profit_percent',
+  'dca_stop_loss_percent',
+  'restart_delay_seconds',
+  'recurring_amount_usdt',
+  'recurring_interval_hours',
+  'recurring_dip_ma_period',
+  'recurring_dip_multiplier',
+  'recurring_max_total_usdt',
+  'grid_spot_range',
+  'grid_spot_count',
+  'grid_spot_order_usdt',
+  'grid_spot_geometric',
+  'grid_spot_stop_loss',
+  'grid_spot_take_profit',
+  'max_position_pct',
 ]
+
+const TREND_NUMERIC_KEYS = [
+  'risk_per_unit_pct',
+  'max_units',
+  'capital_usdt',
+  'exchange_leverage',
+  'max_notional_x',
+  'ema_fast',
+  'ema_slow',
+  'adx_period',
+  'adx_min',
+  'atr_period',
+  'donchian_entry',
+  'donchian_exit',
+  'volume_mult',
+  'volume_sma_period',
+  'stop_atr',
+  'add_step_atr',
+  'trail_atr',
+  'cooldown_bars',
+  'daily_stop_pct',
+  'monthly_stop_pct',
+] as const satisfies readonly CreationSettingKey[]
+
+const BILATERAL_NUMERIC_KEYS = [
+  'bf_window',
+  'bf_time_sigma',
+  'bf_range_sigma',
+  'bf_reversal',
+  'atr_period',
+  'risk_per_unit_pct',
+  'stop_atr',
+  'max_units',
+  'add_step_atr',
+  'trail_atr',
+  'cooldown_bars',
+  'capital_usdt',
+  'exchange_leverage',
+  'max_notional_x',
+  'daily_stop_pct',
+  'monthly_stop_pct',
+] as const satisfies readonly CreationSettingKey[]
 
 function readConfig(payload: Record<string, unknown>): Record<string, unknown> {
   if (!payload.config || typeof payload.config !== 'object') return {}
@@ -168,6 +318,76 @@ export function extractCreationHistorySettings(
   set('trailing_stop_percent', readString(config.trailing_stop_percent))
   set('leverage', readNumber(config.leverage))
 
+  if (payload.bot_type === 'TREND_SPOT') {
+    set('signal_timeframe', readString(config.signal_timeframe))
+    set('trend_timeframe', readString(config.trend_timeframe))
+    for (const key of TREND_NUMERIC_KEYS) set(key, readString(config[key]))
+    set('max_position_pct', readString(config.max_position_pct))
+    if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
+  }
+
+  if (payload.bot_type === 'BILATERAL_FUTURES') {
+    set('signal_timeframe', readString(config.signal_timeframe))
+    for (const key of BILATERAL_NUMERIC_KEYS) set(key, readString(config[key]))
+    if (typeof config.bf_spike_rejection === 'boolean') set('bf_spike_rejection', config.bf_spike_rejection)
+    // Only matters with trailing on (below 50 ATR), like the checkbox in the form
+    if (typeof config.trail_wait_flip === 'boolean' && bilateralTrailOn(readNumber(config.trail_atr))) {
+      set('trail_wait_flip', config.trail_wait_flip)
+    }
+    if (typeof config.close_on_stop === 'boolean') set('close_on_stop', config.close_on_stop)
+  }
+
+  if (payload.bot_type === 'TREND_FUTURES') {
+    set('signal_timeframe', readString(config.signal_timeframe))
+    set('trend_timeframe', readString(config.trend_timeframe))
+    for (const key of TREND_NUMERIC_KEYS) set(key, readString(config[key]))
+    if (typeof config.close_on_stop === 'boolean') set('close_on_stop', config.close_on_stop)
+    if (typeof config.exit_on_regime_flip === 'boolean') set('exit_on_regime_flip', config.exit_on_regime_flip)
+  }
+
+  // Spot DCA: its TP / SL have their own meaning (from the average price, and the SL stops the bot), so own keys
+  if (payload.bot_type === 'DCA_SPOT') {
+    byKey.delete('take_profit_percent')
+    byKey.delete('stop_loss_percent')
+    set('base_order_usdt', readString(config.base_order_usdt))
+    set('safety_order_usdt', readString(config.safety_order_usdt))
+    set('safety_orders_count', readNumber(config.safety_orders_count))
+    set('price_deviation_percent', readString(config.price_deviation_percent))
+    set('step_scale', readString(config.step_scale))
+    set('volume_scale', readString(config.volume_scale))
+    const params = readDcaLadderParams(config)
+    if (params) set('dca_max_funds_usdt', Math.round(dcaMaxFundsUsdt(params) * 100) / 100)
+    set('dca_take_profit_percent', readString(config.take_profit_percent))
+    const trailing = readNumber(config.trailing_take_profit_percent)
+    set('trailing_take_profit_percent', trailing != null && trailing > 0 ? readString(config.trailing_take_profit_percent) : 'off')
+    const stopLoss = readNumber(config.stop_loss_percent)
+    set('dca_stop_loss_percent', stopLoss != null && stopLoss > 0 ? readString(config.stop_loss_percent) : 'off')
+    if (config.auto_restart !== false) set('restart_delay_seconds', readNumber(config.restart_delay_seconds))
+  }
+
+  if (payload.bot_type === 'RECURRING_SPOT') {
+    set('recurring_amount_usdt', readString(config.amount_usdt))
+    set('recurring_interval_hours', readNumber(config.interval_hours))
+    const period = readNumber(config.dip_ma_period)
+    set('recurring_dip_ma_period', period != null && period > 0 ? period : 'off')
+    if (period != null && period > 0) set('recurring_dip_multiplier', readString(config.dip_multiplier))
+    const budget = readNumber(config.max_total_usdt)
+    set('recurring_max_total_usdt', budget != null && budget > 0 ? readString(config.max_total_usdt) : 'off')
+  }
+
+  if (payload.bot_type === 'GRID_SPOT') {
+    const lower = readString(config.lower_price)
+    const upper = readString(config.upper_price)
+    if (lower != null && upper != null) set('grid_spot_range', `${lower} – ${upper}`)
+    set('grid_spot_count', readNumber(config.grid_count))
+    set('grid_spot_order_usdt', readString(config.order_usdt))
+    set('grid_spot_geometric', config.geometric === true ? 'on' : 'off')
+    const sl = readNumber(config.stop_loss_price)
+    set('grid_spot_stop_loss', sl != null && sl > 0 ? readString(config.stop_loss_price) : 'off')
+    const tp = readNumber(config.take_profit_price)
+    set('grid_spot_take_profit', tp != null && tp > 0 ? readString(config.take_profit_price) : 'off')
+  }
+
   return SETTING_ORDER.flatMap((key) => {
     const row = byKey.get(key)
     return row ? [row] : []
@@ -198,6 +418,59 @@ export const CREATION_SETTING_LABEL_KEYS: Record<CreationSettingKey, string> = {
   leverage: 'bots.field_leverage',
   mixed_deposit_usdt: 'bots.mixed_deposit',
   mixed_orders_summary: 'bots.mixed_orders_summary',
+  signal_timeframe: 'bots.trend_field_signal_timeframe',
+  trend_timeframe: 'bots.trend_field_trend_timeframe',
+  bf_window: 'bots.bilateral_field_bf_window',
+  bf_time_sigma: 'bots.bilateral_field_bf_time_sigma',
+  bf_range_sigma: 'bots.bilateral_field_bf_range_sigma',
+  bf_reversal: 'bots.bilateral_field_bf_reversal',
+  bf_spike_rejection: 'bots.bilateral_field_bf_spike_rejection',
+  risk_per_unit_pct: 'bots.trend_field_risk_per_unit_pct',
+  max_units: 'bots.trend_field_max_units',
+  capital_usdt: 'bots.trend_field_capital_usdt',
+  exchange_leverage: 'bots.trend_field_exchange_leverage',
+  max_notional_x: 'bots.trend_field_max_notional_x',
+  close_on_stop: 'bots.trend_field_close_on_stop',
+  ema_fast: 'bots.trend_field_ema_fast',
+  ema_slow: 'bots.trend_field_ema_slow',
+  adx_period: 'bots.trend_field_adx_period',
+  adx_min: 'bots.trend_field_adx_min',
+  atr_period: 'bots.trend_field_atr_period',
+  donchian_entry: 'bots.trend_field_donchian_entry',
+  donchian_exit: 'bots.trend_field_donchian_exit',
+  volume_mult: 'bots.trend_field_volume_mult',
+  volume_sma_period: 'bots.trend_field_volume_sma_period',
+  stop_atr: 'bots.trend_field_stop_atr',
+  add_step_atr: 'bots.trend_field_add_step_atr',
+  trail_atr: 'bots.trend_field_trail_atr',
+  trail_wait_flip: 'bots.bilateral_field_trail_wait_flip',
+  exit_on_regime_flip: 'bots.trend_field_exit_on_regime_flip',
+  cooldown_bars: 'bots.trend_field_cooldown_bars',
+  daily_stop_pct: 'bots.trend_field_daily_stop_pct',
+  monthly_stop_pct: 'bots.trend_field_monthly_stop_pct',
+  base_order_usdt: 'bots.dca_field_base_order',
+  safety_order_usdt: 'bots.dca_field_safety_order',
+  safety_orders_count: 'bots.dca_field_safety_count',
+  price_deviation_percent: 'bots.dca_field_deviation',
+  step_scale: 'bots.dca_field_step_scale',
+  volume_scale: 'bots.dca_field_volume_scale',
+  dca_take_profit_percent: 'bots.dca_field_take_profit',
+  trailing_take_profit_percent: 'bots.dca_field_trailing',
+  dca_stop_loss_percent: 'bots.dca_field_stop_loss',
+  dca_max_funds_usdt: 'bots.dca_max_funds',
+  restart_delay_seconds: 'bots.dca_field_restart_delay',
+  recurring_amount_usdt: 'bots.recurring_field_amount',
+  recurring_interval_hours: 'bots.recurring_field_interval',
+  recurring_dip_ma_period: 'bots.recurring_field_ma_period',
+  recurring_dip_multiplier: 'bots.recurring_field_multiplier',
+  recurring_max_total_usdt: 'bots.recurring_field_budget',
+  grid_spot_range: 'bots.grid_spot_group_range',
+  grid_spot_count: 'bots.grid_spot_field_count',
+  grid_spot_order_usdt: 'bots.grid_spot_field_order',
+  grid_spot_geometric: 'bots.grid_spot_field_geometric',
+  grid_spot_stop_loss: 'bots.grid_spot_field_stop_loss',
+  grid_spot_take_profit: 'bots.grid_spot_field_take_profit',
+  max_position_pct: 'bots.trend_spot_field_max_position_pct',
 }
 
 type TranslateFn = (key: string, values?: Record<string, unknown>) => string
@@ -218,7 +491,59 @@ export function formatCreationSettingValue(setting: CreationHistorySetting, t: T
       if (setting.value === 'fixed') return t('bots.volume_fixed')
       return t('bots.volume_linear')
     case 'auto_restart':
+    case 'close_on_stop':
+    case 'exit_on_regime_flip':
+    case 'trail_wait_flip':
       return setting.value ? t('common.yes') : t('common.no')
+    case 'risk_per_unit_pct':
+    case 'daily_stop_pct':
+    case 'monthly_stop_pct':
+      return `${setting.value}%`
+    case 'capital_usdt':
+      return `${setting.value} USDT`
+    case 'exchange_leverage':
+    case 'max_notional_x':
+      return `${setting.value}×`
+    case 'stop_atr':
+    case 'add_step_atr':
+    case 'trail_atr':
+      return `${setting.value} ATR`
+    case 'volume_mult':
+      return Number(setting.value) === 0 ? t('bots.trend_volume_filter_off') : `${setting.value}×`
+    case 'trailing_take_profit_percent':
+    case 'dca_stop_loss_percent':
+      return setting.value === 'off' ? t('bots.value_off') : `${setting.value}%`
+    case 'price_deviation_percent':
+    case 'dca_take_profit_percent':
+      return `${setting.value}%`
+    case 'step_scale':
+    case 'volume_scale':
+      return `${setting.value}×`
+    case 'base_order_usdt':
+    case 'safety_order_usdt':
+    case 'dca_max_funds_usdt':
+      return `${setting.value} USDT`
+    case 'restart_delay_seconds':
+      return t('bots.dca_seconds_value', { n: setting.value })
+    case 'recurring_amount_usdt':
+      return `${setting.value} USDT`
+    case 'recurring_max_total_usdt':
+      return setting.value === 'off' ? t('bots.recurring_no_limit') : `${setting.value} USDT`
+    case 'recurring_interval_hours':
+      return recurringIntervalLabel(t, Number(setting.value))
+    case 'recurring_dip_ma_period':
+      return setting.value === 'off' ? t('bots.value_off') : t('bots.recurring_days', { n: setting.value })
+    case 'recurring_dip_multiplier':
+      return `${setting.value}×`
+    case 'grid_spot_order_usdt':
+      return `${setting.value} USDT`
+    case 'max_position_pct':
+      return `${setting.value}%`
+    case 'grid_spot_geometric':
+      return setting.value === 'on' ? t('bots.grid_spot_geometric_on') : t('bots.grid_spot_geometric_off')
+    case 'grid_spot_stop_loss':
+    case 'grid_spot_take_profit':
+      return setting.value === 'off' ? t('bots.value_off') : String(setting.value)
     case 'grid_step_percent':
     case 'initial_amount_percent':
     case 'take_profit_percent':

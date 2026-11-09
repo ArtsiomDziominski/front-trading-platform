@@ -40,6 +40,36 @@ const EVENT_TYPE_I18N_KEYS: Record<string, string> = {
   entry_rejected: 'bots.event_type_entry_rejected',
   exit_order_filled: 'bots.event_type_exit_order_filled',
   cycle_closed: 'bots.event_type_cycle_closed',
+  trend_evaluated: 'bots.event_type_trend_evaluated',
+  trend_entry: 'bots.event_type_trend_entry',
+  trend_add: 'bots.event_type_trend_add',
+  trend_stop_moved: 'bots.event_type_trend_stop_moved',
+  trend_exit: 'bots.event_type_trend_exit',
+  trend_regime_changed: 'bots.event_type_trend_regime_changed',
+  trend_risk_pause: 'bots.event_type_trend_risk_pause',
+  trend_exchange_ready: 'bots.event_type_trend_exchange_ready',
+  dca_cycle_started: 'bots.event_type_dca_cycle_started',
+  dca_cycle_closed: 'bots.event_type_dca_cycle_closed',
+  dca_entry_rejected: 'bots.event_type_dca_entry_rejected',
+  dca_safety_rejected: 'bots.event_type_dca_safety_rejected',
+  dca_safety_canceled: 'bots.event_type_dca_safety_canceled',
+  dca_take_profit_replaced: 'bots.event_type_dca_take_profit_replaced',
+  dca_take_profit_rejected: 'bots.event_type_dca_take_profit_rejected',
+  dca_finished: 'bots.event_type_dca_finished',
+  dca_stop_loss: 'bots.event_type_dca_stop_loss',
+  recurring_buy: 'bots.event_type_recurring_buy',
+  recurring_buy_skipped: 'bots.event_type_recurring_buy_skipped',
+  recurring_finished: 'bots.event_type_recurring_finished',
+  grid_spot_started: 'bots.event_type_grid_spot_started',
+  grid_spot_entry_rejected: 'bots.event_type_grid_spot_entry_rejected',
+  grid_spot_round_trip: 'bots.event_type_grid_spot_round_trip',
+  grid_spot_order_rejected: 'bots.event_type_grid_spot_order_rejected',
+  grid_spot_exit: 'bots.event_type_grid_spot_exit',
+  trend_spot_entry: 'bots.event_type_trend_spot_entry',
+  trend_spot_add: 'bots.event_type_trend_spot_add',
+  trend_spot_exit: 'bots.event_type_trend_spot_exit',
+  trend_spot_waiting: 'bots.event_type_trend_spot_waiting',
+  trend_spot_entry_rejected: 'bots.event_type_trend_spot_entry_rejected',
   active: 'bots.status_active',
   closed: 'bots.status_closed',
   error: 'bots.status_error',
@@ -74,12 +104,17 @@ const PAYLOAD_FIELD_I18N_KEYS: Record<string, Record<string, string>> = {
     grid_spot: 'bots.type_grid_spot',
     dca_futures: 'bots.type_dca_futures',
     dca_spot: 'bots.type_dca_spot',
+    recurring_spot: 'bots.type_recurring_spot',
+    trend_spot: 'bots.type_trend_spot',
     anti_martingale_futures: 'bots.type_anti_martingale_futures',
+    trend_futures: 'bots.type_trend_futures',
     custom: 'bots.type_custom',
   },
   reason: {
     take_profit: 'bots.event_reason_take_profit',
     stop_loss: 'bots.event_reason_stop_loss',
+    trailing_take_profit: 'bots.dca_reason_trailing_take_profit',
+    manual: 'bots.dca_reason_manual',
   },
   event_type: EVENT_TYPE_I18N_KEYS,
 }
@@ -115,6 +150,16 @@ export function antiMartingaleLegIndex(clientOrderId: unknown): number | null {
 
 function orderFilledTitleKey(payload: Record<string, unknown> | null | undefined): string {
   const kind = typeof payload?.kind === 'string' ? normalizeBotEventType(payload.kind) : ''
+  // Spot DCA fills
+  if (kind === 'base') return 'bots.event_type_order_filled_dca_base'
+  if (kind === 'safety') return 'bots.event_type_order_filled_dca_safety'
+  if (kind === 'take_profit') return 'bots.event_type_order_filled_dca_take_profit'
+  if (kind === 'exit') return 'bots.event_type_order_filled_dca_exit'
+  if (kind === 'recurring_buy') return 'bots.event_type_order_filled_recurring'
+  if (kind === 'grid_spot_buy' || kind === 'grid_spot_initial') return 'bots.event_type_order_filled_grid_spot_buy'
+  if (kind === 'grid_spot_sell' || kind === 'grid_spot_exit') return 'bots.event_type_order_filled_grid_spot_sell'
+  if (kind === 'trend_spot_entry' || kind === 'trend_spot_add') return 'bots.event_type_order_filled_trend_spot_buy'
+  if (kind === 'trend_spot_exit') return 'bots.event_type_order_filled_trend_spot_sell'
   if (kind === 'entry') return 'bots.event_type_order_filled_entry'
   if (kind === 'addon') return 'bots.event_type_order_filled_addon'
   if (kind === 'order') {
@@ -186,6 +231,27 @@ export function botEventTypeTone(eventType: string): BotEventTone {
   if (type.includes('redeploy') || type === 'restarting' || type === 'grid_recreated') {
     return 'redeployed'
   }
+  // Trend events, before the substring rules below (`trend_exit` has no keyword of its own)
+  if (type === 'trend_entry' || type === 'trend_add' || type === 'trend_exchange_ready') return 'created'
+  if (type === 'trend_exit') return 'closed'
+  if (type === 'trend_risk_pause') return 'error'
+  if (type === 'trend_stop_moved' || type === 'trend_regime_changed' || type === 'trend_evaluated') return 'updated'
+  // Spot DCA events, before the substring rules below (`dca_take_profit_replaced` is not a close)
+  if (type === 'dca_cycle_started') return 'created'
+  if (type === 'dca_cycle_closed' || type === 'dca_stop_loss') return 'closed'
+  if (type === 'dca_finished') return 'stopped'
+  if (type === 'dca_entry_rejected' || type === 'dca_safety_rejected' || type === 'dca_take_profit_rejected') return 'error'
+  if (type === 'dca_safety_canceled' || type === 'dca_take_profit_replaced') return 'updated'
+  if (type === 'recurring_buy') return 'created'
+  if (type === 'recurring_finished') return 'stopped'
+  if (type === 'recurring_buy_skipped') return 'error'
+  if (type === 'grid_spot_started' || type === 'grid_spot_round_trip') return 'created'
+  if (type === 'grid_spot_exit') return 'stopped'
+  if (type === 'trend_spot_entry' || type === 'trend_spot_add') return 'created'
+  if (type === 'trend_spot_exit') return 'stopped'
+  if (type === 'trend_spot_waiting') return 'updated'
+  if (type === 'trend_spot_entry_rejected') return 'error'
+  if (type === 'grid_spot_entry_rejected' || type === 'grid_spot_order_rejected') return 'error'
   if (
     type === 'order_filled'
     || type === 'active'

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const auth = useAuth()
+const appPath = useAppPath()
 
 const settingsLink = computed(() =>
-  auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+  appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
 )
 
 usePageSeo({
@@ -31,7 +32,8 @@ usePageSeo({
             name="Bybit"
             :description="$t('exchanges.bybit_desc')"
             exchange="BYBIT"
-            :active="false"
+            :active="true"
+            :to="settingsLink"
           />
           <ExchangeCard
             name="OKX"

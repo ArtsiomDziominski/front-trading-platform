@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const auth = useAuth()
+const appPath = useAppPath()
 
 const tiles = computed(() => [
   {
@@ -7,7 +8,7 @@ const tiles = computed(() => [
     titleKey: 'home.security_keys_title',
     captionKey: 'home.tile_secure_keys',
     badgeKey: 'home.badge_aes',
-    to: auth.loggedIn.value ? '/settings#api-keys' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/login'),
     tone: 'a' as const,
   },
   {
@@ -15,7 +16,7 @@ const tiles = computed(() => [
     titleKey: 'home.security_setup_title',
     captionKey: 'home.tile_setup',
     badgeKey: 'home.badge_fast',
-    to: auth.loggedIn.value ? '/settings#api-keys' : '/auth/register',
+    to: appPath(auth.loggedIn.value ? '/settings#api-keys' : '/auth/register'),
     tone: 'b' as const,
   },
   {
@@ -23,7 +24,7 @@ const tiles = computed(() => [
     titleKey: 'home.security_alerts_title',
     captionKey: 'home.tile_alerts',
     badgeKey: 'home.badge_24_7',
-    to: auth.loggedIn.value ? '/settings#telegram' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings#telegram' : '/auth/login'),
     tone: 'c' as const,
   },
   {
@@ -31,7 +32,7 @@ const tiles = computed(() => [
     titleKey: 'home.security_audit_title',
     captionKey: 'home.tile_audit',
     badgeKey: 'home.badge_audit',
-    to: auth.loggedIn.value ? '/settings' : '/auth/login',
+    to: appPath(auth.loggedIn.value ? '/settings' : '/auth/login'),
     tone: 'd' as const,
   },
 ])

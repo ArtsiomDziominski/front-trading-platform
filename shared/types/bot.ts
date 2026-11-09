@@ -5,7 +5,11 @@ export type BotType =
   | 'GRID_SPOT'
   | 'DCA_FUTURES'
   | 'DCA_SPOT'
+  | 'RECURRING_SPOT'
+  | 'TREND_SPOT'
   | 'ANTI_MARTINGALE_FUTURES'
+  | 'TREND_FUTURES'
+  | 'BILATERAL_FUTURES'
   | 'CUSTOM'
 
 export type BotLifecycleStatus = 'ACTIVE' | 'STOPPED' | 'CLOSED'
@@ -177,7 +181,628 @@ export interface AntiMartingaleFuturesConfig {
   leverage?: number
 }
 
-export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig
+export type TrendSignalTimeframe = '15m' | '30m' | '1h' | '2h'
+
+export type TrendTrendTimeframe = '1h' | '2h' | '4h' | '6h' | '12h' | '1d'
+
+/**
+ * TREND_FUTURES: one pair, the side follows the EMA regime of the higher timeframe, entry on a Donchian breakout
+ * of the signal timeframe (closed candles only), exchange stop, pyramiding, trailing stop, capital protection.
+ * Every field but `symbol` is optional: the server fills its defaults. Decimals go as strings or numbers.
+ */
+export interface TrendFuturesConfig {
+  symbol: string
+  /** Server default: "1h". */
+  signal_timeframe?: TrendSignalTimeframe
+  /** Must be longer than `signal_timeframe`. Server default: "4h". */
+  trend_timeframe?: TrendTrendTimeframe
+  /** Server default: 50; must be less than `ema_slow`. */
+  ema_fast?: number
+  /** Server default: 200. */
+  ema_slow?: number
+  /** Server default: 14. */
+  adx_period?: number
+  /** ADX below it is a sideways market: no new entries. Server default: "20". */
+  adx_min?: string | number
+  /** Server default: 14. */
+  atr_period?: number
+  /** Entry channel, candles. Server default: 48. */
+  donchian_entry?: number
+  /** Exit channel, candles. Server default: 24. */
+  donchian_exit?: number
+  /** Volume filter multiplier; 0 = off. Server default: "0". */
+  volume_mult?: string | number
+  /** Server default: 20. */
+  volume_sma_period?: number
+  /** Risk of one unit, % of the capital, (0; 10]. Server default: "2". */
+  risk_per_unit_pct?: string | number
+  /** Stop distance in ATR. Server default: "2". */
+  stop_atr?: string | number
+  /** Pyramid step in ATR. Server default: "1". */
+  add_step_atr?: string | number
+  /** 1–10; 1 = no pyramiding. Server default: 4. */
+  max_units?: number
+  /** Trailing stop distance in ATR. Server default: "3". */
+  trail_atr?: string | number
+  /** Server default: true. */
+  exit_on_regime_flip?: boolean
+  /** Candles without entries after a stop-out. Server default: 4. */
+  cooldown_bars?: number
+  /** 0 = off. Server default: "10". */
+  daily_stop_pct?: string | number
+  /** 0 = off. Server default: "35". */
+  monthly_stop_pct?: string | number
+  /** Position notional cap, × capital. Server default: "8". */
+  max_notional_x?: string | number
+  /** 1–125, set on the exchange by the bot (cross). Server default: 10. */
+  exchange_leverage?: number
+  /** null = the account USDT balance when the bot starts. */
+  capital_usdt?: string | number | null
+  /** Stopping the bot: true closes the position at market, false leaves it with its exchange stop. Server default: false. */
+  close_on_stop?: boolean
+}
+
+export type BilateralSignalTimeframe = '1h' | '2h' | '4h' | '6h' | '12h' | '1d'
+
+/**
+ * BILATERAL_FUTURES: one pair, always in a position in the direction of the Bilateral Filter of the signal
+ * timeframe (closed candles only), reversed when the filter flips. Execution as TREND_FUTURES: risk sizing,
+ * exchange stop, trailing, capital protection. Every field but `symbol` is optional: the server fills its defaults.
+ */
+export interface BilateralFuturesConfig {
+  symbol: string
+  /** Server default: "4h". */
+  signal_timeframe?: BilateralSignalTimeframe
+  /** Filter window, candles (5–300). Server default: 40. */
+  bf_window?: number
+  /** Time kernel width, candles. Server default: "12". */
+  bf_time_sigma?: string | number
+  /** Price kernel width, × ATR. Server default: "1.5". */
+  bf_range_sigma?: string | number
+  /** Flip threshold, × the price kernel width. Server default: "1.5". */
+  bf_reversal?: string | number
+  /** Reference price = median of the last three closes. Server default: true. */
+  bf_spike_rejection?: boolean
+  /** Server default: 14. */
+  atr_period?: number
+  /** Risk of the position, % of the capital, (0; 10]. Server default: "2". */
+  risk_per_unit_pct?: string | number
+  /** Stop distance in ATR. Server default: "3". */
+  stop_atr?: string | number
+  /** 1–10; 1 = no pyramiding. Server default: 1. */
+  max_units?: number
+  /** Pyramid step in ATR. Server default: "1". */
+  add_step_atr?: string | number
+  /** Trailing stop distance in ATR; 50 = practically off. Server default: "50". */
+  trail_atr?: string | number
+  /**
+   * After a trailing-stop exit: true — no new entry on the same side until the filter flips (state WAITING_FLIP);
+   * false — re-enter the same trend on the next candle. No effect without trailing. Server default: false (bots
+   * created before the field keep working as before); the create form sends true.
+   */
+  trail_wait_flip?: boolean
+  /** Candles without entries after a stop-out. Server default: 1. */
+  cooldown_bars?: number
+  /** 0 = off. Server default: "10". */
+  daily_stop_pct?: string | number
+  /** 0 = off. Server default: "35". */
+  monthly_stop_pct?: string | number
+  /** Position notional cap, × capital. Server default: "3". */
+  max_notional_x?: string | number
+  /** 1–125, set on the exchange by the bot (cross). Server default: 5. */
+  exchange_leverage?: number
+  /** null = the account USDT balance when the bot starts. */
+  capital_usdt?: string | number | null
+  /** Stopping the bot: true closes the position at market, false leaves it with its exchange stop. Server default: false. */
+  close_on_stop?: boolean
+}
+
+export type TrendState =
+  | 'WARMUP'
+  | 'WAITING_TREND'
+  | 'WAITING_BREAKOUT'
+  | 'IN_LONG'
+  | 'IN_SHORT'
+  | 'COOLDOWN'
+  | 'WAITING_FLIP'
+  | 'PAUSED_RISK'
+
+export type TrendReasonCode =
+  | 'warmup'
+  | 'no_regime'
+  | 'adx_low'
+  | 'no_breakout'
+  | 'volume_low'
+  | 'cooldown'
+  | 'wait_flip'
+  | 'risk_pause'
+  | 'breakout'
+  | 'filter_trend'
+  | 'hold'
+  | 'channel'
+  | 'regime_flip'
+  | 'position_exists'
+  | 'stale_signal'
+  | 'size_too_small'
+  | 'not_started'
+
+export type TrendExitReason = 'stop' | 'trail' | 'channel' | 'regime_flip' | 'risk_pause' | 'manual' | 'liquidation'
+
+export type TrendStopSource = 'initial' | 'pyramid' | 'trail'
+
+/** `trend` field of a GET /bots item: TREND_FUTURES and BILATERAL_FUTURES (`regime` = filter side), `null` for other types. Decimals arrive as numbers. */
+export interface TrendBotStatus {
+  /** Plain string on the server; the known values are `TrendState`. */
+  state: string
+  side: PositionSide | null
+  trade_id: number | null
+  units: number
+  max_units: number
+  entry_price: number | null
+  avg_price: number | null
+  stop_price: number | null
+  initial_stop: number | null
+  stop_source: string | null
+  next_add_price: number | null
+  /** Mark price to the stop, %. */
+  distance_to_stop_pct: number | null
+  /** Unrealized PnL in R (risk of the first unit). */
+  current_r: number | null
+  risk_usdt: number | null
+  regime: PositionSide | null
+  adx: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr: number | null
+  last_reason_code: string | null
+  last_reason: string | null
+  /** Numbers for `last_reason_code`, like `TrendDecision.reason_params`. */
+  last_reason_params?: Record<string, unknown>
+  last_evaluated_at: string | null
+  cooldown_until: string | null
+  paused_until: string | null
+  /** daily | monthly */
+  pause_reason: string | null
+  capital: number | null
+  equity: number | null
+}
+
+/** GET /bots/{id}/trades item: one position, newest first. */
+export interface TrendTrade {
+  id: number
+  bot_id: number
+  config_version: number
+  symbol: string
+  side: string
+  /** OPEN | CLOSED */
+  status: string
+  opened_at: string
+  closed_at: string | null
+  entry_avg: number | null
+  exit_avg: number | null
+  qty_max: number | null
+  units: number
+  initial_stop: number | null
+  risk_usdt: number | null
+  pnl_gross: number | null
+  /** Signed like the wallet: paid is negative. */
+  fees: number | null
+  funding: number | null
+  pnl_net: number | null
+  r_multiple: number | null
+  /** Known values are `TrendExitReason`. */
+  exit_reason: string | null
+  /** Best move from the entry, %. */
+  mfe: number | null
+  /** Worst move from the entry, % (≤ 0). */
+  mae: number | null
+  entry_snapshot: Record<string, unknown> | null
+}
+
+/** enter | exit | hold | wait */
+export type TrendAction = 'enter' | 'exit' | 'hold' | 'wait'
+
+/** GET /bots/{id}/decisions item: the decision on one closed candle, newest first. */
+export interface TrendDecision {
+  id: number
+  created_at: string
+  candle_open: string | null
+  candle_close: string | null
+  state: string | null
+  action: string | null
+  side: string | null
+  /** Stable code for i18n; the known values are `TrendReasonCode`. */
+  reason_code: string | null
+  /** Server-side Russian text, the fallback for unknown codes. */
+  reason: string | null
+  reason_params: Record<string, unknown>
+  regime: string | null
+  adx: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr: number | null
+  close: number | null
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+}
+
+export interface TrendDecisionsQuery {
+  from?: string
+  to?: string
+  limit?: number
+}
+
+export interface TrendMonthPnl {
+  /** YYYY-MM, UTC, by the trade close date. */
+  month: string
+  pnl_net: number | null
+}
+
+/** GET /bots/{id}/stats: closed trades of a trend bot. */
+export interface TrendStats {
+  trades: number
+  wins: number
+  losses: number
+  win_rate_pct: number | null
+  pnl_net: number | null
+  pnl_gross: number | null
+  fees: number | null
+  funding: number | null
+  avg_r: number | null
+  /** null when there is no losing trade. */
+  profit_factor: number | null
+  max_drawdown_usdt: number | null
+  max_drawdown_pct: number | null
+  /** Fees and funding paid, % of the sum of |pnl_gross|. */
+  costs_share_pct: number | null
+  pnl_by_month: TrendMonthPnl[]
+  capital: number | null
+  open_trade: TrendTrade | null
+}
+
+export type TrendMarketExchange = 'BINANCE' | 'OKX' | 'BYBIT'
+
+export interface TrendMarketQuery {
+  exchange: TrendMarketExchange
+  symbol: string
+  signal_timeframe?: TrendSignalTimeframe
+  trend_timeframe?: TrendTrendTimeframe
+  ema_fast?: number
+  ema_slow?: number
+  adx_min?: string | number
+  donchian_entry?: number
+  donchian_exit?: number
+}
+
+/** GET /market/trend: the current trend of a pair, public data. */
+export interface TrendMarket {
+  exchange: ExchangeType
+  symbol: string
+  signal_timeframe: string
+  trend_timeframe: string
+  price: number | null
+  regime: PositionSide | null
+  /** ADX below the threshold: the bot would wait. */
+  sideways: boolean
+  /** WARMUP | WAITING_TREND | WAITING_BREAKOUT */
+  state: string
+  breakout: boolean
+  reason_code: string
+  reason: string
+  reason_params: Record<string, unknown>
+  distance_to_breakout_pct: number | null
+  adx: number | null
+  adx_min: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  atr_signal: number | null
+  atr_trend: number | null
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+  candle_close: string | null
+}
+
+export interface TrendChartPoint {
+  timestamp: string
+  open: number | null
+  high: number | null
+  low: number | null
+  close: number | null
+  volume: number | null
+  /** EMA of the higher timeframe at this candle (a step line). */
+  ema_fast: number | null
+  ema_slow: number | null
+  /** Channels from the previous candles. */
+  entry_high: number | null
+  entry_low: number | null
+  exit_high: number | null
+  exit_low: number | null
+  /** BILATERAL_FUTURES only: the filter value at this candle (EMAs and channels are null). */
+  bf_value?: number | null
+}
+
+/** entry | add | exit | stop_moved */
+export interface TrendChartMarker {
+  timestamp: string
+  price: number | null
+  kind: string
+  side: string | null
+  trade_id: number | null
+  /** For `exit` — the exit reason; for `stop_moved` — the stop source. */
+  label: string | null
+}
+
+/** GET /bots/{id}/trend-chart */
+export interface TrendChart {
+  symbol: string
+  signal_timeframe: string
+  trend_timeframe: string
+  points: TrendChartPoint[]
+  markers: TrendChartMarker[]
+  /** Current stop of the open position. */
+  stop_price: number | null
+  stop_history: TrendChartMarker[]
+}
+
+/**
+ * DCA_SPOT: classic spot DCA, long only, USDT pairs, no leverage. A market base order, then
+ * `safety_orders_count` limit buys below the base fill price, one take-profit sell from the average price.
+ * Decimals go as strings or numbers; the server stores them as strings.
+ */
+export interface DcaSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  /** Base (market) order, USDT, (0; 10 000 000]. */
+  base_order_usdt: string | number
+  /** First safety order, USDT, (0; 10 000 000]; the next ones grow by `volume_scale`. */
+  safety_order_usdt: string | number
+  /** 0–50. Server default: 5. */
+  safety_orders_count: number
+  /** Drop from the base fill price to safety order #1, %, (0; 50]. Server default: "1.5". */
+  price_deviation_percent: string | number
+  /** Each next step is the previous × this, [0.5; 5]. The deepest order must stay above −100 %. Server default: "1". */
+  step_scale: string | number
+  /** Each next safety order size is the previous × this, [0.5; 5]. Server default: "1". */
+  volume_scale: string | number
+  /** Take profit from the average price, %, (0; 100]. Server default: "1.5". */
+  take_profit_percent: string | number
+  /** null = fixed TP; else trailing distance from the high after the TP price is reached, (0; 50]. */
+  trailing_take_profit_percent: string | number | null
+  /** null = off; else (0; 100) below the average price, then the bot sells and stops. */
+  stop_loss_percent: string | number | null
+  /** Server default: true. */
+  auto_restart: boolean
+  /** Pause between cycles, 0–86400 s. Server default: 0. */
+  restart_delay_seconds: number
+}
+
+export type DcaSpotPhase = 'starting' | 'open' | 'waiting_restart' | 'stopped'
+
+/** State of one safety order of the current cycle. */
+export type DcaSafetyOrderState = 'filled' | 'open' | 'pending' | 'rejected' | 'canceled'
+
+export interface DcaSafetyOrderOut {
+  /** 1-based safety order number. */
+  index: number
+  price: number | null
+  /** Plain string on the server; the known values are `DcaSafetyOrderState`. */
+  state: DcaSafetyOrderState | string
+}
+
+/** `dca` field of a GET /bots item: DCA_SPOT only, `null` for other types. Decimals arrive as numbers. */
+export interface DcaSpotStatusOut {
+  /** Plain string on the server; the known values are `DcaSpotPhase`. */
+  phase: DcaSpotPhase | string
+  cycle_no: number
+  cycles_completed: number
+  base_price: number | null
+  avg_price: number | null
+  qty: number | null
+  invested_usdt: number | null
+  safety_filled: number
+  safety_total: number
+  next_safety_price: number | null
+  take_profit_price: number | null
+  stop_loss_price: number | null
+  trailing_active: boolean
+  trailing_high: number | null
+  realized_profit_usdt: number | null
+  last_cycle_profit_usdt: number | null
+  max_funds_usdt: number | null
+  /** When the next cycle starts (phase `waiting_restart`). */
+  restart_at: string | null
+  /** Per-order state of the current cycle's safety orders; missing on older servers. */
+  safety_orders?: DcaSafetyOrderOut[]
+}
+
+/**
+ * RECURRING_SPOT: recurring buy (accumulator), USDT pairs. A market buy of `amount_usdt` every `interval_hours`,
+ * × `dip_multiplier` while the price is below the moving average of `dip_ma_period` daily closes, until
+ * `max_total_usdt` is spent. The bot never sells. Decimals go as strings or numbers; the server stores strings.
+ */
+export interface RecurringSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  /** One buy, USDT, (0; 10 000 000]. */
+  amount_usdt: string | number
+  /** 1–8760 h. Server default: 24. */
+  interval_hours: number
+  /** null = off; else 2–200 daily closes. */
+  dip_ma_period: number | null
+  /** [1; 10]. Server default: "2". */
+  dip_multiplier: string | number
+  /** null = no limit; else ≥ amount_usdt. */
+  max_total_usdt: string | number | null
+}
+
+export type RecurringSpotPhase = 'active' | 'waiting_funds' | 'finished' | 'stopped'
+
+/** `recurring` field of a GET /bots item: RECURRING_SPOT only. Decimals arrive as numbers. */
+export interface RecurringSpotStatusOut {
+  /** Plain string on the server; the known values are `RecurringSpotPhase`. */
+  phase: RecurringSpotPhase | string
+  buys_done: number
+  qty: number | null
+  avg_price: number | null
+  invested_usdt: number | null
+  fees_usdt: number | null
+  budget_usdt: number | null
+  budget_left_usdt: number | null
+  next_buy_at: string | null
+  next_buy_usdt: number | null
+  last_buy_at: string | null
+  last_buy_price: number | null
+  last_buy_usdt: number | null
+  last_buy_dip: boolean
+  ma_price: number | null
+  dip_active: boolean
+  last_skip_reason: string | null
+}
+
+/**
+ * GRID_SPOT: spot grid, USDT pairs. `grid_count` cells between `lower_price` and `upper_price`: a cell rests a LIMIT
+ * BUY of `order_usdt` at its lower level, or holds the coins it bought and a LIMIT SELL one level higher. The cells
+ * above the start price get their coins with one market buy. Stop loss / take profit sell every coin of the grid
+ * and stop the bot. Decimals go as strings or numbers; the server stores strings.
+ */
+export interface GridSpotConfig {
+  /** Must end with USDT. */
+  symbol: string
+  lower_price: string | number
+  /** > lower_price. */
+  upper_price: string | number
+  /** 2–150. Server default: 20. */
+  grid_count: number
+  /** One cell's buy, USDT. */
+  order_usdt: string | number
+  /** false — equal step in USDT, true — equal step in %. */
+  geometric: boolean
+  /** null = off; below lower_price. */
+  stop_loss_price: string | number | null
+  /** null = off; above upper_price. */
+  take_profit_price: string | number | null
+}
+
+export type GridSpotPhase = 'starting' | 'running' | 'exiting' | 'stopped'
+
+export interface GridSpotCellOut {
+  /** From 1, bottom up. */
+  index: number
+  buy_price: number | null
+  sell_price: number | null
+  side: 'buy' | 'sell'
+  /** open — the order rests on the book, waiting — waits for funds / a retry, rejected — below the exchange minimum. */
+  state: 'open' | 'waiting' | 'rejected'
+  qty: number | null
+}
+
+/** `grid_spot` field of a GET /bots item: GRID_SPOT only. Decimals arrive as numbers. */
+export interface GridSpotStatusOut {
+  phase: GridSpotPhase | string
+  round_trips: number
+  realized_profit_usdt: number | null
+  fees_usdt: number | null
+  qty: number | null
+  avg_price: number | null
+  cost_usdt: number | null
+  last_price: number | null
+  in_range: boolean | null
+  start_price: number | null
+  buy_orders: number
+  sell_orders: number
+  cells: GridSpotCellOut[]
+  stop_loss_price: number | null
+  take_profit_price: number | null
+  exit_reason: 'stop_loss' | 'take_profit' | 'manual' | null
+  entry_rejected_reason: string | null
+}
+
+/**
+ * TREND_SPOT: the trend bot's rules on a spot account — long only, no leverage, no exchange stop order (the engine
+ * sells at market when the last price reaches the stop). Every field but the symbol has a server default.
+ */
+export interface TrendSpotConfig {
+  symbol: string
+  signal_timeframe?: TrendSignalTimeframe
+  trend_timeframe?: TrendTrendTimeframe
+  /** 2–199, < ema_slow. */
+  ema_fast?: number
+  /** 3–200. */
+  ema_slow?: number
+  adx_period?: number
+  adx_min?: string | number
+  /** 2–60. */
+  atr_period?: number
+  /** 2–200. */
+  donchian_entry?: number
+  /** 2–200. */
+  donchian_exit?: number
+  volume_mult?: string | number
+  volume_sma_period?: number
+  risk_per_unit_pct?: string | number
+  stop_atr?: string | number
+  add_step_atr?: string | number
+  max_units?: number
+  trail_atr?: string | number
+  exit_on_regime_flip?: boolean
+  cooldown_bars?: number
+  /** Position ceiling, % of the capital, (0; 100]. Server default: "100". */
+  max_position_pct?: string | number
+  /** null = the free USDT on the first tick. */
+  capital_usdt?: string | number | null
+}
+
+export interface TrendSpotLastTrade {
+  trade_no: number | null
+  pnl_usdt: number | null
+  r: number | null
+  reason: string | null
+  units: number | null
+  entry_price: number | null
+  exit_price: number | null
+  closed_at: string | null
+}
+
+/** `trend_spot` field of a GET /bots item: TREND_SPOT only. Decimals arrive as numbers. */
+export interface TrendSpotStatusOut {
+  phase: 'flat' | 'in_position' | 'stopped' | string
+  state: string
+  regime: 'LONG' | 'SHORT' | null
+  adx: number | null
+  atr: number | null
+  ema_fast: number | null
+  ema_slow: number | null
+  close: number | null
+  entry_level: number | null
+  exit_level: number | null
+  decision_code: string | null
+  decision_reason: string | null
+  capital_usdt: number | null
+  realized_pnl_usdt: number | null
+  fees_usdt: number | null
+  trades: number
+  wins: number
+  units: number
+  max_units: number
+  qty: number | null
+  avg_price: number | null
+  cost_usdt: number | null
+  entry_price: number | null
+  stop_price: number | null
+  next_add_price: number | null
+  risk_usdt: number | null
+  current_r: number | null
+  distance_to_stop_pct: number | null
+  add_blocked_reason: string | null
+  cooldown_until: string | null
+  last_trade: TrendSpotLastTrade | null
+}
+
+export type BotConfig = GridFuturesConfig | AntiMartingaleFuturesConfig | TrendFuturesConfig | BilateralFuturesConfig | DcaSpotConfig | RecurringSpotConfig | GridSpotConfig | TrendSpotConfig
 
 export interface BotCreate {
   api_key_id: number
@@ -200,6 +825,31 @@ export interface CandleOut {
   high: number
   low: number
   close: number
+}
+
+/** GET /bots/{id}/grid-chart order: one of the current grid's orders waiting on the exchange. */
+export interface GridChartOrder {
+  kind: 'grid' | 'entry' | 'take_profit' | 'stop_loss' | string
+  /** Grid level from 1; null for take profit / stop loss. */
+  level: number | null
+  side: 'BUY' | 'SELL' | string
+  /** Limit price, or the trigger of a stop order. */
+  price: number | null
+  /** What is left to fill, in the exchange's order unit (coins on Binance, contracts on OKX). */
+  quantity: number | null
+  client_order_id: string
+}
+
+export type GridChartTimeframe = '15m' | '1h' | '4h'
+
+/** GET /bots/{id}/grid-chart: GRID_FUTURES only. */
+export interface GridChart {
+  symbol: string
+  timeframe: GridChartTimeframe | string
+  candles: CandleOut[]
+  orders: GridChartOrder[]
+  /** The exchange did not return the orders; the candles are still there. */
+  orders_error: string | null
 }
 
 export interface LiquidationCheckOut {
@@ -238,6 +888,16 @@ export interface BotListOut extends BotOut {
   pnl_percent: number | null
   /** null for grid bots; closed 15m candles for the breakout window for anti-martingale bots. */
   recent_candles?: CandleOut[] | null
+  /** TREND_FUTURES only: strategy state, side, R, stop; null for other types and in old caches. */
+  trend?: TrendBotStatus | null
+  /** DCA_SPOT only: cycle, safety orders, average and TP price, profit; null for other types and in old caches. */
+  dca?: DcaSpotStatusOut | null
+  /** RECURRING_SPOT only: buys, accumulated coins, next buy, budget; null for other types and in old caches. */
+  recurring?: RecurringSpotStatusOut | null
+  /** GRID_SPOT only: phase, cells, round trips, profit, the grid's coins; null for other types and in old caches. */
+  grid_spot?: GridSpotStatusOut | null
+  /** TREND_SPOT only: regime, decision, position, stop, next add-on, trades; null for other types and in old caches. */
+  trend_spot?: TrendSpotStatusOut | null
 }
 
 export interface BotListItem extends BotListOut {
@@ -305,6 +965,36 @@ export type BotEventType =
   | 'grid_cycle_started'
   | 'grid_cycle_settled'
   | 'grid_size_resolved'
+  | 'trend_evaluated'
+  | 'trend_entry'
+  | 'trend_add'
+  | 'trend_stop_moved'
+  | 'trend_exit'
+  | 'trend_regime_changed'
+  | 'trend_risk_pause'
+  | 'trend_exchange_ready'
+  | 'dca_cycle_started'
+  | 'dca_cycle_closed'
+  | 'dca_entry_rejected'
+  | 'dca_safety_rejected'
+  | 'dca_safety_canceled'
+  | 'dca_take_profit_replaced'
+  | 'dca_take_profit_rejected'
+  | 'dca_finished'
+  | 'dca_stop_loss'
+  | 'recurring_buy'
+  | 'recurring_buy_skipped'
+  | 'recurring_finished'
+  | 'grid_spot_started'
+  | 'grid_spot_entry_rejected'
+  | 'grid_spot_round_trip'
+  | 'grid_spot_order_rejected'
+  | 'grid_spot_exit'
+  | 'trend_spot_entry'
+  | 'trend_spot_add'
+  | 'trend_spot_exit'
+  | 'trend_spot_waiting'
+  | 'trend_spot_entry_rejected'
   | 'error'
 
 export interface BotEventOut {
