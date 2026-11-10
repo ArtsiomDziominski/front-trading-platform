@@ -1502,7 +1502,13 @@
     "api_keys_delete_title": "Удалить API-ключ?",
     "api_keys_delete_confirm": "Удалить ключ {exchange} «{label}»? Боты с этим ключом перестанут работать.",
     "api_keys_error_required": "Укажите API key и secret.",
-    "api_keys_error_passphrase_required": "Для OKX укажите passphrase."
+    "api_keys_error_passphrase_required": "Для OKX укажите passphrase.",
+    "api_keys_server_ip_title": "IP сервера для белого списка",
+    "api_keys_server_ip_hint": "При создании API-ключа на бирже включите ограничение по IP и добавьте этот адрес. Тогда ключ будет работать только с нашего сервера, даже если утечёт.",
+    "api_keys_server_ip_copy": "Скопировать",
+    "api_keys_server_ip_copied": "Скопировано",
+    "api_keys_server_ip_copy_failed": "Не удалось скопировать в буфер обмена.",
+    "api_keys_server_ip_modal_hint": "Совет: ограничьте ключ на бирже по IP {ip} — это безопаснее, чем ключ без ограничений."
   },
   "auth": {
     "login": "Войти",

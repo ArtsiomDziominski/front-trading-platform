@@ -1,5 +1,5 @@
 import { parseApiError } from '~/utils/parseApiError'
-import type { ApiKeyCreate, ApiKeyOut } from '#shared/types/api-key'
+import type { ApiKeyCreate, ApiKeyOut, ServerIpOut } from '#shared/types/api-key'
 
 export const useApiKeys = () => {
   const config = useRuntimeConfig()
@@ -12,6 +12,8 @@ export const useApiKeys = () => {
   const creating = useState<boolean>('user_api_keys_creating', () => false)
   const deletingId = useState<number | null>('user_api_keys_deleting_id', () => null)
   const error = useState<string | null>('user_api_keys_error', () => null)
+  const serverIps = useState<string[]>('server_ips', () => [])
+  const serverIpsLoaded = useState<boolean>('server_ips_loaded', () => false)
 
   function errorFallback(): string {
     const i18n = nuxtApp.$i18n
@@ -39,6 +41,20 @@ export const useApiKeys = () => {
     } finally {
       loading.value = false
     }
+  }
+
+  /** Outgoing server IPs for the exchange API key whitelist. Failure is non-fatal: the block just stays hidden. */
+  async function fetchServerIps() {
+    if (serverIpsLoaded.value) return serverIps.value
+
+    try {
+      const data = await auth.authFetch<ServerIpOut>(`${baseUrl}/api-keys/server-ip`)
+      serverIps.value = data.ips ?? []
+      serverIpsLoaded.value = true
+    } catch {
+      serverIps.value = []
+    }
+    return serverIps.value
   }
 
   async function createKey(payload: ApiKeyCreate) {
@@ -81,7 +97,9 @@ export const useApiKeys = () => {
     creating,
     deletingId,
     error,
+    serverIps,
     fetchKeys,
+    fetchServerIps,
     createKey,
     deleteKey,
   }

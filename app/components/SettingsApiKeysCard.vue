@@ -18,6 +18,21 @@ const apiPassphrase = ref('')
 const exchangeOptions: ExchangeType[] = ['BINANCE', 'BYBIT', 'OKX', 'OTHER']
 const needsPassphrase = computed(() => exchange.value === 'OKX')
 
+const ipsCopied = ref(false)
+const serverIpsText = computed(() => apiKeys.serverIps.value.join(', '))
+
+async function copyServerIps() {
+  if (!serverIpsText.value || !import.meta.client) return
+
+  try {
+    await navigator.clipboard.writeText(serverIpsText.value)
+    ipsCopied.value = true
+    setTimeout(() => { ipsCopied.value = false }, 2000)
+  } catch {
+    apiKeys.error.value = t('settings.api_keys_server_ip_copy_failed')
+  }
+}
+
 const route = useRoute()
 const sectionRef = ref<HTMLElement | null>(null)
 
@@ -126,6 +141,7 @@ async function handleCreateSubmit() {
 }
 
 onMounted(async () => {
+  apiKeys.fetchServerIps()
   await apiKeys.fetchKeys()
   scrollIntoViewIfTargeted()
 })
@@ -138,6 +154,17 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
     <UCard class="settings-card">
       <h2 class="settings-card__title">{{ $t('settings.api_keys_section') }}</h2>
       <p class="settings-card__desc">{{ $t('settings.api_keys_section_desc') }}</p>
+
+      <div v-if="apiKeys.serverIps.value.length" class="server-ip">
+        <div class="server-ip__main">
+          <p class="server-ip__title">{{ $t('settings.api_keys_server_ip_title') }}</p>
+          <p class="server-ip__value">{{ serverIpsText }}</p>
+          <p class="server-ip__hint">{{ $t('settings.api_keys_server_ip_hint') }}</p>
+        </div>
+        <AppButton variant="secondary" size="sm" @click="copyServerIps">
+          {{ ipsCopied ? $t('settings.api_keys_server_ip_copied') : $t('settings.api_keys_server_ip_copy') }}
+        </AppButton>
+      </div>
 
       <UAlert
         v-if="formSuccess"
@@ -205,6 +232,10 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
                 class="w-full"
               />
             </UFormField>
+
+            <p v-if="apiKeys.serverIps.value.length" class="server-ip__modal-hint">
+              {{ $t('settings.api_keys_server_ip_modal_hint', { ip: serverIpsText }) }}
+            </p>
 
             <UFormField :label="$t('settings.api_keys_key')">
               <UInput
@@ -374,6 +405,45 @@ watch(() => route.hash, scrollIntoViewIfTargeted)
 .api-keys-list__meta {
   margin: 0;
   font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+.server-ip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.server-ip__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-ip__title {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.server-ip__value {
+  margin: 0 0 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.95rem;
+  color: var(--color-accent);
+  word-break: break-all;
+}
+
+.server-ip__hint,
+.server-ip__modal-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--color-text-muted);
 }
 </style>
