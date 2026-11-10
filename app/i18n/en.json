@@ -1502,7 +1502,13 @@
     "api_keys_delete_title": "Delete API key?",
     "api_keys_delete_confirm": "Remove the {exchange} key \"{label}\"? Bots using this key will stop working.",
     "api_keys_error_required": "API key and secret are required.",
-    "api_keys_error_passphrase_required": "Passphrase is required for OKX."
+    "api_keys_error_passphrase_required": "Passphrase is required for OKX.",
+    "api_keys_server_ip_title": "Server IP for the whitelist",
+    "api_keys_server_ip_hint": "When creating the API key on the exchange, enable IP restriction and add this address. The key will then work only from our server, even if it leaks.",
+    "api_keys_server_ip_copy": "Copy",
+    "api_keys_server_ip_copied": "Copied",
+    "api_keys_server_ip_copy_failed": "Could not copy to clipboard.",
+    "api_keys_server_ip_modal_hint": "Tip: restrict the key on the exchange to IP {ip} — it is safer than an unrestricted key."
   },
   "auth": {
     "login": "Login",

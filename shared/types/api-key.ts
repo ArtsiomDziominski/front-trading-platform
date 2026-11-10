@@ -16,3 +16,8 @@ export interface ApiKeyCreate {
   passphrase?: string
   label?: string
 }
+
+export interface ServerIpOut {
+  ips: string[]
+  source: 'config' | 'detected' | 'unavailable'
+}
